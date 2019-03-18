@@ -10,6 +10,6 @@ include (etc/clang_format.cmake)
 include (etc/clang_tidy.cmake)
 include (etc/cppcheck.cmake)
 
-#add_bh_exec (hash_and_try)
-#add_bh_exec (bls_hash)
 add_bh_exec (psha256)
+add_bh_exec (hash_and_try)
+#add_bh_exec (bls_hash)
