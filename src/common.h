@@ -34,6 +34,7 @@ mpz_t *get_p(void);
 mpz_t *get_q(void);
 void common_init(void);
 void common_uninit(void);
+void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY);
 
 #define __bls_hash__src__common_h__
 #endif

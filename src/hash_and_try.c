@@ -13,6 +13,9 @@ int main(int argc, char **argv) {
         nreps = 16;
     }
 
+    // initialize temp variables in common.c
+    common_init();
+
     // get libgmp ready
     mpz_t t, ft, y, pp1o4;
     mpz_init(t);
@@ -55,17 +58,20 @@ int main(int argc, char **argv) {
         if (j == 256) {
             gmp_fprintf(stderr, "no point found!\n");
         } else {
-            gmp_fprintf(stderr, "(%Zx, %Zx)\n", t, y);
+            if (argc > 2) {
+                clear_cofactor(t, y, t, y);
+            }
+            gmp_fprintf(stdout, "(0x%Zx, 0x%Zx)\n", t, y);
         }
     }
 
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
-    common_uninit();
     mpz_clear(pp1o4);
     mpz_clear(y);
     mpz_clear(ft);
     mpz_clear(t);
+    common_uninit();
 
     return 0;
 }
