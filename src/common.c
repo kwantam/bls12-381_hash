@@ -54,15 +54,13 @@ bool lt_be(const unsigned char *a, const unsigned char *b, size_t len) {
     return false;
 }
 
+// clang-format off
 static unsigned char ZEROS[P_LEN] = {0,};
-static bool next_com(EVP_CIPHER_CTX *cctx,
-                     unsigned char *out,
-                     size_t len,
-                     const unsigned char *max,
+// clang-format on
+static bool next_com(EVP_CIPHER_CTX *cctx, unsigned char *out, size_t len, const unsigned char *max,
                      unsigned char mask) {
     int outl = len;
     EVP_EncryptUpdate(cctx, out, &outl, ZEROS, len);
-    fprintf(stderr, "bytes: %d\n", outl);
     out[0] &= mask;
     if (lt_be(out, max, len)) {
         return false;
@@ -71,18 +69,47 @@ static bool next_com(EVP_CIPHER_CTX *cctx,
     return true;
 }
 
-unsigned char *next_p(EVP_CIPHER_CTX *cctx) {
-    static unsigned char p_out[P_LEN];
-
-    while (next_com(cctx, p_out, P_LEN, BLS12_381_p, 0x1f)) ;
-
-    return p_out;
+void next_modp(EVP_CIPHER_CTX *cctx, mpz_t ret) {
+    unsigned char p_out[P_LEN];
+    while (next_com(cctx, p_out, P_LEN, BLS12_381_p, 0x1f)) {
+    }
+    mpz_import(ret, P_LEN, 1, 1, 1, 0, p_out);
 }
 
-unsigned char *next_q(EVP_CIPHER_CTX *cctx) {
-    static unsigned char q_out[Q_LEN];
+void next_modq(EVP_CIPHER_CTX *cctx, mpz_t ret) {
+    unsigned char q_out[Q_LEN];
+    while (next_com(cctx, q_out, Q_LEN, BLS12_381_q, 0x73)) {
+    }
+    mpz_import(ret, Q_LEN, 1, 1, 1, 0, q_out);
+}
 
-    while (next_com(cctx, q_out, Q_LEN, BLS12_381_q, 0x73)) ;
+static mpz_t mpz_bls12_381_p;
+mpz_t *get_p(void) {
+    common_init();
+    return &mpz_bls12_381_p;
+}
 
-    return q_out;
+static mpz_t mpz_bls12_381_q;
+mpz_t *get_q(void) {
+    common_init();
+    return &mpz_bls12_381_q;
+}
+
+static bool init_done = false;
+void common_init(void) {
+    if (!init_done) {
+        init_done = true;
+        mpz_init(mpz_bls12_381_q);
+        mpz_import(mpz_bls12_381_q, Q_LEN, 1, 1, 1, 0, BLS12_381_q);
+        mpz_init(mpz_bls12_381_p);
+        mpz_import(mpz_bls12_381_p, P_LEN, 1, 1, 1, 0, BLS12_381_p);
+    }
+}
+
+void common_uninit(void) {
+    if (init_done) {
+        init_done = false;
+        mpz_clear(mpz_bls12_381_q);
+        mpz_clear(mpz_bls12_381_p);
+    }
 }

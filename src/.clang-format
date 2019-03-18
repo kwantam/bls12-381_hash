@@ -4,8 +4,8 @@ BasedOnStyle: LLVM
 AlignEscapedNewlines: Left
 AllowAllParametersOfDeclarationOnNextLine: false
 AlwaysBreakTemplateDeclarations: true
-BinPackArguments: false
-BinPackParameters: false
+BinPackArguments: true
+BinPackParameters: true
 BreakConstructorInitializers: BeforeComma
 ColumnLimit: 120
 CommentPragmas: '^(!|NOLINT)'
