@@ -10,6 +10,6 @@ include (etc/clang_format.cmake)
 include (etc/clang_tidy.cmake)
 include (etc/cppcheck.cmake)
 
-include_directories ("${PROJECT_SOURCE_DIR}/bint" "${PROJECT_SOURCE_DIR}/bhcommon")
+include_directories ("${PROJECT_SOURCE_DIR}/bint" "${PROJECT_SOURCE_DIR}/curve" "${PROJECT_SOURCE_DIR}/util")
 
 add_bh_exec (hash_and_try)

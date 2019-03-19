@@ -2,13 +2,14 @@
 //
 // (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
-#include "common.h"
+#include "curve.h"
+#include "util.h"
 
 int main(int argc, char **argv) {
     struct cmdline_opts opts = get_cmdline_opts(argc, argv);
 
-    // initialize temp variables in common.c
-    common_init();
+    // initialize temp variables for curve computations
+    curve_init();
 
     // get libgmp ready
     mpz_t t, ft, y, pp1o4;
@@ -65,7 +66,7 @@ int main(int argc, char **argv) {
     mpz_clear(y);
     mpz_clear(ft);
     mpz_clear(t);
-    common_uninit();
+    curve_uninit();
 
     return 0;
 }
