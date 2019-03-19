@@ -8,12 +8,10 @@
 #include "bls12_381_consts.h"
 
 #include <stdbool.h>
+#include <string.h>
 
 static mpz_t mpz_bls12_381_p;
 mpz_t *get_p(void) { return &mpz_bls12_381_p; }
-
-static mpz_t mpz_bls12_381_q;
-mpz_t *get_q(void) { return &mpz_bls12_381_q; }
 
 struct jac_point {
     uint64_t X[BINT_NWORDS];
@@ -28,21 +26,20 @@ static uint64_t bint_tmp[NUM_TMP_BINT][BINT_NWORDS];
 
 static mpz_t mpz_tmp;
 static bool init_done = false;
+static void precomp_init(void);
 void curve_init(void) {
     if (!init_done) {
         init_done = true;
-        mpz_init(mpz_bls12_381_q);
         mpz_init(mpz_bls12_381_p);
         mpz_init(mpz_tmp);
-        mpz_import(mpz_bls12_381_q, Q_LEN, 1, 1, 1, 0, BLS12_381_q);
         mpz_import(mpz_bls12_381_p, P_LEN, 1, 1, 1, 0, BLS12_381_p);
+        precomp_init();
     }
 }
 
 void curve_uninit(void) {
     if (init_done) {
         init_done = false;
-        mpz_clear(mpz_bls12_381_q);
         mpz_clear(mpz_bls12_381_p);
         mpz_clear(mpz_tmp);
     }
@@ -232,4 +229,48 @@ void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY) {
     point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp);
 
     from_jac_point(outX, outY, jp_tmp + 7);
+}
+
+static struct jac_point bint_precomp[4][4][4];
+static void precomp_init(void) {
+    memcpy(bint_precomp[0][0][1].X, g_prime_x, sizeof(g_prime_x));
+    memcpy(bint_precomp[0][0][1].Y, g_prime_y, sizeof(g_prime_y));
+    bint_set1(bint_precomp[0][0][1].Z);
+    point_double(&bint_precomp[0][0][2], &bint_precomp[0][0][1]);
+    point_add(&bint_precomp[0][0][3], &bint_precomp[0][0][2], &bint_precomp[0][0][1]);
+
+    memcpy(bint_precomp[0][1][0].X, g_prime_ll128_x, sizeof(g_prime_ll128_x));
+    memcpy(bint_precomp[0][1][0].Y, g_prime_ll128_y, sizeof(g_prime_ll128_y));
+    bint_set1(bint_precomp[0][1][0].Z);
+    point_double(&bint_precomp[0][2][0], &bint_precomp[0][1][0]);
+    point_add(&bint_precomp[0][3][0], &bint_precomp[0][2][0], &bint_precomp[0][1][0]);
+    for (unsigned i = 1; i < 4; ++i) {
+        for (unsigned j = 1; j < 4; ++j) {
+            point_add(&bint_precomp[0][i][j], &bint_precomp[0][i][0], &bint_precomp[0][0][j]);
+        }
+    }
+}
+
+static void precomp_finish(void) {
+    // precondition: bint_precomp[1][0][0] is the point we need to fill the table with
+    point_double(&bint_precomp[2][0][0], &bint_precomp[1][0][0]);
+    point_add(&bint_precomp[3][0][0], &bint_precomp[2][0][0], &bint_precomp[1][0][0]);
+
+    for (unsigned i = 1; i < 4; ++i) {
+        for (unsigned j = 1; j < 4; ++j) {
+            for (unsigned k = 1; k < 4; ++k) {
+                point_add(&bint_precomp[i][j][k], &bint_precomp[i][0][0], &bint_precomp[0][j][k]);
+            }
+        }
+    }
+}
+
+void clear_and_add(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY, const uint8_t *r) {
+    // first, precompute the values for the table
+    to_jac_point(&bint_precomp[1][0][0], inX, inY);
+    precomp_finish();
+
+    (void)outX;
+    (void)outY;
+    (void)r;
 }
