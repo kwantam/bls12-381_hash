@@ -33,15 +33,6 @@ static const uint64_t pP[7] =
     , 0xfc9468b316fee2L
     , 0xa0ceb06106feaaL
     };
-static const uint64_t rI[7] =
-    { 0x3433825937d5f3L
-    , 0x6111a3ad18fad0L
-    , 0x4e13432f445babL
-    , 0x2c8bd44589b2c2L
-    , 0x4b9b5a29e226deL
-    , 0xeb2d58dea73611L
-    , 0x1055a9f965d8L
-    };
 static const uint64_t rSq[7] =
     { 0x6d1c34510370edL
     , 0xec45c53e243d62L
