@@ -1,4 +1,8 @@
-#ifndef __bls_hash__src__common_h__
+// common functionality for bls12-381 hashing
+//
+// (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
+
+#ifndef __bls_hash__src__bhcommon__common_h__
 
 #include <endian.h>
 #include <errno.h>
@@ -43,5 +47,5 @@ void common_uninit(void);
 void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY);
 struct cmdline_opts get_cmdline_opts(int argc, char **argv);
 
-#define __bls_hash__src__common_h__
-#endif
+#define __bls_hash__src__bhcommon__common_h__
+#endif  // __bls_hash__src__bhcommon__common_h__

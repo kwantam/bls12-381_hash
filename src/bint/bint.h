@@ -1,6 +1,10 @@
+// bls12-381 bigint
+//
+// (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
+
 #include "bint_consts.h"
 
-#ifndef _HAVE_BINT_H
+#ifndef __bls_hash__src__bint__bint_h__
 #include <gmp.h>
 #include <stdint.h>
 
@@ -17,5 +21,5 @@ void bint_redc(uint64_t *out, const uint64_t *in);
 void bint_import_mpz(uint64_t *out, const mpz_t in);
 void bint_export_mpz(mpz_t out, const uint64_t *in);
 
-#define _HAVE_BINT_H
-#endif  // _HAVE_BINT_H
+#define __bls_hash__src__bint__bint_h__
+#endif  // __bls_hash__src__bint__bint_h__

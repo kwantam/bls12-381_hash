@@ -10,9 +10,10 @@ include (etc/clang_format.cmake)
 include (etc/clang_tidy.cmake)
 include (etc/cppcheck.cmake)
 
-include_directories ("${PROJECT_SOURCE_DIR}/bint")
+include_directories ("${PROJECT_SOURCE_DIR}/bint" "${PROJECT_SOURCE_DIR}/bhcommon")
+
+add_subdirectory ("${PROJECT_SOURCE_DIR}/bhcommon")
 
 add_subdirectory ("${PROJECT_SOURCE_DIR}/bint")
 
 add_bh_exec (hash_and_try)
-#add_bh_exec (bls_hash)

@@ -1,16 +1,8 @@
-#include "bint_internal.h"
+// bls12-381 bigint
+//
+// (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
-#ifdef DEBUG_PRINT
-static inline void _bint_debug_print(const uint64_t *ina, const char *pre, bool cr) {
-    printf("%s [", pre ? pre : "");
-    for (int i = NWORDS - 1; i >= 0; i--) {
-        printf("0x%016lx, ", ina[i]);
-    }
-    if (cr) {
-        printf("]\n");
-    }
-}
-#endif
+#include "bint_internal.h"
 
 static inline int _bint_compare(const uint64_t *ina, const uint64_t *inb) {
     bool gt = false;

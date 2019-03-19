@@ -1,6 +1,10 @@
+// constants for bls12-381 bigint
+//
+// (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
+
 #ifdef BINT_INTERNAL
 
-#ifndef _HAVE_BINT_CONSTS_H_INTERNAL
+#ifndef __bls_hash__src__bint__bint_consts_h__internal__
 #include <stdint.h>
 #define NWORDS 7
 #define BITS_PER_WORD 56
@@ -16,15 +20,15 @@ static const uint64_t rSq[7] = {0x6d1c34510370edL, 0xec45c53e243d62L, 0x93317d3b
                                 0x865d118c10ea72L, 0xfd5cd507320a75L, 0xc8d4cc8a759L};
 static const uint64_t r[7] = {0xd800000347fcb8L, 0xcde6d2002b119L, 0x83a2090c7212e0L, 0xda0f73e037669fL,
                               0x1297bb09b09b42L, 0x12ca7c515d98fL, 0x577a659fcfaL};
-#define _HAVE_BINT_CONSTS_H_INTERNAL
-#endif  // _HAVE_BINT_CONSTS_H_INTERNAL
+#define __bls_hash__src__bint__bint_consts_h__internal__
+#endif  // __bls_hash__src__bint__bint_consts_h__internal__
 
 #else  // not BINT_INTERNAL
 
-#ifndef _HAVE_BINT_CONSTS_H
+#ifndef __bls_hash__src__bint__bint_consts_h__external__
 #define BINT_NWORDS 7
 #define BINT_BITS_PER_WORD 56
-#define _HAVE_BINT_CONSTS_H
-#endif  // _HAVE_BINT_CONSTS_H
+#define __bls_hash__src__bint__bint_consts_h__external__
+#endif  // __bls_hash__src__bint__bint_consts_h__external__
 
 #endif  // BINT_INTERNAL

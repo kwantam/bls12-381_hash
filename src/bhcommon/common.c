@@ -1,3 +1,7 @@
+// common functionality for bls12-381 hashing
+//
+// (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
+
 #include "common.h"
 
 #include "bint.h"

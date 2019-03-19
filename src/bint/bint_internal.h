@@ -1,12 +1,11 @@
-#ifndef _HAVE_BINT_INTERNAL_H
+// bls12-381 bigint internal header
+//
+// (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
+
+#ifndef __bls_hash__src__bint__bint_internal_h__
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-
-#ifdef DEBUG_PRINT
-#include <stdio.h>
-static inline void _bint_debug_print(const uint64_t *ina, const char *pre, bool cr);
-#endif
 
 static inline void _bint_to_monty(uint64_t *out, const uint64_t *in);
 static inline void _bint_from_monty(uint64_t *out, const uint64_t *in);
@@ -25,5 +24,5 @@ static inline void _bint_sqr(uint64_t *out, const uint64_t *ina);
 static const uint64_t zero[NWORDS] = {0,};
 // clang-format on
 
-#define _HAVE_BINT_INTERNAL_H
-#endif  // _HAVE_BINT_INTERNAL_H
+#define __bls_hash__src__bint__bint_internal_h__
+#endif  // __bls_hash__src__bint__bint_internal_h__

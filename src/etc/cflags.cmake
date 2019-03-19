@@ -15,6 +15,7 @@ if (${IS_CLANG_COMPILER})
 endif ()
 
 # add some flags for the Release, Debug, and DebugSan modes
+set (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto -funroll-all-loops")
 set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb3 -Og")
 set (CMAKE_C_FLAGS_DEBUGASAN "${CMAKE_C_FLAGS_DEBUG} -fsanitize=undefined -fsanitize=address")
 set (CMAKE_C_FLAGS_DEBUGTSAN "${CMAKE_C_FLAGS_DEBUG} -fsanitize=thread")
