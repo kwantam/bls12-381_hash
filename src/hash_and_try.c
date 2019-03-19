@@ -38,11 +38,9 @@ int main(int argc, char **argv) {
             next_modp(prng_ctx, t);
 
             // t^3 + 4
-            mpz_mul(ft, t, t);
-            mpz_mod(ft, ft, *p);
-            mpz_mul(ft, ft, t);
+            sqr_modp(ft, t);
+            mul_modp(ft, ft, t);
             mpz_add_ui(ft, ft, 4);
-            mpz_mod(ft, ft, *p);
 
             if (mpz_legendre(ft, *p) == 1) {
                 mpz_powm(y, ft, pp1o4, *p);

@@ -126,12 +126,12 @@ void common_uninit(void) {
     }
 }
 
-static void sqr_modp(mpz_t out, const mpz_t in) {
+void sqr_modp(mpz_t out, const mpz_t in) {
     mpz_mul(out, in, in);
     mpz_mod(out, out, mpz_bls12_381_p);
 }
 
-static void mul_modp(mpz_t out, const mpz_t in1, const mpz_t in2) {
+void mul_modp(mpz_t out, const mpz_t in1, const mpz_t in2) {
     mpz_mul(out, in1, in2);
     mpz_mod(out, out, mpz_bls12_381_p);
 }
@@ -289,10 +289,12 @@ void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY) {
     }
     point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp);
 
+    // convert from bint to gmp
     bint_export_mpz(outX, jp_tmp[7].X);
     bint_export_mpz(outY, jp_tmp[7].Y);
     bint_export_mpz(mpz_tmp, jp_tmp[7].Z);
 
+    // convert from Jacobi to affine
     mpz_invert(mpz_tmp, mpz_tmp, mpz_bls12_381_p);  // Z^-1
     mul_modp(outY, outY, mpz_tmp);                  // Y / Z
     sqr_modp(mpz_tmp, mpz_tmp);                     // Z^-2

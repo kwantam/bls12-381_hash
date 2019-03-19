@@ -44,6 +44,8 @@ mpz_t *get_p(void);
 mpz_t *get_q(void);
 void common_init(void);
 void common_uninit(void);
+void mul_modp(mpz_t out, const mpz_t in1, const mpz_t in2);
+void sqr_modp(mpz_t out, const mpz_t in);
 void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY);
 struct cmdline_opts get_cmdline_opts(int argc, char **argv);
 
