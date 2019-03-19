@@ -25,10 +25,9 @@ static inline int _bint_compare(const uint64_t *ina, const uint64_t *inb) {
 
 static inline void _bint_condsub_p(uint64_t *io) {
     bool geq = _bint_compare(io, p) >= 0;
-    uint64_t tmp;
     uint64_t c = 0;
     for (int i = 0; i < NWORDS; i++) {
-        tmp = io[i] + mp[i] + c;
+        uint64_t tmp = io[i] + mp[i] + c;
         io[i] = geq ? tmp : io[i];
         c = io[i] >> BITS_PER_WORD;
         io[i] &= LO_MASK;
