@@ -217,7 +217,7 @@ static void point_add(struct jac_point *out, const struct jac_point *in1, const 
 // clear BLS12-381 G1 cofactor
 // outX == inX and/or outY == inY is OK
 // Addition chain: Bos-Coster (win=7) : 147 links, 8 variables
-// TODO: is there a faster addition-subtraction chain?
+// TODO(rsw): is there a faster addition-subtraction chain?
 void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY) {
     bint_import_mpz(jp_tmp[1].X, inX);
     bint_import_mpz(jp_tmp[1].Y, inY);

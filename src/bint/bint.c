@@ -118,8 +118,8 @@ static inline void _bint_from_monty(uint64_t *out, const uint64_t *in) {
 
 #define MUL_LOOP(A, B, C, D)                                          \
     do {                                                              \
-        for (int i = A; i < B; i++) {                                 \
-            for (int j = C; j < D; j++) {                             \
+        for (int i = (A); i < (B); i++) {                             \
+            for (int j = (C); j < (D); j++) {                         \
                 tmp += (__uint128_t)ina[j] * (__uint128_t)inb[i - j]; \
             }                                                         \
             out[i] = ((uint64_t)tmp) & LO_MASK;                       \

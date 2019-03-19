@@ -50,13 +50,13 @@ int main(int argc, char **argv) {
             }
         }
         if (j == 256) {
-            gmp_fprintf(stderr, "no point found!\n");
+            fprintf(stderr, "no point found!\n");
         } else {
             if (opts.clear_h) {
                 clear_cofactor(t, y, t, y);
             }
             if (!opts.quiet) {
-                gmp_fprintf(stdout, "(0x%Zx, 0x%Zx)\n", t, y);
+                gmp_printf("(0x%Zx, 0x%Zx)\n", t, y);
             }
         }
     }
