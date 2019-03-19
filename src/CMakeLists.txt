@@ -12,8 +12,4 @@ include (etc/cppcheck.cmake)
 
 include_directories ("${PROJECT_SOURCE_DIR}/bint" "${PROJECT_SOURCE_DIR}/bhcommon")
 
-add_subdirectory ("${PROJECT_SOURCE_DIR}/bhcommon")
-
-add_subdirectory ("${PROJECT_SOURCE_DIR}/bint")
-
 add_bh_exec (hash_and_try)
