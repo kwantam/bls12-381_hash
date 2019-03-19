@@ -140,14 +140,34 @@ static void point_add(struct jac_point *out, const struct jac_point *in1, const 
     bint_mul(out->Z, out->Z, bint_tmp[6]);               // Z3 = 2 * Z1 * Z2 * H         v = 2   w = 1
 }
 
-// clear BLS12-381 G1 cofactor
+// convert from a jac_point to a pair of mpz_t
+static void from_jac_point(mpz_t outX, mpz_t outY, const struct jac_point *jp) {
+    // convert from bint to gmp
+    bint_export_mpz(outX, jp->X);
+    bint_export_mpz(outY, jp->Y);
+    bint_export_mpz(mpz_tmp, jp->Z);
+
+    // convert from Jacobian to affine coordinates
+    mpz_invert(mpz_tmp, mpz_tmp, mpz_bls12_381_p);  // Z^-1
+    mul_modp(outY, outY, mpz_tmp);                  // Y / Z
+    sqr_modp(mpz_tmp, mpz_tmp);                     // Z^-2
+    mul_modp(outY, outY, mpz_tmp);                  // Y / Z^3
+    mul_modp(outX, outX, mpz_tmp);                  // X / Z^2
+}
+
+// convert from a pair of mpz_t to a jac_point
+static void to_jac_point(struct jac_point *jp, const mpz_t inX, const mpz_t inY) {
+    bint_import_mpz(jp->X, inX);
+    bint_import_mpz(jp->Y, inY);
+    bint_set1(jp->Z);
+}
+
+// clear BLS12-381 cofactor
 // outX == inX and/or outY == inY is OK
 // Addition chain: Bos-Coster (win=7) : 147 links, 8 variables
 // TODO(rsw): is there a faster addition-subtraction chain?
 void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY) {
-    bint_import_mpz(jp_tmp[1].X, inX);
-    bint_import_mpz(jp_tmp[1].Y, inY);
-    bint_set1(jp_tmp[1].Z);
+    to_jac_point(jp_tmp + 1, inX, inY);
 
     point_double(jp_tmp + 3, jp_tmp + 1);
     point_add(jp_tmp + 2, jp_tmp + 3, jp_tmp + 1);
@@ -211,15 +231,5 @@ void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY) {
     }
     point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp);
 
-    // convert from bint to gmp
-    bint_export_mpz(outX, jp_tmp[7].X);
-    bint_export_mpz(outY, jp_tmp[7].Y);
-    bint_export_mpz(mpz_tmp, jp_tmp[7].Z);
-
-    // convert from Jacobi to affine
-    mpz_invert(mpz_tmp, mpz_tmp, mpz_bls12_381_p);  // Z^-1
-    mul_modp(outY, outY, mpz_tmp);                  // Y / Z
-    sqr_modp(mpz_tmp, mpz_tmp);                     // Z^-2
-    mul_modp(outY, outY, mpz_tmp);                  // Y / Z^3
-    mul_modp(outX, outX, mpz_tmp);                  // X / Z^2
+    from_jac_point(outX, outY, jp_tmp + 7);
 }
