@@ -36,10 +36,10 @@ static inline void _bint_condsub_p(uint64_t *io) {
 }
 
 static inline void _bint_monty_help(uint64_t *out, uint64_t *tmp) {
-    uint64_t tmp2[2*NWORDS], tmp3[NWORDS], c = 0;
+    uint64_t tmp2[2 * NWORDS], tmp3[NWORDS], c = 0;
 
-    _bint_mul_low(tmp3, tmp, pP);                           // m = (T mod R) N' mod R
-    _bint_mul(tmp2, tmp3, p);                               // mN
+    _bint_mul_low(tmp3, tmp, pP);  // m = (T mod R) N' mod R
+    _bint_mul(tmp2, tmp3, p);      // mN
 
     for (int i = 0; i < NWORDS; i++) {
         tmp[i] = tmp[i] + tmp2[i] + c;
@@ -74,20 +74,18 @@ void bint_lsh(uint64_t *out, const uint64_t *in, int sh) {
 }
 
 void bint_mul(uint64_t *out, const uint64_t *ina, const uint64_t *inb) {
-    uint64_t tmp[2*NWORDS];
-    _bint_mul(tmp, ina, inb);                               // T = xy
+    uint64_t tmp[2 * NWORDS];
+    _bint_mul(tmp, ina, inb);  // T = xy
     _bint_monty_help(out, tmp);
 }
 
 void bint_sqr(uint64_t *out, const uint64_t *ina) {
-    uint64_t tmp[2*NWORDS];
-    _bint_sqr(tmp, ina);                                    // T = xx
+    uint64_t tmp[2 * NWORDS];
+    _bint_sqr(tmp, ina);  // T = xx
     _bint_monty_help(out, tmp);
 }
 
-void bint_redc(uint64_t *out, const uint64_t *in) {
-    bint_mul(out, in, r);
-}
+void bint_redc(uint64_t *out, const uint64_t *in) { bint_mul(out, in, r); }
 
 void bint_set1(uint64_t *out) {
     for (int i = 0; i < NWORDS; i++) {
@@ -95,17 +93,15 @@ void bint_set1(uint64_t *out) {
     }
 }
 
-static inline void _bint_to_monty(uint64_t *out, const uint64_t *in) {
-    bint_mul(out, in, rSq);
-}
+static inline void _bint_to_monty(uint64_t *out, const uint64_t *in) { bint_mul(out, in, rSq); }
 
 static inline void _bint_from_monty(uint64_t *out, const uint64_t *in) {
-    uint64_t tmp2[2*NWORDS], tmp3[NWORDS], c;
+    uint64_t tmp2[2 * NWORDS], tmp3[NWORDS], c;
 
-    _bint_mul_low(tmp3, in, pP);                            // m = (T mod R) N' mod R
-    _bint_mul(tmp2, tmp3, p);                               // mN
+    _bint_mul_low(tmp3, in, pP);  // m = (T mod R) N' mod R
+    _bint_mul(tmp2, tmp3, p);     // mN
 
-    c = 0;                                                  // (T + mN)
+    c = 0;  // (T + mN)
     for (int i = 0; i < NWORDS; i++) {
         tmp2[i] = in[i] + tmp2[i] + c;
         c = tmp2[i] >> BITS_PER_WORD;
@@ -116,26 +112,26 @@ static inline void _bint_from_monty(uint64_t *out, const uint64_t *in) {
         c = out[i] >> BITS_PER_WORD;
         out[i] &= LO_MASK;
     }
-    out[NWORDS-1] = htmp2[NWORDS-1] + c;
+    out[NWORDS - 1] = htmp2[NWORDS - 1] + c;
     _bint_condsub_p(out);
 }
 
-#define MUL_LOOP(A, B, C, D)                                            \
-    do {                                                                \
-        for (int i = A; i < B; i++) {                                   \
-            for (int j = C; j < D; j++) {                               \
-                tmp += (__uint128_t) ina[j] * (__uint128_t) inb[i-j];   \
-            }                                                           \
-            out[i] = ((uint64_t) tmp) & LO_MASK;                        \
-            tmp = tmp >> BITS_PER_WORD;                                 \
-        }                                                               \
+#define MUL_LOOP(A, B, C, D)                                          \
+    do {                                                              \
+        for (int i = A; i < B; i++) {                                 \
+            for (int j = C; j < D; j++) {                             \
+                tmp += (__uint128_t)ina[j] * (__uint128_t)inb[i - j]; \
+            }                                                         \
+            out[i] = ((uint64_t)tmp) & LO_MASK;                       \
+            tmp = tmp >> BITS_PER_WORD;                               \
+        }                                                             \
     } while (0)
 
 static inline void _bint_mul(uint64_t *out, const uint64_t *ina, const uint64_t *inb) {
     __uint128_t tmp = 0;
     MUL_LOOP(0, NWORDS, 0, i + 1);
     MUL_LOOP(NWORDS, 2 * NWORDS - 1, i + 1 - NWORDS, NWORDS);
-    out[2 * NWORDS - 1] = (uint64_t) tmp;
+    out[2 * NWORDS - 1] = (uint64_t)tmp;
 }
 
 static inline void _bint_mul_low(uint64_t *out, const uint64_t *ina, const uint64_t *inb) {
@@ -148,42 +144,42 @@ static inline void _bint_sqr(uint64_t *out, const uint64_t *ina) {
     __uint128_t tmp = 0;
     uint64_t tmp2 = 0;
 
-    tmp = (__uint128_t) ina[0] * (__uint128_t) ina[0];
-    out[0] = ((uint64_t) tmp) & LO_MASK;
+    tmp = (__uint128_t)ina[0] * (__uint128_t)ina[0];
+    out[0] = ((uint64_t)tmp) & LO_MASK;
     tmp = tmp >> BITS_PER_WORD;
 
     for (unsigned i = 1; i < NWORDS; i++) {
         for (unsigned j = 0; j < (i + 1) / 2; j++) {
             tmp2 = ina[j] << 1;
-            tmp += (__uint128_t) tmp2 * (__uint128_t) ina[i-j];
+            tmp += (__uint128_t)tmp2 * (__uint128_t)ina[i - j];
         }
 
         if (i % 2 == 0) {
-            tmp += (__uint128_t) ina[i/2] * (__uint128_t) ina[i/2];
+            tmp += (__uint128_t)ina[i / 2] * (__uint128_t)ina[i / 2];
         }
 
-        out[i] = ((uint64_t) tmp) & LO_MASK;
+        out[i] = ((uint64_t)tmp) & LO_MASK;
         tmp = tmp >> BITS_PER_WORD;
     }
 
     for (unsigned k = 1; k < NWORDS - 1; k++) {
         unsigned i = NWORDS + k - 1;
         for (unsigned j = 0; j < (NWORDS - k) / 2; j++) {
-            tmp2 = ina[j+k] << 1;
-            tmp += (__uint128_t) tmp2 * (__uint128_t) ina[i-j-k];
+            tmp2 = ina[j + k] << 1;
+            tmp += (__uint128_t)tmp2 * (__uint128_t)ina[i - j - k];
         }
 
         if (i % 2 == 0) {
-            tmp += (__uint128_t) ina[i/2] * (__uint128_t) ina[i/2];
+            tmp += (__uint128_t)ina[i / 2] * (__uint128_t)ina[i / 2];
         }
 
-        out[i] = ((uint64_t) tmp) & LO_MASK;
+        out[i] = ((uint64_t)tmp) & LO_MASK;
         tmp = tmp >> BITS_PER_WORD;
     }
 
-    tmp += (__uint128_t) ina[NWORDS-1] * (__uint128_t) ina[NWORDS-1];
-    out[2*NWORDS-2] = ((uint64_t) tmp) & LO_MASK;
-    out[2*NWORDS-1] = tmp >> BITS_PER_WORD;
+    tmp += (__uint128_t)ina[NWORDS - 1] * (__uint128_t)ina[NWORDS - 1];
+    out[2 * NWORDS - 2] = ((uint64_t)tmp) & LO_MASK;
+    out[2 * NWORDS - 1] = tmp >> BITS_PER_WORD;
 }
 
 void bint_import_mpz(uint64_t *out, const mpz_t in) {

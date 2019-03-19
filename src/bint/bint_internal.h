@@ -21,7 +21,9 @@ static inline void _bint_sqr(uint64_t *out, const uint64_t *ina);
 #include "bint.h"
 #undef BINT_INTERNAL
 
+// clang-format off
 static const uint64_t zero[NWORDS] = {0,};
+// clang-format on
 
 #define _HAVE_BINT_INTERNAL_H
-#endif // _HAVE_BINT_INTERNAL_H
+#endif  // _HAVE_BINT_INTERNAL_H

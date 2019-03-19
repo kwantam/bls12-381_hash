@@ -85,14 +85,10 @@ void next_modq(EVP_CIPHER_CTX *cctx, mpz_t ret) {
 }
 
 static mpz_t mpz_bls12_381_p;
-mpz_t *get_p(void) {
-    return &mpz_bls12_381_p;
-}
+mpz_t *get_p(void) { return &mpz_bls12_381_p; }
 
 static mpz_t mpz_bls12_381_q;
-mpz_t *get_q(void) {
-    return &mpz_bls12_381_q;
-}
+mpz_t *get_q(void) { return &mpz_bls12_381_q; }
 
 struct jac_point {
     uint64_t X[BINT_NWORDS];
@@ -140,82 +136,82 @@ static void mul_modp(mpz_t out, const mpz_t in1, const mpz_t in2) {
 // out == in is OK
 // from EFD: https://www.hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-0.html#doubling-dbl-2009-l
 static void point_double(struct jac_point *out, const struct jac_point *in) {
-    bint_sqr(bint_tmp[0], in->X);                           // A = X^2                      v = 2   w = 1
-    bint_sqr(bint_tmp[1], in->Y);                           // B = Y^2                      v = 2   w = 1
-    bint_sqr(bint_tmp[2], bint_tmp[1]);                     // C = B^2                      v = 2   w = 1
-
-    bint_add(bint_tmp[3], in->X, bint_tmp[1]);              // X + B                        v = 4   w = 2
-    bint_sqr(bint_tmp[3], bint_tmp[3]);                     // (X + B)^2                    v = 2   w = 1
-    bint_add(bint_tmp[4], bint_tmp[0], bint_tmp[2]);        // (A + C)                      v = 4   w = 2
-    bint_sub(bint_tmp[3], bint_tmp[3], bint_tmp[4], 3);     // (X + B)^2 - A - C            v = 10  w = 9
-    bint_lsh(bint_tmp[3], bint_tmp[3], 1);                  // D = 2 * ((X + B)^2 - A - C)  v = 20  w = 18
-
-    bint_lsh(bint_tmp[4], bint_tmp[0], 1);                  // 2 * A                        v = 4   w = 2
-    bint_add(bint_tmp[4], bint_tmp[4], bint_tmp[0]);        // E = 3 * A                    v = 6   w = 3
-
-    bint_sqr(bint_tmp[5], bint_tmp[4]);                     // F = E^2                      v = 2   w = 1
-
-    bint_lsh(bint_tmp[6], bint_tmp[3], 1);                  // 2 * D                        v = 40  w = 36
-    bint_sub(bint_tmp[6], bint_tmp[5], bint_tmp[6], 6);     // F - 2 * D                    v = 66  w = 65
-    bint_redc(out->X, bint_tmp[6]);                         // X3 = F - 2 * D               v = 2   w = 1
-
-    bint_lsh(bint_tmp[6], in->Z, 1);                        // 2 * Z                        v = 4   w = 2
-    bint_mul(out->Z, bint_tmp[6], in->Y);                   // 2 * Z * Y                    v = 2   w = 1
-
-    bint_lsh(bint_tmp[2], bint_tmp[2], 3);                  // 8 * C                        v = 16  w = 8
-    bint_sub(bint_tmp[6], bint_tmp[3], out->X, 2);          // D - X3                       v = 24  w = 22
-    bint_mul(bint_tmp[6], bint_tmp[6], bint_tmp[4]);        // E * (D - X3)                 v = 2   w = 1
-    bint_sub(bint_tmp[6], bint_tmp[6], bint_tmp[2], 5);     // E * (D - X3) - 8 * C         v = 34  w = 33
-    bint_redc(out->Y, bint_tmp[6]);                         // Y = E * (D - X3) - 8 * C     v = 2   w = 1
+    bint_sqr(bint_tmp[0], in->X);                        // A = X^2                      v = 2   w = 1
+    bint_sqr(bint_tmp[1], in->Y);                        // B = Y^2                      v = 2   w = 1
+    bint_sqr(bint_tmp[2], bint_tmp[1]);                  // C = B^2                      v = 2   w = 1
+                                                         //
+    bint_add(bint_tmp[3], in->X, bint_tmp[1]);           // X + B                        v = 4   w = 2
+    bint_sqr(bint_tmp[3], bint_tmp[3]);                  // (X + B)^2                    v = 2   w = 1
+    bint_add(bint_tmp[4], bint_tmp[0], bint_tmp[2]);     // (A + C)                      v = 4   w = 2
+    bint_sub(bint_tmp[3], bint_tmp[3], bint_tmp[4], 3);  // (X + B)^2 - A - C            v = 10  w = 9
+    bint_lsh(bint_tmp[3], bint_tmp[3], 1);               // D = 2 * ((X + B)^2 - A - C)  v = 20  w = 18
+                                                         //
+    bint_lsh(bint_tmp[4], bint_tmp[0], 1);               // 2 * A                        v = 4   w = 2
+    bint_add(bint_tmp[4], bint_tmp[4], bint_tmp[0]);     // E = 3 * A                    v = 6   w = 3
+                                                         //
+    bint_sqr(bint_tmp[5], bint_tmp[4]);                  // F = E^2                      v = 2   w = 1
+                                                         //
+    bint_lsh(bint_tmp[6], bint_tmp[3], 1);               // 2 * D                        v = 40  w = 36
+    bint_sub(bint_tmp[6], bint_tmp[5], bint_tmp[6], 6);  // F - 2 * D                    v = 66  w = 65
+    bint_redc(out->X, bint_tmp[6]);                      // X3 = F - 2 * D               v = 2   w = 1
+                                                         //
+    bint_lsh(bint_tmp[6], in->Z, 1);                     // 2 * Z                        v = 4   w = 2
+    bint_mul(out->Z, bint_tmp[6], in->Y);                // 2 * Z * Y                    v = 2   w = 1
+                                                         //
+    bint_lsh(bint_tmp[2], bint_tmp[2], 3);               // 8 * C                        v = 16  w = 8
+    bint_sub(bint_tmp[6], bint_tmp[3], out->X, 2);       // D - X3                       v = 24  w = 22
+    bint_mul(bint_tmp[6], bint_tmp[6], bint_tmp[4]);     // E * (D - X3)                 v = 2   w = 1
+    bint_sub(bint_tmp[6], bint_tmp[6], bint_tmp[2], 5);  // E * (D - X3) - 8 * C         v = 34  w = 33
+    bint_redc(out->Y, bint_tmp[6]);                      // Y = E * (D - X3) - 8 * C     v = 2   w = 1
 }
 
 // add two points in Jacobian coordinates
 // out == in1 or out == in2 is OK
+// NOTE: out->Y remains unreduced, but it meets numerical stability criteria
 // from EFD: https://www.hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-0.html#addition-add-2007-bl
 static void point_add(struct jac_point *out, const struct jac_point *in1, const struct jac_point *in2) {
-    bint_sqr(bint_tmp[0], in1->Z);                          // Z1Z1 = Z1^2                  v = 2   w = 1
-
-    bint_sqr(bint_tmp[1], in2->Z);                          // Z2Z2 = Z2^2                  v = 2   w = 1
-
-    bint_mul(bint_tmp[2], bint_tmp[1], in1->X);             // U1 = X1 * Z2Z2               v = 2   w = 1
-    bint_mul(bint_tmp[3], bint_tmp[0], in2->X);             // U2 = X2 * Z1Z1               v = 2   w = 1
-
-    bint_mul(bint_tmp[4], in1->Y, in2->Z);                  // Y1 * Z2                      v = 2   w = 1
-    bint_mul(bint_tmp[4], bint_tmp[4], bint_tmp[1]);        // S1 = Y1 * Z2 * Z2Z2          v = 2   w = 1
-
-    bint_mul(bint_tmp[5], in2->Y, in1->Z);                  // Y2 * Z1                      v = 2   w = 1
-    bint_mul(bint_tmp[5], bint_tmp[5], bint_tmp[0]);        // S2 = Y2 * Z1 * Z1Z1          v = 2   w = 1
-
-    bint_sub(bint_tmp[6], bint_tmp[3], bint_tmp[2], 2);     // H = U2 - U1                  v = 6   w = 5
-
-    bint_lsh(bint_tmp[7], bint_tmp[6], 1);                  // 2 * H                        v = 12  w = 10
-    bint_sqr(bint_tmp[7], bint_tmp[7]);                     // I = (2 * H)^2                v = 2   w = 1
-
-    bint_mul(bint_tmp[8], bint_tmp[7], bint_tmp[6]);        // J = H * I                    v = 2   w = 1
-
-    bint_sub(bint_tmp[9], bint_tmp[5], bint_tmp[4], 2);     // S2 - S1                      v = 6   w = 5
-    bint_lsh(bint_tmp[9], bint_tmp[9], 1);                  // r = 2 * (S2 - S1)            v = 12  w = 10
-
-    bint_mul(bint_tmp[10], bint_tmp[2], bint_tmp[7]);       // V = U1 * I                   v = 2   w = 1
-
-    bint_lsh(out->X, bint_tmp[10], 1);                      // 2 * V                        v = 4   w = 2
-    bint_add(out->X, out->X, bint_tmp[8]);                  // J + 2 * V                    v = 6   w = 3
-    bint_sqr(bint_tmp[7], bint_tmp[9]);                     // r^2                          v = 2   w = 1
-    bint_sub(out->X, bint_tmp[7], out->X, 4);               // r^2 - J - 2 * V              v = 18  w = 17
-    bint_redc(out->X, out->X);                              // X3 = r^2 - J - 2 * V         v = 2   w = 1
-
-    bint_lsh(bint_tmp[4], bint_tmp[4], 1);                  // 2 * S1                       v = 4   w = 2
-    bint_mul(bint_tmp[4], bint_tmp[4], bint_tmp[8]);        // 2 * S1 * J                   v = 2   w = 1
-    bint_sub(out->Y, bint_tmp[10], out->X, 2);              // V - X3                       v = 6   w = 5
-    bint_mul(out->Y, out->Y, bint_tmp[9]);                  // r * (V - X3)                 v = 2   w = 1
-    bint_sub(out->Y, out->Y, bint_tmp[4], 2);               // r * (V - X3) - 2 * S1 * J    v = 6   w = 5
-    // v=6 w=5 is small enough that we can skip reduction
-
-    bint_add(out->Z, in1->Z, in2->Z);                       // Z1 + Z2                      v = 4   w = 2
-    bint_sqr(out->Z, out->Z);                               // (Z1 + Z2)^2                  v = 2   w = 1
-    bint_add(bint_tmp[0], bint_tmp[0], bint_tmp[1]);        // Z1Z1 + Z2Z2                  v = 4   w = 2
-    bint_sub(out->Z, out->Z, bint_tmp[0], 3);               // (Z1 + Z2)^2 - Z1Z1 - Z2Z2    v = 10  w = 9
-    bint_mul(out->Z, out->Z, bint_tmp[6]);                  // Z3 = 2 * Z1 * Z2 * H         v = 2   w = 1
+    bint_sqr(bint_tmp[0], in1->Z);                       // Z1Z1 = Z1^2                  v = 2   w = 1
+                                                         //
+    bint_sqr(bint_tmp[1], in2->Z);                       // Z2Z2 = Z2^2                  v = 2   w = 1
+                                                         //
+    bint_mul(bint_tmp[2], bint_tmp[1], in1->X);          // U1 = X1 * Z2Z2               v = 2   w = 1
+    bint_mul(bint_tmp[3], bint_tmp[0], in2->X);          // U2 = X2 * Z1Z1               v = 2   w = 1
+                                                         //
+    bint_mul(bint_tmp[4], in1->Y, in2->Z);               // Y1 * Z2                      v = 2   w = 1
+    bint_mul(bint_tmp[4], bint_tmp[4], bint_tmp[1]);     // S1 = Y1 * Z2 * Z2Z2          v = 2   w = 1
+                                                         //
+    bint_mul(bint_tmp[5], in2->Y, in1->Z);               // Y2 * Z1                      v = 2   w = 1
+    bint_mul(bint_tmp[5], bint_tmp[5], bint_tmp[0]);     // S2 = Y2 * Z1 * Z1Z1          v = 2   w = 1
+                                                         //
+    bint_sub(bint_tmp[6], bint_tmp[3], bint_tmp[2], 2);  // H = U2 - U1                  v = 6   w = 5
+                                                         //
+    bint_lsh(bint_tmp[7], bint_tmp[6], 1);               // 2 * H                        v = 12  w = 10
+    bint_sqr(bint_tmp[7], bint_tmp[7]);                  // I = (2 * H)^2                v = 2   w = 1
+                                                         //
+    bint_mul(bint_tmp[8], bint_tmp[7], bint_tmp[6]);     // J = H * I                    v = 2   w = 1
+                                                         //
+    bint_sub(bint_tmp[9], bint_tmp[5], bint_tmp[4], 2);  // S2 - S1                      v = 6   w = 5
+    bint_lsh(bint_tmp[9], bint_tmp[9], 1);               // r = 2 * (S2 - S1)            v = 12  w = 10
+                                                         //
+    bint_mul(bint_tmp[10], bint_tmp[2], bint_tmp[7]);    // V = U1 * I                   v = 2   w = 1
+                                                         //
+    bint_lsh(out->X, bint_tmp[10], 1);                   // 2 * V                        v = 4   w = 2
+    bint_add(out->X, out->X, bint_tmp[8]);               // J + 2 * V                    v = 6   w = 3
+    bint_sqr(bint_tmp[7], bint_tmp[9]);                  // r^2                          v = 2   w = 1
+    bint_sub(out->X, bint_tmp[7], out->X, 4);            // r^2 - J - 2 * V              v = 18  w = 17
+    bint_redc(out->X, out->X);                           // X3 = r^2 - J - 2 * V         v = 2   w = 1
+                                                         //
+    bint_lsh(bint_tmp[4], bint_tmp[4], 1);               // 2 * S1                       v = 4   w = 2
+    bint_mul(bint_tmp[4], bint_tmp[4], bint_tmp[8]);     // 2 * S1 * J                   v = 2   w = 1
+    bint_sub(out->Y, bint_tmp[10], out->X, 2);           // V - X3                       v = 6   w = 5
+    bint_mul(out->Y, out->Y, bint_tmp[9]);               // r * (V - X3)                 v = 2   w = 1
+    bint_sub(out->Y, out->Y, bint_tmp[4], 2);            // r * (V - X3) - 2 * S1 * J    v = 6   w = 5
+                                                         //
+    bint_add(out->Z, in1->Z, in2->Z);                    // Z1 + Z2                      v = 4   w = 2
+    bint_sqr(out->Z, out->Z);                            // (Z1 + Z2)^2                  v = 2   w = 1
+    bint_add(bint_tmp[0], bint_tmp[0], bint_tmp[1]);     // Z1Z1 + Z2Z2                  v = 4   w = 2
+    bint_sub(out->Z, out->Z, bint_tmp[0], 3);            // (Z1 + Z2)^2 - Z1Z1 - Z2Z2    v = 10  w = 9
+    bint_mul(out->Z, out->Z, bint_tmp[6]);               // Z3 = 2 * Z1 * Z2 * H         v = 2   w = 1
 }
 
 // clear BLS12-381 G1 cofactor
@@ -293,11 +289,11 @@ void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY) {
     bint_export_mpz(outY, jp_tmp[7].Y);
     bint_export_mpz(mpz_tmp, jp_tmp[7].Z);
 
-    mpz_invert(mpz_tmp, mpz_tmp, mpz_bls12_381_p);          // Z^-1
-    mul_modp(outY, outY, mpz_tmp);                          // Y / Z
-    sqr_modp(mpz_tmp, mpz_tmp);                             // Z^-2
-    mul_modp(outY, outY, mpz_tmp);                          // Y / Z^3
-    mul_modp(outX, outX, mpz_tmp);                          // X / Z^2
+    mpz_invert(mpz_tmp, mpz_tmp, mpz_bls12_381_p);  // Z^-1
+    mul_modp(outY, outY, mpz_tmp);                  // Y / Z
+    sqr_modp(mpz_tmp, mpz_tmp);                     // Z^-2
+    mul_modp(outY, outY, mpz_tmp);                  // Y / Z^3
+    mul_modp(outX, outX, mpz_tmp);                  // X / Z^2
 }
 
 struct cmdline_opts get_cmdline_opts(int argc, char **argv) {
