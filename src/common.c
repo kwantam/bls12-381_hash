@@ -194,50 +194,6 @@ static void point_double(struct jac_point *out, const struct jac_point *in) {
     mpz_mod(out->Y, out->Y, mpz_bls12_381_p);           // Y3 = E * (D - X3) - 8 * C
 }
 
-// add two points in Jacobian coordinates; requires in2->Z == 1
-// out == in1 or out == in2 is OK
-// from EFD: https://www.hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-0.html#addition-madd-2007-bl
-static void point_add_mixed(struct jac_point *out, const struct jac_point *in1, const struct jac_point *in2) {
-    sqr_modp(mpz_tmp[0], in1->Z);                       // Z1Z1 = Z1^2
-    mul_modp(mpz_tmp[2], in1->Z, in2->Y);               // Y2 * Z1
-
-    mul_modp(mpz_tmp[1], in2->X, mpz_tmp[0]);           // U2 = X2 * Z1Z1
-    mul_modp(mpz_tmp[2], mpz_tmp[2], mpz_tmp[0]);       // S2 = Y2 * Z1 * Z1Z1
-
-    mpz_sub(mpz_tmp[3], mpz_tmp[1], in1->X);            // H = U2 - X1
-
-    sqr_modp(mpz_tmp[4], mpz_tmp[3]);                   // HH = H^2
-
-    mpz_mul_2exp(mpz_tmp[5], mpz_tmp[4], 2);            // I = 4 * HH
-
-    mul_modp(mpz_tmp[6], mpz_tmp[5], mpz_tmp[3]);       // J = H * I
-
-    mpz_sub(mpz_tmp[7], mpz_tmp[2], in1->Y);            // S2 - Y1
-    mpz_mul_2exp(mpz_tmp[7], mpz_tmp[7], 1);            // r = 2 * (S2 - Y1)
-
-    mul_modp(mpz_tmp[8], in1->X, mpz_tmp[5]);           // V = X1 * I
-
-    sqr_modp(mpz_tmp[5], mpz_tmp[7]);                   // r^2
-
-    mpz_mul_2exp(out->X, mpz_tmp[8], 1);                // 2 * V
-    mpz_add(out->X, out->X, mpz_tmp[6]);                // J + 2 * V
-    mpz_sub(out->X, mpz_tmp[5], out->X);                // r^2 - J - 2 * V
-    mpz_mod(out->X, out->X, mpz_bls12_381_p);           // X3 = r^2 - J - 2 * V
-
-    mpz_mul_2exp(out->Y, in1->Y, 1);                    // 2 * Y1
-    mul_modp(out->Y, out->Y, mpz_tmp[6]);               // 2 * Y1 * J
-    mpz_sub(mpz_tmp[8], mpz_tmp[8], out->X);            // V - X3
-    mul_modp(mpz_tmp[8], mpz_tmp[8], mpz_tmp[7]);       // r * (V - X3)
-    mpz_sub(out->Y, mpz_tmp[8], out->Y);                // r * (V - X3) - 2 * Y1 * J
-    mpz_mod(out->Y, out->Y, mpz_bls12_381_p);           // Y3 = r * (V - X3) - 2 * Y1 * J
-
-    mpz_add(out->Z, in1->Z, mpz_tmp[3]);                // Z1 + H
-    sqr_modp(out->Z, out->Z);                           // (Z1 + H)^2
-    mpz_sub(out->Z, out->Z, mpz_tmp[0]);                // (Z1 + H)^2 - Z1Z1
-    mpz_sub(out->Z, out->Z, mpz_tmp[4]);                // (Z1 + H)^2 - Z1Z1 - HH
-    mpz_mod(out->Z, out->Z, mpz_bls12_381_p);           // Z3 = (Z1 + H)^2 - Z1Z1 - HH
-}
-
 // add two points in Jacobian coordinates
 // out == in1 or out == in2 is OK
 // from EFD: https://www.hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-0.html#addition-add-2007-bl
@@ -295,7 +251,7 @@ void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY) {
     init_jac_point_xy(in, inX, inY);
 
     point_double(jp_tmp + 3, in);
-    point_add_mixed(jp_tmp + 2, jp_tmp + 3, in);
+    point_add(jp_tmp + 2, jp_tmp + 3, in);
     point_double(jp_tmp + 5, jp_tmp + 3);
     point_double(jp_tmp + 4, jp_tmp + 5);
     point_add(jp_tmp + 1, jp_tmp + 4, jp_tmp + 2);
@@ -362,3 +318,50 @@ void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY) {
     mul_modp(outY, jp_tmp[7].Y, mpz_tmp[1]);                // Y * Z^-2
     mul_modp(outY, outY, mpz_tmp[0]);                       // y = Y * Z^-3
 }
+
+
+/*
+// add two points in Jacobian coordinates; requires in2->Z == 1
+// out == in1 or out == in2 is OK
+// from EFD: https://www.hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-0.html#addition-madd-2007-bl
+static void point_add_mixed(struct jac_point *out, const struct jac_point *in1, const struct jac_point *in2) {
+    sqr_modp(mpz_tmp[0], in1->Z);                       // Z1Z1 = Z1^2
+    mul_modp(mpz_tmp[2], in1->Z, in2->Y);               // Y2 * Z1
+
+    mul_modp(mpz_tmp[1], in2->X, mpz_tmp[0]);           // U2 = X2 * Z1Z1
+    mul_modp(mpz_tmp[2], mpz_tmp[2], mpz_tmp[0]);       // S2 = Y2 * Z1 * Z1Z1
+
+    mpz_sub(mpz_tmp[3], mpz_tmp[1], in1->X);            // H = U2 - X1
+
+    sqr_modp(mpz_tmp[4], mpz_tmp[3]);                   // HH = H^2
+
+    mpz_mul_2exp(mpz_tmp[5], mpz_tmp[4], 2);            // I = 4 * HH
+
+    mul_modp(mpz_tmp[6], mpz_tmp[5], mpz_tmp[3]);       // J = H * I
+
+    mpz_sub(mpz_tmp[7], mpz_tmp[2], in1->Y);            // S2 - Y1
+    mpz_mul_2exp(mpz_tmp[7], mpz_tmp[7], 1);            // r = 2 * (S2 - Y1)
+
+    mul_modp(mpz_tmp[8], in1->X, mpz_tmp[5]);           // V = X1 * I
+
+    sqr_modp(mpz_tmp[5], mpz_tmp[7]);                   // r^2
+
+    mpz_mul_2exp(out->X, mpz_tmp[8], 1);                // 2 * V
+    mpz_add(out->X, out->X, mpz_tmp[6]);                // J + 2 * V
+    mpz_sub(out->X, mpz_tmp[5], out->X);                // r^2 - J - 2 * V
+    mpz_mod(out->X, out->X, mpz_bls12_381_p);           // X3 = r^2 - J - 2 * V
+
+    mpz_mul_2exp(out->Y, in1->Y, 1);                    // 2 * Y1
+    mul_modp(out->Y, out->Y, mpz_tmp[6]);               // 2 * Y1 * J
+    mpz_sub(mpz_tmp[8], mpz_tmp[8], out->X);            // V - X3
+    mul_modp(mpz_tmp[8], mpz_tmp[8], mpz_tmp[7]);       // r * (V - X3)
+    mpz_sub(out->Y, mpz_tmp[8], out->Y);                // r * (V - X3) - 2 * Y1 * J
+    mpz_mod(out->Y, out->Y, mpz_bls12_381_p);           // Y3 = r * (V - X3) - 2 * Y1 * J
+
+    mpz_add(out->Z, in1->Z, mpz_tmp[3]);                // Z1 + H
+    sqr_modp(out->Z, out->Z);                           // (Z1 + H)^2
+    mpz_sub(out->Z, out->Z, mpz_tmp[0]);                // (Z1 + H)^2 - Z1Z1
+    mpz_sub(out->Z, out->Z, mpz_tmp[4]);                // (Z1 + H)^2 - Z1Z1 - HH
+    mpz_mod(out->Z, out->Z, mpz_bls12_381_p);           // Z3 = (Z1 + H)^2 - Z1Z1 - HH
+}
+*/
