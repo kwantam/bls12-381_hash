@@ -5,13 +5,7 @@
 #include "common.h"
 
 int main(int argc, char **argv) {
-    unsigned nreps = 0;
-    if (argc > 1) {
-        nreps = atoi(argv[1]);  // NOLINT(cert-err34-c)
-    }
-    if (nreps == 0) {
-        nreps = 16;
-    }
+    struct cmdline_opts opts = get_cmdline_opts(argc, argv);
 
     // initialize temp variables in common.c
     common_init();
@@ -37,9 +31,9 @@ int main(int argc, char **argv) {
     hash_stdin(&hash_ctx);
 
     // loop through different resulting PRNG keys
-    for (unsigned i = 0; i < nreps; ++i) {
-        unsigned j = 0;
-        for (; j < 256; ++j) {
+    for (unsigned i = 0; i < opts.nreps; ++i) {
+        unsigned j;
+        for (j = 0; j < 256; ++j) {
             next_prng(prng_ctx, &hash_ctx, (i << 8) + j);
             next_modp(prng_ctx, t);
 
@@ -58,10 +52,12 @@ int main(int argc, char **argv) {
         if (j == 256) {
             gmp_fprintf(stderr, "no point found!\n");
         } else {
-            if (argc > 2) {
+            if (opts.clear_h) {
                 clear_cofactor(t, y, t, y);
             }
-            gmp_fprintf(stdout, "(0x%Zx, 0x%Zx)\n", t, y);
+            if (!opts.quiet) {
+                gmp_fprintf(stdout, "(0x%Zx, 0x%Zx)\n", t, y);
+            }
         }
     }
 

@@ -105,12 +105,6 @@ static void init_jac_point(struct jac_point *p) {
     mpz_init(p->Z);
 }
 
-static void init_jac_point_xy(struct jac_point *p, const mpz_t x, const mpz_t y) {
-    mpz_init_set(p->X, x);
-    mpz_init_set(p->Y, y);
-    mpz_init_set_ui(p->Z, 1);
-}
-
 static void clear_jac_point(struct jac_point *p) {
     mpz_clear(p->X);
     mpz_clear(p->Y);
@@ -236,22 +230,22 @@ static void point_add(struct jac_point *out, const struct jac_point *in1, const 
     mpz_sub(out->Y, out->Y, mpz_tmp[4]);                // r * (V - X3) - 2 * S1 * J
     mpz_mod(out->Y, out->Y, mpz_bls12_381_p);           // Y3 = r * (V - X3) - 2 * S1 * J
 
-    mpz_mul(out->Z, in1->Z, in2->Z);                    // Z1 * Z2
+    mul_modp(out->Z, in1->Z, in2->Z);                   // Z1 * Z2
     mpz_mul_2exp(out->Z, out->Z, 1);                    // 2 * Z1 * Z2
-    mpz_mul(out->Z, out->Z, mpz_tmp[6]);                // Z3 = 2 * Z1 * Z2 * H
+    mul_modp(out->Z, out->Z, mpz_tmp[6]);               // Z3 = 2 * Z1 * Z2 * H
 }
 
 // clear BLS12-381 G1 cofactor
 // outX == inX and/or outY == inY is OK
-// Addition chain: Bos-Coster (win=7) : 147 links, 9 variables
+// Addition chain: Bos-Coster (win=7) : 147 links, 8 variables
 // TODO: is there a faster addition-subtraction chain?
 void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY) {
-    struct jac_point in_v;
-    struct jac_point *in = &in_v;
-    init_jac_point_xy(in, inX, inY);
+    mpz_set(jp_tmp[1].X, inX);
+    mpz_set(jp_tmp[1].Y, inY);
+    mpz_set_ui(jp_tmp[1].Z, 1);
 
-    point_double(jp_tmp + 3, in);
-    point_add(jp_tmp + 2, jp_tmp + 3, in);
+    point_double(jp_tmp + 3, jp_tmp + 1);
+    point_add(jp_tmp + 2, jp_tmp + 3, jp_tmp + 1);
     point_double(jp_tmp + 5, jp_tmp + 3);
     point_double(jp_tmp + 4, jp_tmp + 5);
     point_add(jp_tmp + 1, jp_tmp + 4, jp_tmp + 2);
@@ -365,3 +359,39 @@ static void point_add_mixed(struct jac_point *out, const struct jac_point *in1, 
     mpz_mod(out->Z, out->Z, mpz_bls12_381_p);           // Z3 = (Z1 + H)^2 - Z1Z1 - HH
 }
 */
+
+struct cmdline_opts get_cmdline_opts(int argc, char **argv) {
+    struct cmdline_opts ret = {0, true, false};
+    int opt_ret;
+    bool found_err = false;
+    while ((opt_ret = getopt(argc, argv, "n:Cq")) >= 0) {
+        switch (opt_ret) {
+            case 'n':
+                ret.nreps = atoi(optarg);  // NOLINT(cert-err34-c)
+                break;
+
+            case 'C':
+                ret.clear_h = false;
+                break;
+
+            case 'q':
+                ret.quiet = true;
+                break;
+
+            default:
+                found_err = true;
+        }
+        if (found_err) {
+            break;
+        }
+    }
+    if (found_err || optind != argc) {
+        printf("Usage: %s [-n <npoints>] [-q] [-C]\n", argv[0]);
+        exit(1);
+    }
+    if (ret.nreps == 0) {
+        ret.nreps = 16;
+    }
+
+    return ret;
+}

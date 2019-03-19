@@ -24,6 +24,12 @@
         }                                                                                      \
     } while (0)
 
+struct cmdline_opts {
+    unsigned nreps;
+    bool clear_h;
+    bool quiet;
+};
+
 void hash_stdin(SHA256_CTX *ctx);
 void next_prng(EVP_CIPHER_CTX *cctx, const SHA256_CTX *hctx, uint32_t idx);
 void show_buf(FILE *of, const unsigned char *buf, size_t len);
@@ -35,6 +41,7 @@ mpz_t *get_q(void);
 void common_init(void);
 void common_uninit(void);
 void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY);
+struct cmdline_opts get_cmdline_opts(int argc, char **argv);
 
 #define __bls_hash__src__common_h__
 #endif
