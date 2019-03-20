@@ -244,6 +244,7 @@ static void precomp_init(void) {
     bint_set1(bint_precomp[0][1][0].Z);
     point_double(&bint_precomp[0][2][0], &bint_precomp[0][1][0]);
     point_add(&bint_precomp[0][3][0], &bint_precomp[0][2][0], &bint_precomp[0][1][0]);
+
     for (unsigned i = 1; i < 4; ++i) {
         for (unsigned j = 1; j < 4; ++j) {
             point_add(&bint_precomp[0][i][j], &bint_precomp[0][i][0], &bint_precomp[0][0][j]);
@@ -257,20 +258,55 @@ static void precomp_finish(void) {
     point_add(&bint_precomp[3][0][0], &bint_precomp[2][0][0], &bint_precomp[1][0][0]);
 
     for (unsigned i = 1; i < 4; ++i) {
-        for (unsigned j = 1; j < 4; ++j) {
-            for (unsigned k = 1; k < 4; ++k) {
+        for (unsigned j = 0; j < 4; ++j) {
+            for (unsigned k = 0; k < 4; ++k) {
+                if (j == 0 && k == 0) {
+                    continue;
+                }
                 point_add(&bint_precomp[i][j][k], &bint_precomp[i][0][0], &bint_precomp[0][j][k]);
             }
         }
     }
 }
 
+// this is a 3-point multiplication
+//     point 1 is h * (X, Y)
+//     point 2 is r1 * G'
+//     point 3 is r2 * 2^128 * G'
+// where h is the cofactor, G' is an element of the order-q subgroup, and
+//       r = r2 * 2^128 + r1 is a random element of Zq.
+// h is 126 bits, so splitting r and precomputing 2^128 * G' saves doublings
+//
+// NOTE this function is not constant time, and it leaks bits of r through memory accesses
 void clear_and_add(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY, const uint8_t *r) {
     // first, precompute the values for the table
     to_jac_point(&bint_precomp[1][0][0], inX, inY);
     precomp_finish();
 
-    (void)outX;
-    (void)outY;
-    (void)r;
+    const uint8_t *r2 = r + 16;
+    bool is_zero = true;
+    for (unsigned idx = 0; idx < 16; ++idx) {
+        for (uint8_t mask = 3 << 6, shift = 6; mask != 0; mask = mask >> 2, shift -= 2) {
+            // double if the point is not zero
+            if (!is_zero) {
+                point_double(jp_tmp, jp_tmp);
+                point_double(jp_tmp, jp_tmp);
+            }
+
+            uint8_t h_idx = (BLS12_381_h[idx] & mask) >> shift;
+            uint8_t r_idx = (r[idx] & mask) >> shift;
+            uint8_t r2_idx = (r2[idx] & mask) >> shift;
+            if ((h_idx | r_idx | r2_idx) != 0) {
+                struct jac_point *tp = &bint_precomp[h_idx][r_idx][r2_idx];
+                if (is_zero) {
+                    is_zero = false;
+                    memcpy(jp_tmp, tp, sizeof(struct jac_point));
+                } else {
+                    point_add(jp_tmp, jp_tmp, tp);
+                }
+            }
+        }
+    }
+
+    from_jac_point(outX, outY, jp_tmp);
 }

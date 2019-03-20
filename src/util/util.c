@@ -81,9 +81,11 @@ void next_modp(EVP_CIPHER_CTX *cctx, mpz_t ret) {
     mpz_import(ret, P_LEN, 1, 1, 1, 0, p_out);
 }
 
-void next_modq(EVP_CIPHER_CTX *cctx, uint8_t *ret) {
+uint8_t *next_modq(EVP_CIPHER_CTX *cctx) {
+    static uint8_t ret[Q_LEN];
     while (next_com(cctx, ret, Q_LEN, BLS12_381_q, 0x73)) {
     }
+    return ret;
 }
 
 struct cmdline_opts get_cmdline_opts(int argc, char **argv) {
