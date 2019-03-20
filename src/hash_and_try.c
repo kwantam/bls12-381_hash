@@ -12,11 +12,9 @@ int main(int argc, char **argv) {
     curve_init();
 
     // get libgmp ready
-    mpz_t x, fx, y;
+    mpz_t x, y;
     mpz_init(x);
-    mpz_init(fx);
     mpz_init(y);
-    mpz_t *p = get_p();
 
     // load libcrypto error strings and set up SHA and PRNG
     ERR_load_crypto_strings();
@@ -37,11 +35,8 @@ int main(int argc, char **argv) {
         unsigned j;
         for (j = 0; j < 256; ++j) {
             next_prng(prng_ctx, &hash_ctx, (i << 8) + j);
-            next_modp(prng_ctx, x);
-
-            bls_fx(fx, x);
-            if (mpz_legendre(fx, *p) == 1) {
-                sqrt_modp(y, fx);
+            const bool negate = next_modp(prng_ctx, x);
+            if (check_fx(y, x, negate, false)) {
                 break;
             }
         }
@@ -83,7 +78,6 @@ int main(int argc, char **argv) {
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
     mpz_clear(y);
-    mpz_clear(fx);
     mpz_clear(x);
     curve_uninit();
 

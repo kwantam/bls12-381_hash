@@ -63,27 +63,29 @@ static inline bool lt_be(const uint8_t *a, const uint8_t *b, size_t len) {
 // clang-format off
 static uint8_t ZEROS[P_LEN] = {0,};
 // clang-format on
-static bool next_com(EVP_CIPHER_CTX *cctx, uint8_t *out, size_t len, const uint8_t *max, uint8_t mask) {
+static int next_com(EVP_CIPHER_CTX *cctx, uint8_t *out, size_t len, const uint8_t *max, uint8_t mask) {
     int outl = len;
     EVP_EncryptUpdate(cctx, out, &outl, ZEROS, len);
+    int ret = (out[0] & 0x80) ? 1 : 0;  // grab most significant bit to return
     out[0] &= mask;
     if (lt_be(out, max, len)) {
-        return false;
+        return ret;
     }
-
-    return true;
+    return -1;
 }
 
-void next_modp(EVP_CIPHER_CTX *cctx, mpz_t ret) {
+bool next_modp(EVP_CIPHER_CTX *cctx, mpz_t ret) {
     uint8_t p_out[P_LEN];
-    while (next_com(cctx, p_out, P_LEN, BLS12_381_p, 0x1f)) {
+    int b;
+    while ((b = next_com(cctx, p_out, P_LEN, BLS12_381_p, 0x1f)) < 0) {
     }
     mpz_import(ret, P_LEN, 1, 1, 1, 0, p_out);
+    return b != 0;
 }
 
 uint8_t *next_modq(EVP_CIPHER_CTX *cctx, mpz_t *out) {
     static uint8_t ret[Q_LEN];
-    while (next_com(cctx, ret, Q_LEN, BLS12_381_q, 0x73)) {
+    while (next_com(cctx, ret, Q_LEN, BLS12_381_q, 0x73) < 0) {
     }
     if (out != NULL) {
         mpz_import(*out, Q_LEN, 1, 1, 1, 0, ret);

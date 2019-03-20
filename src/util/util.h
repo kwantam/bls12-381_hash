@@ -30,7 +30,7 @@ struct cmdline_opts get_cmdline_opts(int argc, char **argv);
 // hashing to Fq and Fp
 void hash_stdin(SHA256_CTX *ctx);
 void next_prng(EVP_CIPHER_CTX *cctx, const SHA256_CTX *hctx, uint32_t idx);
-void next_modp(EVP_CIPHER_CTX *cctx, mpz_t ret);
+bool next_modp(EVP_CIPHER_CTX *cctx, mpz_t ret);
 uint8_t *next_modq(EVP_CIPHER_CTX *cctx, mpz_t *out);
 
 #define __bls_hash__src__util__util_h__
