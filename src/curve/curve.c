@@ -133,15 +133,15 @@ void svdw_map(mpz_t x, mpz_t y, const mpz_t t) {
     // first, save off sign of t (because maybe t is aliased with x)
     const bool neg_t = mpz_cmp(mpz_bls12_381_pp1o2, t) <= 0;  // true (negative) when t >= (p+1)/2
 
-    sqr_modp(mpz_tmp[0], t);                              // t^2
-    mpz_ui_sub(mpz_tmp[1], 23, mpz_tmp[0]);               // 23 - t^2
-                                                          //
-    mul_modp(mpz_tmp[2], mpz_tmp[1], mpz_tmp[0]);         // t^2 * (23 - t^2)
-    inv0_modp(mpz_tmp[2], mpz_tmp[2]);                    // (t^2 * (23 - t^2)) ^ -1, or 0 if t == 0
-                                                          //
-    sqr_modp(mpz_tmp[0], mpz_tmp[0]);                     // t^4
-    mul_modp(mpz_tmp[0], mpz_tmp[0], mpz_tmp[2]);         // t^2 / (23 - t^2)
-    mul_modp(mpz_tmp[0], mpz_tmp[0], sqrtM27);            // t^2 sqrt(-27) / (23 - t^2)
+    sqr_modp(mpz_tmp[0], t);                       // t^2
+    mpz_ui_sub(mpz_tmp[1], 23, mpz_tmp[0]);        // 23 - t^2
+                                                   //
+    mul_modp(mpz_tmp[2], mpz_tmp[1], mpz_tmp[0]);  // t^2 * (23 - t^2)
+    inv0_modp(mpz_tmp[2], mpz_tmp[2]);             // (t^2 * (23 - t^2)) ^ -1, or 0 if t == 0
+                                                   //
+    sqr_modp(mpz_tmp[0], mpz_tmp[0]);              // t^4
+    mul_modp(mpz_tmp[0], mpz_tmp[0], mpz_tmp[2]);  // t^2 / (23 - t^2)
+    mul_modp(mpz_tmp[0], mpz_tmp[0], sqrtM27);     // t^2 sqrt(-27) / (23 - t^2)
 
     // x1
     mpz_add(x, cx1, mpz_tmp[0]);  // (3 - sqrt(-27))/2 + t^2 * sqrt(-27) / (23 - t^2)
