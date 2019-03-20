@@ -38,14 +38,15 @@ void next_prng(EVP_CIPHER_CTX *cctx, const SHA256_CTX *hctx, uint32_t idx) {
     memcpy(&lctx, hctx, sizeof(lctx));
 
     // append the index and compute the hash
-    uint32_t idx_bytes = htole32(idx);  // fix endianness of counter
+    uint32_t idx_bytes = htole32(idx);  // make sure counter is little endian
     CHECK_CRYPTO(SHA256_Update(&lctx, &idx_bytes, sizeof(idx_bytes)));
 
     uint8_t key_iv[SHA256_DIGEST_LENGTH];
-    CHECK_CRYPTO(SHA256_Final(key_iv, &lctx));
+    CHECK_CRYPTO(SHA256_Final(key_iv, &lctx));  // hash to key and IV
 
-    EVP_CIPHER_CTX_reset(cctx);
-    EVP_EncryptInit(cctx, EVP_aes_128_ctr(), key_iv, key_iv + 16);
+    // initialize cipher context with new key and IV
+    CHECK_CRYPTO(EVP_CIPHER_CTX_reset(cctx));
+    CHECK_CRYPTO(EVP_EncryptInit(cctx, EVP_aes_128_ctr(), key_iv, key_iv + 16));
 }
 
 static inline bool lt_be(const uint8_t *a, const uint8_t *b, size_t len) {
@@ -63,9 +64,10 @@ static inline bool lt_be(const uint8_t *a, const uint8_t *b, size_t len) {
 // clang-format off
 static uint8_t ZEROS[P_LEN] = {0,};
 // clang-format on
-static int next_com(EVP_CIPHER_CTX *cctx, uint8_t *out, size_t len, const uint8_t *max, uint8_t mask) {
+static int next_com(EVP_CIPHER_CTX *cctx, uint8_t *out, int len, const uint8_t *max, uint8_t mask) {
     int outl = len;
-    EVP_EncryptUpdate(cctx, out, &outl, ZEROS, len);
+    CHECK_CRYPTO(EVP_EncryptUpdate(cctx, out, &outl, ZEROS, len));
+    CHECK_CRYPTO(outl == len);
     int ret = (out[0] & 0x80) ? 1 : 0;  // grab most significant bit to return
     out[0] &= mask;
     if (lt_be(out, max, len)) {
