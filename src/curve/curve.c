@@ -282,13 +282,10 @@ static void to_jac_point(struct jac_point *jp, const mpz_t inX, const mpz_t inY)
     bint_set1(jp->Z);
 }
 
-// clear BLS12-381 cofactor
-// outX == inX and/or outY == inY is OK
 // Addition chain: Bos-Coster (win=7) : 147 links, 8 variables
+// input point is assumed to be in jp_tmp[1]
 // TODO(rsw): is there a faster addition-subtraction chain?
-void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY) {
-    to_jac_point(jp_tmp + 1, inX, inY);
-
+static void clear_h_chain(mpz_t outX, mpz_t outY) {
     point_double(jp_tmp + 3, jp_tmp + 1);
     point_add(jp_tmp + 2, jp_tmp + 3, jp_tmp + 1);
     point_double(jp_tmp + 5, jp_tmp + 3);
@@ -354,6 +351,34 @@ void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY) {
     from_jac_point(outX, outY, jp_tmp + 7);
 }
 
+// clear BLS12-381 cofactor
+// outX == inX and/or outY == inY is OK
+void clear_h(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY) {
+    to_jac_point(jp_tmp + 1, inX, inY);
+    clear_h_chain(outX, outY);
+}
+
+// add two points together, leave result in jp_tmp[1]
+static inline void add2_help(const mpz_t inX1, const mpz_t inY1, const mpz_t inX2, const mpz_t inY2) {
+    to_jac_point(jp_tmp, inX1, inY1);
+    to_jac_point(jp_tmp + 1, inX2, inY2);
+    point_add(jp_tmp + 1, jp_tmp + 1, jp_tmp);
+}
+
+// add 2 points together; don't clear cofactor
+void add2(mpz_t outX, mpz_t outY, const mpz_t inX1, const mpz_t inY1, const mpz_t inX2, const mpz_t inY2) {
+    add2_help(inX1, inY1, inX2, inY2);
+    from_jac_point(outX, outY, jp_tmp + 1);
+}
+
+// add 2 points together, then clear cofactor
+// ouX == inX{1,2} and/or outY == inY{1,2} is OK
+void add2_clear_h(mpz_t outX, mpz_t outY, const mpz_t inX1, const mpz_t inY1, const mpz_t inX2, const mpz_t inY2) {
+    add2_help(inX1, inY1, inX2, inY2);
+    clear_h_chain(outX, outY);
+}
+
+// precompute the fixed part of the table for addrG
 static struct jac_point bint_precomp[4][4][4];
 void precomp_init(void) {
     memcpy(bint_precomp[0][0][1].X, g_prime_x, sizeof(g_prime_x));
@@ -375,6 +400,7 @@ void precomp_init(void) {
     }
 }
 
+// precompute the part of the addrG table that involves the input point
 static void precomp_finish(void) {
     // precondition: bint_precomp[1][0][0] is the point we need to fill the table with
     point_double(&bint_precomp[2][0][0], &bint_precomp[1][0][0]);
@@ -397,11 +423,11 @@ static void precomp_finish(void) {
 //     point 2 is r1 * G'
 //     point 3 is r2 * 2^128 * G'
 // where h is the cofactor, G' is an element of the order-q subgroup, and
-//       r = r2 * 2^128 + r1 is a random element of Zq.
-// h is 126 bits, so splitting r and precomputing 2^128 * G' saves doublings
+//     r = r2 * 2^128 + r1
+// is a random element of Zq. h is 126 bits, so splitting r saves doublings.
 //
 // NOTE this function is not constant time, and it leaks bits of r through memory accesses
-void clear_and_add_rG(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY, const uint8_t *r) {
+void addrG_clear_h(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY, const uint8_t *r) {
     // first, precompute the values for the table
     to_jac_point(&bint_precomp[1][0][0], inX, inY);
     precomp_finish();

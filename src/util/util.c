@@ -81,18 +81,21 @@ void next_modp(EVP_CIPHER_CTX *cctx, mpz_t ret) {
     mpz_import(ret, P_LEN, 1, 1, 1, 0, p_out);
 }
 
-uint8_t *next_modq(EVP_CIPHER_CTX *cctx) {
+uint8_t *next_modq(EVP_CIPHER_CTX *cctx, mpz_t *out) {
     static uint8_t ret[Q_LEN];
     while (next_com(cctx, ret, Q_LEN, BLS12_381_q, 0x73)) {
+    }
+    if (out != NULL) {
+        mpz_import(*out, Q_LEN, 1, 1, 1, 0, ret);
     }
     return ret;
 }
 
 struct cmdline_opts get_cmdline_opts(int argc, char **argv) {
-    struct cmdline_opts ret = {0, true, false, false};
+    struct cmdline_opts ret = {0, true, false, false, svdw_basic};
     int opt_ret;
     bool found_err = false;
-    while ((opt_ret = getopt(argc, argv, "n:Cqt")) >= 0) {
+    while ((opt_ret = getopt(argc, argv, "n:Cqt2r")) >= 0) {
         switch (opt_ret) {
             case 'n':
                 ret.nreps = atoi(optarg);  // NOLINT(cert-err34-c)
@@ -108,6 +111,14 @@ struct cmdline_opts get_cmdline_opts(int argc, char **argv) {
 
             case 't':
                 ret.test = true;
+                break;
+
+            case '2':
+                ret.method = svdw_add2;
+                break;
+
+            case 'r':
+                ret.method = svdw_addrG;
                 break;
 
             default:

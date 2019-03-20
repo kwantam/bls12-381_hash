@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
             }
 
             if (opts.clear_h || opts.test) {
-                clear_cofactor(x, y, x, y);
+                clear_h(x, y, x, y);
             }
 
             if (opts.test || !opts.quiet) {

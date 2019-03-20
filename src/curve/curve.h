@@ -23,10 +23,14 @@ void bls_fx(mpz_t out, const mpz_t in);
 void svdw_map(mpz_t x, mpz_t y, const mpz_t t);
 
 // addition chain for clearing cofactor
-void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY);
+void clear_h(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY);
 
 // clear cofactor, add random subgroup element via 3-point multi-multiplication
-void clear_and_add_rG(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY, const uint8_t *r);
+void addrG_clear_h(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY, const uint8_t *r);
+
+// add two points together and then clear cofactor
+void add2(mpz_t outX, mpz_t outY, const mpz_t inX1, const mpz_t inY1, const mpz_t inX2, const mpz_t inY2);
+void add2_clear_h(mpz_t outX, mpz_t outY, const mpz_t inX1, const mpz_t inY1, const mpz_t inX2, const mpz_t inY2);
 
 #define __bls_hash__src__curve__curve_h__
 #endif  // __bls_hash__src__curve__curve_h__
