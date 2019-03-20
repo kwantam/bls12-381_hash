@@ -88,6 +88,13 @@ void mul_modp(mpz_t out, const mpz_t in1, const mpz_t in2) {
     mpz_mod(out, out, mpz_bls12_381_p);
 }
 
+// in^-1 mod p, but set out = 0 if in = 0
+static void inv0_modp(mpz_t out, const mpz_t in) {
+    if (mpz_invert(out, in, mpz_bls12_381_p) == 0) {
+        mpz_set_ui(out, 0);
+    }
+}
+
 // f(x) = x^3 + 4
 void bls_fx(mpz_t out, const mpz_t in) {
     sqr_modp(out, in);
@@ -123,14 +130,14 @@ static inline bool svdw_check(const mpz_t x, mpz_t y, bool neg_t, bool force);
 // NOTE: t must be reduced mod p!
 // t == x is OK, but x and y must be distinct
 void svdw_map(mpz_t x, mpz_t y, const mpz_t t) {
-    // first, save off sign of t (because maybe it's aliased with x)
+    // first, save off sign of t (because maybe t is aliased with x)
     const bool neg_t = mpz_cmp(mpz_bls12_381_pp1o2, t) <= 0;  // true (negative) when t >= (p+1)/2
 
     sqr_modp(mpz_tmp[0], t);                              // t^2
     mpz_ui_sub(mpz_tmp[1], 23, mpz_tmp[0]);               // 23 - t^2
                                                           //
     mul_modp(mpz_tmp[2], mpz_tmp[1], mpz_tmp[0]);         // t^2 * (23 - t^2)
-    mpz_invert(mpz_tmp[2], mpz_tmp[2], mpz_bls12_381_p);  // (t^2 * (23 - t^2)) ^ -1
+    inv0_modp(mpz_tmp[2], mpz_tmp[2]);                    // (t^2 * (23 - t^2)) ^ -1, or 0 if t == 0
                                                           //
     sqr_modp(mpz_tmp[0], mpz_tmp[0]);                     // t^4
     mul_modp(mpz_tmp[0], mpz_tmp[0], mpz_tmp[2]);         // t^2 / (23 - t^2)
