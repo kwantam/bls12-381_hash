@@ -18,23 +18,12 @@
         }                                                                                      \
     } while (0)
 
-// SvdW hashing method:
-//   basic: just run svdw_map once
-//   add2:  run svdw_map twice, add together, clear cofactor
-//   addrG: run svdw_map once, add to rG' while clearing cofactor
-enum svdw_method {
-    svdw_basic,
-    svdw_add2,
-    svdw_addrG,
-};
-
 // getting commandline options
 struct cmdline_opts {
     unsigned nreps;
     bool clear_h;
     bool quiet;
     bool test;
-    enum svdw_method method;
 };
 struct cmdline_opts get_cmdline_opts(int argc, char **argv);
 

@@ -11,4 +11,6 @@ include (etc/clang_tidy.cmake)
 include (etc/cppcheck.cmake)
 
 add_bh_exec (hash_and_try)
-add_bh_exec (hash_svdw)
+add_bh_exec (hash_svdw_1)
+add_bh_exec (hash_svdw_2)
+add_bh_exec (hash_svdw_rG)
