@@ -10,11 +10,13 @@
 #include <stdbool.h>
 #include <string.h>
 
-static mpz_t mpz_bls12_381_p;
+static mpz_t mpz_bls12_381_p, mpz_bls12_381_pp1o2, mpz_bls12_381_pp1o4;
 mpz_t *get_p(void) { return &mpz_bls12_381_p; }
 
-static mpz_t mpz_bls12_381_pp1o4;
-mpz_t *get_pp1o4(void) { return &mpz_bls12_381_pp1o4; }
+static void mpz_init_import(mpz_t out, const uint64_t *in) {
+    mpz_init(out);
+    mpz_import(out, 6, -1, 8, 0, 0, in);
+}
 
 struct jac_point {
     uint64_t X[BINT_NWORDS];
@@ -27,17 +29,31 @@ static struct jac_point jp_tmp[NUM_TMP_JP];
 #define NUM_TMP_BINT 11
 static uint64_t bint_tmp[NUM_TMP_BINT][BINT_NWORDS];
 
-static mpz_t mpz_tmp;
+#define NUM_TMP_MPZ 3
+static mpz_t cx1, cx2, sqrtM27, invM27, mpz_tmp[NUM_TMP_MPZ];
 static bool init_done = false;
 void curve_init(void) {
     if (!init_done) {
         init_done = true;
+        // p, p+1/4, p+1/2
         mpz_init(mpz_bls12_381_p);
         mpz_init(mpz_bls12_381_pp1o4);
-        mpz_init(mpz_tmp);
+        mpz_init(mpz_bls12_381_pp1o2);
         mpz_import(mpz_bls12_381_p, P_LEN, 1, 1, 1, 0, BLS12_381_p);
-        mpz_add_ui(mpz_bls12_381_pp1o4, mpz_bls12_381_p, 4);
+        mpz_add_ui(mpz_bls12_381_pp1o4, mpz_bls12_381_p, 1);
+        mpz_fdiv_q_2exp(mpz_bls12_381_pp1o2, mpz_bls12_381_pp1o4, 1);
         mpz_fdiv_q_2exp(mpz_bls12_381_pp1o4, mpz_bls12_381_pp1o4, 2);
+
+        // SvdW constants
+        mpz_init_import(cx1, Icx1);
+        mpz_init_import(cx2, Icx2);
+        mpz_init_import(sqrtM27, IsqrtM27);
+        mpz_init_import(invM27, IinvM27);
+
+        // temp variables
+        for (unsigned i = 0; i < NUM_TMP_MPZ; ++i) {
+            mpz_init(mpz_tmp[i]);
+        }
     }
 }
 
@@ -46,7 +62,14 @@ void curve_uninit(void) {
         init_done = false;
         mpz_clear(mpz_bls12_381_p);
         mpz_clear(mpz_bls12_381_pp1o4);
-        mpz_clear(mpz_tmp);
+        mpz_clear(mpz_bls12_381_pp1o2);
+        mpz_clear(cx1);
+        mpz_clear(cx2);
+        mpz_clear(sqrtM27);
+        mpz_clear(invM27);
+        for (unsigned i = 0; i < NUM_TMP_MPZ; ++i) {
+            mpz_clear(mpz_tmp[i]);
+        }
     }
 }
 
@@ -55,6 +78,9 @@ void sqr_modp(mpz_t out, const mpz_t in) {
     mpz_mul(out, in, in);
     mpz_mod(out, out, mpz_bls12_381_p);
 }
+
+// sqrt(in1) mod p
+void sqrt_modp(mpz_t out, const mpz_t in) { mpz_powm(out, in, mpz_bls12_381_pp1o4, mpz_bls12_381_p); }
 
 // in1 * in2 mod p
 void mul_modp(mpz_t out, const mpz_t in1, const mpz_t in2) {
@@ -65,8 +91,91 @@ void mul_modp(mpz_t out, const mpz_t in1, const mpz_t in2) {
 // f(x) = x^3 + 4
 void bls_fx(mpz_t out, const mpz_t in) {
     sqr_modp(out, in);
-    mul_modp(out, out, in);
+    mpz_mul(out, out, in);
     mpz_add_ui(out, out, 4);
+    mpz_mod(out, out, mpz_bls12_381_p);
+}
+
+// shortcut reductions when we know the values are constrained
+static void condadd_p(mpz_t in) {
+    if (mpz_cmp_ui(in, 0) < 0) {
+        mpz_add(in, in, mpz_bls12_381_p);
+    }
+}
+
+static void condsub_p(mpz_t in) {
+    if (mpz_cmp(in, mpz_bls12_381_p) >= 0) {
+        mpz_sub(in, in, mpz_bls12_381_p);
+    }
+}
+
+static inline bool svdw_check(const mpz_t x, mpz_t y, bool neg_t, bool force);
+// Map to curve given by
+//   Shallue and van de Woestijne, "Construction of rational points on elliptic curves over finite fields."
+//   Proc. ANTS 2006. https://works.bepress.com/andrew_shallue/1/
+//
+// Derivation follows the one from
+//   Fouque and Tibouchi, "Indifferentiable hashing to Barreto-Naehrig curves."
+//   Proc. LATINCRYPT 2012. https://link.springer.com/chapter/10.1007/978-3-642-33481-8_1
+//
+// See the paper/ subdir for a complete worked derivation.
+//
+// NOTE: t must be reduced mod p!
+// t == x is OK, but x and y must be distinct
+void svdw_map(mpz_t x, mpz_t y, const mpz_t t) {
+    // first, save off sign of t (because maybe it's aliased with x)
+    const bool neg_t = mpz_cmp(mpz_bls12_381_pp1o2, t) <= 0;  // true (negative) when t >= (p+1)/2
+
+    sqr_modp(mpz_tmp[0], t);                              // t^2
+    mpz_ui_sub(mpz_tmp[1], 23, mpz_tmp[0]);               // 23 - t^2
+                                                          //
+    mul_modp(mpz_tmp[2], mpz_tmp[1], mpz_tmp[0]);         // t^2 * (23 - t^2)
+    mpz_invert(mpz_tmp[2], mpz_tmp[2], mpz_bls12_381_p);  // (t^2 * (23 - t^2)) ^ -1
+                                                          //
+    sqr_modp(mpz_tmp[0], mpz_tmp[0]);                     // t^4
+    mul_modp(mpz_tmp[0], mpz_tmp[0], mpz_tmp[2]);         // t^2 / (23 - t^2)
+    mul_modp(mpz_tmp[0], mpz_tmp[0], sqrtM27);            // t^2 sqrt(-27) / (23 - t^2)
+
+    // x1
+    mpz_add(x, cx1, mpz_tmp[0]);  // (3 - sqrt(-27))/2 + t^2 * sqrt(-27) / (23 - t^2)
+    if (svdw_check(x, y, neg_t, false)) {
+        condsub_p(x);  // reduce x mod p (mpz_tmp[0] and cx1 were both reduced, so x < 2p)
+        return;
+    }
+
+    // x2
+    mpz_sub(x, cx2, mpz_tmp[0]);  // (3 - sqrt(-27))/2 - t^2 * sqrt(-27) / (23 - t^2)
+    if (svdw_check(x, y, neg_t, false)) {
+        condadd_p(x);  // reduce x mod p (mpz_tmp[0] and cx2 were both reduced, so x > -p)
+        return;
+    }
+
+    // x3
+    sqr_modp(x, mpz_tmp[1]);     // (23 - t^2)^2
+    mul_modp(x, x, mpz_tmp[1]);  // (23 - t^2)^3
+    mul_modp(x, x, mpz_tmp[2]);  // (23 - t^2)^2 / t^2
+    mul_modp(x, x, invM27);      // - (23 - t^2)^2 / (27 * t^2)
+    mpz_sub_ui(x, x, 3);         // -3 - (23 - t^2)^2 / (27 * t^2)
+    condadd_p(x);                // reduce x mod p (subtracted p from a reduced value, so x >= -3)
+    svdw_check(x, y, neg_t, true);
+}
+
+// check if x is a point on the curve, and compute the corresponding y-coord if so
+static inline bool svdw_check(const mpz_t x, mpz_t y, bool neg_t, bool force) {
+    bls_fx(y, x);  // f(x)
+    if (!force && mpz_legendre(y, mpz_bls12_381_p) != 1) {
+        // f(x) is not a residue
+        return false;
+    }
+
+    // found a residue
+    sqrt_modp(y, y);  // sqrt(f(x))
+
+    // multiply by 'sign' of t, for t negative when t >= p+1/2
+    if (neg_t) {
+        mpz_sub(y, mpz_bls12_381_p, y);
+    }
+    return true;
 }
 
 // double a point in Jacobian coordinates
@@ -156,14 +265,14 @@ static void from_jac_point(mpz_t outX, mpz_t outY, const struct jac_point *jp) {
     // convert from bint to gmp
     bint_export_mpz(outX, jp->X);
     bint_export_mpz(outY, jp->Y);
-    bint_export_mpz(mpz_tmp, jp->Z);
+    bint_export_mpz(mpz_tmp[0], jp->Z);
 
     // convert from Jacobian to affine coordinates
-    mpz_invert(mpz_tmp, mpz_tmp, mpz_bls12_381_p);  // Z^-1
-    mul_modp(outY, outY, mpz_tmp);                  // Y / Z
-    sqr_modp(mpz_tmp, mpz_tmp);                     // Z^-2
-    mul_modp(outY, outY, mpz_tmp);                  // Y / Z^3
-    mul_modp(outX, outX, mpz_tmp);                  // X / Z^2
+    mpz_invert(mpz_tmp[0], mpz_tmp[0], mpz_bls12_381_p);  // Z^-1
+    mul_modp(outY, outY, mpz_tmp[0]);                     // Y / Z
+    sqr_modp(mpz_tmp[0], mpz_tmp[0]);                     // Z^-2
+    mul_modp(outY, outY, mpz_tmp[0]);                     // Y / Z^3
+    mul_modp(outX, outX, mpz_tmp[0]);                     // X / Z^2
 }
 
 // convert from a pair of mpz_t to a jac_point
@@ -292,7 +401,7 @@ static void precomp_finish(void) {
 // h is 126 bits, so splitting r and precomputing 2^128 * G' saves doublings
 //
 // NOTE this function is not constant time, and it leaks bits of r through memory accesses
-void clear_and_add(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY, const uint8_t *r) {
+void clear_and_add_rG(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY, const uint8_t *r) {
     // first, precompute the values for the table
     to_jac_point(&bint_precomp[1][0][0], inX, inY);
     precomp_finish();

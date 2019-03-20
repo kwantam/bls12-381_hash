@@ -13,3 +13,4 @@ include (etc/cppcheck.cmake)
 include_directories ("${PROJECT_SOURCE_DIR}/bint" "${PROJECT_SOURCE_DIR}/curve" "${PROJECT_SOURCE_DIR}/util")
 
 add_bh_exec (hash_and_try)
+add_bh_exec (hash_svdw)

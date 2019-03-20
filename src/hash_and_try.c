@@ -17,7 +17,6 @@ int main(int argc, char **argv) {
     mpz_init(fx);
     mpz_init(y);
     mpz_t *p = get_p();
-    mpz_t *pp1o4 = get_pp1o4();
 
     // load libcrypto error strings and set up SHA and PRNG
     ERR_load_crypto_strings();
@@ -38,7 +37,7 @@ int main(int argc, char **argv) {
 
             bls_fx(fx, x);
             if (mpz_legendre(fx, *p) == 1) {
-                mpz_powm(y, fx, *pp1o4, *p);
+                sqrt_modp(y, fx);
                 break;
             }
         }
