@@ -28,6 +28,10 @@ int main(int argc, char **argv) {
     // hash the contents of stdin
     hash_stdin(&hash_ctx);
 
+    const bool first_print = opts.test || (!opts.quiet && !opts.clear_h);
+    const bool do_clear = opts.test || opts.clear_h;
+    const bool second_print = opts.test || (!opts.quiet && opts.clear_h);
+
     // loop through different resulting PRNG keys
     for (unsigned i = 0; i < opts.nreps; ++i) {
         unsigned j;
@@ -43,26 +47,36 @@ int main(int argc, char **argv) {
         }
         if (j == 256) {
             fprintf(stderr, "no point found!\n");
-        } else {
-            // show results
-            //   test:                          (xin, yin, xout, yout)
-            //   quiet && !test:                <<nothing>>
-            //   !quiet && !test && clear_h:    (xout, yout)
-            //   !quiet && !test && !clear_h:   (xin, yin)
-            //
-            if (opts.test) {
-                gmp_printf("(0x%Zx, 0x%Zx, ", x, y);
-            } else if (!opts.quiet) {
-                printf("(");
-            }
+            continue;
+        }
 
-            if (opts.clear_h || opts.test) {
-                clear_h(x, y, x, y);
-            }
+        // show results
+        //   test:                          (xin, yin, xout, yout)
+        //   quiet && !test:                <<nothing>>
+        //   !quiet && !test && clear_h:    (xout, yout)
+        //   !quiet && !test && !clear_h:   (xin, yin)
+        //
+        if (first_print || second_print) {
+            printf("(");
+        }
 
-            if (opts.test || !opts.quiet) {
-                gmp_printf("0x%Zx, 0x%Zx)\n", x, y);
-            }
+        // maybe output the input point
+        if (first_print) {
+            gmp_printf("0x%Zx, 0x%Zx, ", x, y);
+        }
+
+        // maybe clear the cofactor
+        if (do_clear) {
+            clear_h(x, y, x, y);
+        }
+
+        // maybe output the result
+        if (second_print) {
+            gmp_printf("0x%Zx, 0x%Zx, ", x, y);
+        }
+
+        if (first_print || second_print) {
+            printf(")\n");
         }
     }
 
