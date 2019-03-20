@@ -12,14 +12,12 @@ int main(int argc, char **argv) {
     curve_init();
 
     // get libgmp ready
-    mpz_t t, ft, y, pp1o4;
-    mpz_init(t);
-    mpz_init(ft);
+    mpz_t x, fx, y;
+    mpz_init(x);
+    mpz_init(fx);
     mpz_init(y);
-    mpz_init(pp1o4);
     mpz_t *p = get_p();
-    mpz_add_ui(pp1o4, *p, 1);
-    mpz_fdiv_q_2exp(pp1o4, pp1o4, 2);
+    mpz_t *pp1o4 = get_pp1o4();
 
     // load libcrypto error strings and set up SHA and PRNG
     ERR_load_crypto_strings();
@@ -36,36 +34,44 @@ int main(int argc, char **argv) {
         unsigned j;
         for (j = 0; j < 256; ++j) {
             next_prng(prng_ctx, &hash_ctx, (i << 8) + j);
-            next_modp(prng_ctx, t);
+            next_modp(prng_ctx, x);
 
-            // t^3 + 4
-            sqr_modp(ft, t);
-            mul_modp(ft, ft, t);
-            mpz_add_ui(ft, ft, 4);
-
-            if (mpz_legendre(ft, *p) == 1) {
-                mpz_powm(y, ft, pp1o4, *p);
+            bls_fx(fx, x);
+            if (mpz_legendre(fx, *p) == 1) {
+                mpz_powm(y, fx, *pp1o4, *p);
                 break;
             }
         }
         if (j == 256) {
             fprintf(stderr, "no point found!\n");
         } else {
-            if (opts.clear_h) {
-                clear_cofactor(t, y, t, y);
+            // show results
+            //   test:                          (xin, yin, xout, yout)
+            //   quiet && !test:                <<nothing>>
+            //   !quiet && !test && clear_h:    (xout, yout)
+            //   !quiet && !test && !clear_h:   (xin, yin)
+            //
+            if (opts.test) {
+                gmp_printf("(0x%Zx, 0x%Zx, ", x, y);
+            } else if (!opts.quiet) {
+                printf("(");
             }
-            if (!opts.quiet) {
-                gmp_printf("(0x%Zx, 0x%Zx)\n", t, y);
+
+            if (opts.clear_h || opts.test) {
+                clear_cofactor(x, y, x, y);
+            }
+
+            if (opts.test || !opts.quiet) {
+                gmp_printf("0x%Zx, 0x%Zx)\n", x, y);
             }
         }
     }
 
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
-    mpz_clear(pp1o4);
     mpz_clear(y);
-    mpz_clear(ft);
-    mpz_clear(t);
+    mpz_clear(fx);
+    mpz_clear(x);
     curve_uninit();
 
     return 0;

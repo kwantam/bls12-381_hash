@@ -89,10 +89,10 @@ uint8_t *next_modq(EVP_CIPHER_CTX *cctx) {
 }
 
 struct cmdline_opts get_cmdline_opts(int argc, char **argv) {
-    struct cmdline_opts ret = {0, true, false};
+    struct cmdline_opts ret = {0, true, false, false};
     int opt_ret;
     bool found_err = false;
-    while ((opt_ret = getopt(argc, argv, "n:Cq")) >= 0) {
+    while ((opt_ret = getopt(argc, argv, "n:Cqt")) >= 0) {
         switch (opt_ret) {
             case 'n':
                 ret.nreps = atoi(optarg);  // NOLINT(cert-err34-c)
@@ -104,6 +104,10 @@ struct cmdline_opts get_cmdline_opts(int argc, char **argv) {
 
             case 'q':
                 ret.quiet = true;
+                break;
+
+            case 't':
+                ret.test = true;
                 break;
 
             default:

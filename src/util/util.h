@@ -23,6 +23,7 @@ struct cmdline_opts {
     unsigned nreps;
     bool clear_h;
     bool quiet;
+    bool test;
 };
 struct cmdline_opts get_cmdline_opts(int argc, char **argv);
 

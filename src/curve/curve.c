@@ -13,6 +13,9 @@
 static mpz_t mpz_bls12_381_p;
 mpz_t *get_p(void) { return &mpz_bls12_381_p; }
 
+static mpz_t mpz_bls12_381_pp1o4;
+mpz_t *get_pp1o4(void) { return &mpz_bls12_381_pp1o4; }
+
 struct jac_point {
     uint64_t X[BINT_NWORDS];
     uint64_t Y[BINT_NWORDS];
@@ -26,14 +29,15 @@ static uint64_t bint_tmp[NUM_TMP_BINT][BINT_NWORDS];
 
 static mpz_t mpz_tmp;
 static bool init_done = false;
-static void precomp_init(void);
 void curve_init(void) {
     if (!init_done) {
         init_done = true;
         mpz_init(mpz_bls12_381_p);
+        mpz_init(mpz_bls12_381_pp1o4);
         mpz_init(mpz_tmp);
         mpz_import(mpz_bls12_381_p, P_LEN, 1, 1, 1, 0, BLS12_381_p);
-        precomp_init();
+        mpz_add_ui(mpz_bls12_381_pp1o4, mpz_bls12_381_p, 4);
+        mpz_fdiv_q_2exp(mpz_bls12_381_pp1o4, mpz_bls12_381_pp1o4, 2);
     }
 }
 
@@ -41,18 +45,28 @@ void curve_uninit(void) {
     if (init_done) {
         init_done = false;
         mpz_clear(mpz_bls12_381_p);
+        mpz_clear(mpz_bls12_381_pp1o4);
         mpz_clear(mpz_tmp);
     }
 }
 
+// in1 ^ 2 mod p
 void sqr_modp(mpz_t out, const mpz_t in) {
     mpz_mul(out, in, in);
     mpz_mod(out, out, mpz_bls12_381_p);
 }
 
+// in1 * in2 mod p
 void mul_modp(mpz_t out, const mpz_t in1, const mpz_t in2) {
     mpz_mul(out, in1, in2);
     mpz_mod(out, out, mpz_bls12_381_p);
+}
+
+// f(x) = x^3 + 4
+void bls_fx(mpz_t out, const mpz_t in) {
+    sqr_modp(out, in);
+    mul_modp(out, out, in);
+    mpz_add_ui(out, out, 4);
 }
 
 // double a point in Jacobian coordinates
@@ -232,7 +246,7 @@ void clear_cofactor(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY) {
 }
 
 static struct jac_point bint_precomp[4][4][4];
-static void precomp_init(void) {
+void precomp_init(void) {
     memcpy(bint_precomp[0][0][1].X, g_prime_x, sizeof(g_prime_x));
     memcpy(bint_precomp[0][0][1].Y, g_prime_y, sizeof(g_prime_y));
     bint_set1(bint_precomp[0][0][1].Z);
