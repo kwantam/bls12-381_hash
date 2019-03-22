@@ -5,17 +5,25 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic -pedantic-errors -Werror -Wall -W
 # check for supported compiler versions
 set (IS_GNU_COMPILER ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU"))
 set (IS_CLANG_COMPILER ("${CMAKE_C_COMPILER_ID}" MATCHES "[Cc][Ll][Aa][Nn][Gg]"))
-set (C_VERSION_LT_6 ("${CMAKE_C_COMPILER_VERSION}" VERSION_LESS 6))
+set (C_VERSION_LT_7 ("${CMAKE_C_COMPILER_VERSION}" VERSION_LESS 7))
 set (C_VERSION_LT_8 ("${CMAKE_C_COMPILER_VERSION}" VERSION_LESS 8))
-if ((${IS_GNU_COMPILER} AND ${C_VERSION_LT_8}) OR (${IS_CLANG_COMPILER} AND ${C_VERSION_LT_6}))
-    message (FATAL_ERROR "You must compile this project with g++ >= 8 or clang >= 6.")
+if ((${IS_GNU_COMPILER} AND ${C_VERSION_LT_8}) OR (${IS_CLANG_COMPILER} AND ${C_VERSION_LT_7}))
+    message (FATAL_ERROR "You must compile this project with g++ >= 8 or clang >= 7.")
 endif ()
 if (${IS_CLANG_COMPILER})
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wloop-analysis")
 endif ()
 
+# unroll loops in bint.c
+if (${IS_CLANG_COMPILER})
+    # clang only supports -funroll-loops, not -funroll-all-loops
+    set_source_files_properties("${PROJECT_SOURCE_DIR}/bint/bint.c" PROPERTIES COMPILE_OPTIONS "-funroll-loops")
+else ()
+    set_source_files_properties("${PROJECT_SOURCE_DIR}/bint/bint.c" PROPERTIES COMPILE_OPTIONS "-funroll-all-loops")
+endif (${IS_CLANG_COMPILER})
+
 # add some flags for the Release, Debug, and DebugSan modes
-set (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto -funroll-all-loops")
+set (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
 set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb3 -Og")
 set (CMAKE_C_FLAGS_DEBUGASAN "${CMAKE_C_FLAGS_DEBUG} -fsanitize=undefined -fsanitize=address")
 set (CMAKE_C_FLAGS_DEBUGTSAN "${CMAKE_C_FLAGS_DEBUG} -fsanitize=thread")

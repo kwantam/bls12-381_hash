@@ -3,7 +3,6 @@ include_directories ("${PROJECT_SOURCE_DIR}/bint" "${PROJECT_SOURCE_DIR}/curve" 
 add_library (bls_hash STATIC "${PROJECT_SOURCE_DIR}/util/util.c"
                              "${PROJECT_SOURCE_DIR}/bint/bint.c"
                              "${PROJECT_SOURCE_DIR}/curve/curve.c")
-
 find_library (LIBGMP gmp)
 find_library (LIBCRYPTO crypto)
 
