@@ -13,12 +13,13 @@ int main(int argc, char **argv) {
     precomp_init();
 
     // get libgmp ready
-    mpz_t x1, y1, x2, y2, t;
+    mpz_t x1, y1, t1, x2, y2, t2;
     mpz_init(x1);
     mpz_init(y1);
+    mpz_init(t1);
     mpz_init(x2);
     mpz_init(y2);
-    mpz_init(t);
+    mpz_init(t2);
 
     // load libcrypto error strings and set up SHA and PRNG
     ERR_load_crypto_strings();
@@ -37,10 +38,10 @@ int main(int argc, char **argv) {
     // loop through different resulting PRNG keys
     for (unsigned i = 0; i < opts.nreps; ++i) {
         next_prng(prng_ctx, &hash_ctx, i);
-        next_modp(prng_ctx, t);
-        svdw_map(x1, y1, t);
-        next_modp(prng_ctx, t);
-        svdw_map(x2, y2, t);
+        next_modp(prng_ctx, t1);
+        svdw_map(x1, y1, t1);
+        next_modp(prng_ctx, t2);
+        svdw_map(x2, y2, t2);
 
         // show results                     svdw_add2
         //   test:                          (x1, y1, x2, y2, xO, yO)
@@ -52,7 +53,9 @@ int main(int argc, char **argv) {
         }
 
         // maybe output the points
-        if (first_print) {
+        if (opts.test) {
+            gmp_printf("0x%Zx, 0x%Zx, ", t1, t2);
+        } else if (first_print) {
             gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, ", x1, y1, x2, y2);
         }
 
@@ -75,9 +78,10 @@ int main(int argc, char **argv) {
 
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
-    mpz_clear(t);
+    mpz_clear(t2);
     mpz_clear(y2);
     mpz_clear(x2);
+    mpz_clear(t1);
     mpz_clear(y1);
     mpz_clear(x1);
     curve_uninit();

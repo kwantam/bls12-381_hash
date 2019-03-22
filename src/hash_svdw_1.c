@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
         svdw_map(x1, y1, t);
 
         // show results                     svdw_basic
-        //   test:                          (xI, yI, xO, yO)
+        //   test:                          (t, xO, yO)
         //   quiet && !test:                <<nothing>>
         //   !quiet && !test && clear_h:    (xO, yO)
         //   !quiet && !test && !clear_h:   (xI, yI)
@@ -48,7 +48,9 @@ int main(int argc, char **argv) {
         }
 
         // maybe output the input point
-        if (first_print) {
+        if (opts.test) {
+            gmp_printf("0x%Zx, ", t);
+        } else if (first_print) {
             gmp_printf("0x%Zx, 0x%Zx, ", x1, y1);
         }
 

@@ -14,3 +14,5 @@ add_bh_exec (hash_and_try)
 add_bh_exec (hash_svdw_1)
 add_bh_exec (hash_svdw_2)
 add_bh_exec (hash_svdw_rG)
+
+include (etc/tests.cmake)

@@ -52,12 +52,12 @@ static const uint64_t g_prime_ll128_y[] = {
 
 // constants for the Shallue and van de Woestijne mapping
 static const uint64_t Icx1[] = {
-    0x2ff900000002aab1LL, 0x846477c48b35fff9LL, 0xce15d6ed41c73289LL,
-    0x3539f96eb556aafeLL, 0x2dcf7226a4e741e2LL, 0x1a0111ea397fe699LL,
-};
-static const uint64_t Icx2[] = {
     0x8a05fffffffcfffdLL, 0x9a47883a261e0006LL, 0x991afbb3b4e9c39aLL,
     0x2f3d52163e2e67c0LL, 0x1d4c358f9e646af5LL, 0x0000000000000001LL,
+};
+static const uint64_t Icx2[] = {
+    0x2ff900000002aab1LL, 0x846477c48b35fff9LL, 0xce15d6ed41c73289LL,
+    0x3539f96eb556aafeLL, 0x2dcf7226a4e741e2LL, 0x1a0111ea397fe699LL,
 };
 static const uint64_t IsqrtM27[] = {
     0x140bfffffff9fff7LL, 0x348f10744c3c000dLL, 0x3235f76769d38735LL,

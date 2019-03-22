@@ -13,10 +13,11 @@ int main(int argc, char **argv) {
     precomp_init();
 
     // get libgmp ready
-    mpz_t x1, y1, t;
+    mpz_t x1, y1, t, rr;
     mpz_init(x1);
     mpz_init(y1);
     mpz_init(t);
+    mpz_init(rr);
 
     // load libcrypto error strings and set up SHA and PRNG
     ERR_load_crypto_strings();
@@ -37,7 +38,7 @@ int main(int argc, char **argv) {
         next_prng(prng_ctx, &hash_ctx, i);
         next_modp(prng_ctx, t);
         svdw_map(x1, y1, t);
-        const uint8_t *r = next_modq(prng_ctx, first_print ? &t : NULL);
+        const uint8_t *r = next_modq(prng_ctx, opts.test ? &rr : NULL);
 
         // show results                     svdw_addrG
         //   test:                          (xI, yI, r, xO, yO)
@@ -49,8 +50,10 @@ int main(int argc, char **argv) {
         }
 
         // maybe output points and r
-        if (first_print) {
-            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, ", x1, y1, t);
+        if (opts.test) {
+            gmp_printf("0x%Zx, 0x%Zx, ", t, rr);
+        } else if (first_print) {
+            gmp_printf("0x%Zx, 0x%Zx, ", x1, y1);
         }
 
         // maybe do the addition
@@ -70,6 +73,7 @@ int main(int argc, char **argv) {
 
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
+    mpz_clear(rr);
     mpz_clear(t);
     mpz_clear(y1);
     mpz_clear(x1);
