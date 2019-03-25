@@ -11,9 +11,6 @@ include (etc/cppcheck.cmake)
 
 include (etc/build_defs.cmake)
 
-add_bh_exec (hash_and_try)
-add_bh_exec (hash_svdw_1)
-add_bh_exec (hash_svdw_2)
-add_bh_exec (hash_svdw_rG)
+add_subdirectory ("${PROJECT_SOURCE_DIR}/apps")
 
 include (etc/tests.cmake)
