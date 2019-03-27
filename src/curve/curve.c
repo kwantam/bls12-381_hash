@@ -97,8 +97,6 @@ static inline void condsub_p(mpz_t in) {
     }
 }
 
-
-
 // *********************
 // SvdW map to BLS12-381
 // *********************
@@ -213,8 +211,6 @@ bool check_fx(mpz_t y, const mpz_t x, bool negate, bool force) {
     }
     return true;
 }
-
-
 
 // **************************
 // BLS12-381 curve operations
