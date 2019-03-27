@@ -13,10 +13,11 @@ int main(int argc, char **argv) {
     precomp_init();
 
     // get libgmp ready
-    mpz_t x1, y1, u;
+    mpz_t x1, y1, u1, u2;
     mpz_init(x1);
     mpz_init(y1);
-    mpz_init(u);
+    mpz_init(u1);
+    mpz_init(u2);
 
     // load libcrypto error strings and set up SHA and PRNG
     ERR_load_crypto_strings();
@@ -31,15 +32,17 @@ int main(int argc, char **argv) {
     // loop through different resulting PRNG keys
     for (unsigned i = 0; i < opts.nreps; ++i) {
         next_prng(prng_ctx, &hash_ctx, i);
-        next_modp(prng_ctx, u);
-        swu_map(x1, y1, u);
+        next_modp(prng_ctx, u1);
+        next_modp(prng_ctx, u2);
+        swu_map2(x1, y1, u1, u2);
 
-        gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, u);
+        gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, u1, u2);
     }
 
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
-    mpz_clear(u);
+    mpz_clear(u2);
+    mpz_clear(u1);
     mpz_clear(y1);
     mpz_clear(x1);
     curve_uninit();

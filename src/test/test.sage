@@ -75,5 +75,5 @@ if __name__ == "__main__":
                     for (t, r, xOut, yOut) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "swu_test":
-        assert all( EllP(xOut, yOut) == swu(u)
-                    for (xOut, yOut, u) in ( eval(l) for l in sys.stdin.readlines() ) )
+        assert all( EllP(xOut, yOut) == swu(u1) + swu(u2)
+                    for (xOut, yOut, u1, u2) in ( eval(l) for l in sys.stdin.readlines() ) )

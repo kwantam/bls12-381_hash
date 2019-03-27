@@ -641,3 +641,10 @@ void swu_map(mpz_t x, mpz_t y, mpz_t u) {
     swu_help(0, u);
     from_jac_point(x, y, jp_tmp);
 }
+
+void swu_map2(mpz_t x, mpz_t y, mpz_t u1, mpz_t u2) {
+    swu_help(0, u1);
+    swu_help(1, u2);
+    point_add(jp_tmp, jp_tmp, jp_tmp + 1);
+    from_jac_point(x, y, jp_tmp);
+}
