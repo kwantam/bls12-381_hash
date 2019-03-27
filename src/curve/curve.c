@@ -9,11 +9,16 @@
 
 #include <string.h>
 
+// ***********************************
+// static consts and utility functions
+// ***********************************
+// init an mpz_t and set it from a constant defined in bls12_381_consts.h
 static inline void mpz_init_import(mpz_t out, const uint64_t *in) {
     mpz_init(out);
     mpz_import(out, 6, -1, 8, 0, 0, in);
 }
 
+// initialize the temporary variables and constants uesd in this file
 #define NUM_TMP_MPZ 7
 static mpz_t cx1, cx2, sqrtM27, invM27, mpz_tmp[NUM_TMP_MPZ], fld_p, pp1o2, pp1o4;
 static bool init_done = false;
@@ -43,6 +48,7 @@ void curve_init(void) {
     }
 }
 
+// uninitialize temporary variables and constants
 void curve_uninit(void) {
     if (init_done) {
         init_done = false;
@@ -91,6 +97,11 @@ static inline void condsub_p(mpz_t in) {
     }
 }
 
+
+
+// *********************
+// SvdW map to BLS12-381
+// *********************
 // Map to curve given by
 //   Shallue and van de Woestijne, "Construction of rational points on elliptic curves over finite fields."
 //   Proc. ANTS 2006. https://works.bepress.com/andrew_shallue/1/
@@ -203,6 +214,11 @@ bool check_fx(mpz_t y, const mpz_t x, bool negate, bool force) {
     return true;
 }
 
+
+
+// **************************
+// BLS12-381 curve operations
+// **************************
 // Jacobian coordinates: x = X/Z^2, y = Y/Z^3
 struct jac_point {
     uint64_t X[BINT_NWORDS];
