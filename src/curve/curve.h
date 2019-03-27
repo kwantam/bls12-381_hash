@@ -13,10 +13,11 @@ void curve_init(void);
 void precomp_init(void);
 void curve_uninit(void);
 
-// useful curve functions
+// functions for mapping to curve
 void svdw_map(mpz_t x, mpz_t y, const mpz_t t);
 void svdw_map2(mpz_t x1, mpz_t y1, const mpz_t t1, mpz_t x2, mpz_t y2, const mpz_t t2);
 bool check_fx(mpz_t y, const mpz_t x, bool negate, bool force);
+void swu_map(mpz_t x, mpz_t y, mpz_t u);
 
 // addition chain for clearing cofactor
 void clear_h(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY);

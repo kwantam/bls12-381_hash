@@ -10,6 +10,10 @@ h = 3 * 11**2 * 10177**2 * 859267**2 * 52437899**2
 gPrime = Ell(0x12d016e80c318f8a0097be925a89b9407479550d744e573a9438f1b2b41e750a2a5f1885c1ec0f54835eb4f7069257d2,
              0xd2553c973f28a7b1d2a781cfe09e8cb405529cdd1074ff20408a2943bef24938df961937462bbdea85bd083a1c43bc)
 
+EllP_a = 12190336318893619529228877361869031420615612348429846051986726275283378313155663745811710833465465981901188123677
+EllP_b = 2906670324641927570491258158026293881577086121416628140204402091718288198173574630967936031029026176254968826637280
+EllP = EllipticCurve(F, [EllP_a, EllP_b])
+
 cx1 = F((F(3) + sqrt(F(-27))) / F(2))
 cx2 = F((F(3) - sqrt(F(-27))) / F(2))
 
@@ -24,7 +28,7 @@ def svdw(t):
     fx2 = F(x2 ** 3 + 4)
     fx3 = F(x3 ** 3 + 4)
 
-    negate = 1 if t < (p + 1) / 2 else -1
+    negate = 1 if t < (p + 1) // 2 else -1
     if fx1.is_square():
         y = pow(fx1, (p+1)//4, p)
         return Ell(x1, y * negate)
@@ -35,6 +39,19 @@ def svdw(t):
 
     y = pow(fx3, (p+1)//4, p)
     return Ell(x3, y * negate)
+
+def swu(u):
+    if u in (-1, 0, 1):
+        return EllP(0, 1, 0)
+
+    x0 = F(-EllP_b / F(EllP_a) * (1 + 1 / F(u^4 - u^2)))
+    gx0 = F(x0^3 + EllP_a * x0 + EllP_b)
+    sqrtCand = pow(gx0, (p+1)//4, p)
+
+    if F(sqrtCand^2) == gx0:
+        negate = 1 if u < (p + 1) // 2 else -1
+        return EllP(x0, sqrtCand * negate)
+    return EllP(F(-u^2 * x0), F(u^3 * sqrtCand))
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -56,3 +73,7 @@ if __name__ == "__main__":
     elif sys.argv[1] == "rG":
         assert all( Ell(xOut, yOut) == h * svdw(t) + r * gPrime
                     for (t, r, xOut, yOut) in ( eval(l) for l in sys.stdin.readlines() ) )
+
+    elif sys.argv[1] == "swu_test":
+        assert all( EllP(xOut, yOut) == swu(u)
+                    for (xOut, yOut, u) in ( eval(l) for l in sys.stdin.readlines() ) )

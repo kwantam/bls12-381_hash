@@ -6,6 +6,7 @@
 
 #include "bint.h"
 #include "bls12_381_consts.h"
+#include "iso_params.h"
 
 #include <string.h>
 
@@ -19,8 +20,11 @@ static inline void mpz_init_import(mpz_t out, const uint64_t *in) {
 }
 
 // initialize the temporary variables and constants uesd in this file
-#define NUM_TMP_MPZ 7
-static mpz_t cx1, cx2, sqrtM27, invM27, mpz_tmp[NUM_TMP_MPZ], fld_p, pp1o2, pp1o4;
+#define NUM_TMP_MPZ 8
+static mpz_t cx1, cx2, sqrtM27, invM27, mpz_tmp[NUM_TMP_MPZ], fld_p, pp1o2, pp1o4, pm3o4;
+static mpz_t ellp_a, ellp_Mb;
+static mpz_t xmap_num[ELLP_XMAP_NUM_LEN], xmap_den[ELLP_XMAP_DEN_LEN];
+static mpz_t ymap_num[ELLP_YMAP_NUM_LEN], ymap_den[ELLP_YMAP_DEN_LEN];
 static bool init_done = false;
 void curve_init(void) {
     if (!init_done) {
@@ -30,16 +34,35 @@ void curve_init(void) {
         mpz_init(fld_p);
         mpz_init(pp1o4);
         mpz_init(pp1o2);
+        mpz_init(pm3o4);
         mpz_import(fld_p, P_LEN, 1, 1, 1, 0, BLS12_381_p);
-        mpz_add_ui(pp1o4, fld_p, 1);
-        mpz_fdiv_q_2exp(pp1o2, pp1o4, 1);
-        mpz_fdiv_q_2exp(pp1o4, pp1o4, 2);
+        mpz_add_ui(pp1o4, fld_p, 1);       // p+1
+        mpz_fdiv_q_2exp(pp1o2, pp1o4, 1);  // (p+1)/2  (for "sign")
+        mpz_fdiv_q_2exp(pp1o4, pp1o4, 2);  // (p+1)/4  (for square root)
+        mpz_sub_ui(pm3o4, fld_p, 3);       // p-3
+        mpz_fdiv_q_2exp(pm3o4, pm3o4, 2);  // (p-3)/4  (for simultaneous invert--square root)
 
         // SvdW constants
         mpz_init_import(cx1, Icx1);
         mpz_init_import(cx2, Icx2);
         mpz_init_import(sqrtM27, IsqrtM27);
         mpz_init_import(invM27, IinvM27);
+
+        // 11-isogeny constants
+        mpz_init_import(ellp_a, ELLP_a);
+        mpz_init_import(ellp_Mb, ELLP_negB);
+        for (unsigned i = 0; i < ELLP_XMAP_NUM_LEN; ++i) {
+            mpz_init_import(xmap_num[i], ELLP_XMAP_NUM[i]);
+        }
+        for (unsigned i = 0; i < ELLP_XMAP_DEN_LEN; ++i) {
+            mpz_init_import(xmap_den[i], ELLP_XMAP_DEN[i]);
+        }
+        for (unsigned i = 0; i < ELLP_YMAP_NUM_LEN; ++i) {
+            mpz_init_import(ymap_num[i], ELLP_YMAP_NUM[i]);
+        }
+        for (unsigned i = 0; i < ELLP_YMAP_DEN_LEN; ++i) {
+            mpz_init_import(ymap_den[i], ELLP_YMAP_DEN[i]);
+        }
 
         // temp variables
         for (unsigned i = 0; i < NUM_TMP_MPZ; ++i) {
@@ -57,12 +80,29 @@ void curve_uninit(void) {
         mpz_clear(fld_p);
         mpz_clear(pp1o4);
         mpz_clear(pp1o2);
+        mpz_clear(pm3o4);
 
         // SvdW constants
         mpz_clear(cx1);
         mpz_clear(cx2);
         mpz_clear(sqrtM27);
         mpz_clear(invM27);
+
+        // 11-isogeny constants
+        mpz_clear(ellp_a);
+        mpz_clear(ellp_Mb);
+        for (unsigned i = 0; i < ELLP_XMAP_NUM_LEN; ++i) {
+            mpz_clear(xmap_num[i]);
+        }
+        for (unsigned i = 0; i < ELLP_XMAP_DEN_LEN; ++i) {
+            mpz_clear(xmap_den[i]);
+        }
+        for (unsigned i = 0; i < ELLP_YMAP_NUM_LEN; ++i) {
+            mpz_clear(ymap_num[i]);
+        }
+        for (unsigned i = 0; i < ELLP_YMAP_DEN_LEN; ++i) {
+            mpz_clear(ymap_den[i]);
+        }
 
         // temp variables
         for (unsigned i = 0; i < NUM_TMP_MPZ; ++i) {
@@ -509,4 +549,95 @@ void addrG_clear_h(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY, con
     }
 
     from_jac_point(outX, outY, jp_tmp);
+}
+
+// ***************************************************************
+// S-vdW-Ulas "simplified" map for curves with nonzero j-invariant
+// ***************************************************************
+// Map to curve with j-invariant != 0, 1728 (i.e., NOT BLS12-381!)
+// This version is based on the description given by
+//   Tibouchi, "Elligator Squared: Uniform points on elliptic curves of prime order
+//   as uniform random strings." Proc. Financial Crypto 2014. https://eprint.iacr.org/2014/043.
+//
+// which comes from Section 7 of
+//   Brier, Coron, Icart, Madore, Randriam, Tibouchi. "Efficient indifferentiable hashing
+//   into ordinary elliptic curves." Proc. CRYPTO 2010. https://eprint.iacr.org/2009/340.
+//
+// which is itself a simplification of the one given by
+//   Ulas, "Rational points on certain hyperelliptic curves over finite fields."
+//   Bulletin of the Polish Academy of Science Mathematics, vol 55, no 2, pp 97--104, 2007.
+//
+// We use a couple small tricks to simplify evaluating (we justify in the document in the paper subdir)
+//   1. If g(X0(u)) is nonsquare, then u^3 * g(X0(u))^((p+1)/4) is a sqrt of g(X1(u))
+//   2. We can compute sqrt(u/v) without inverting v, via a trick given in Section 5 of
+//      Berinstein, Duif, Lange, Schwabe, and Yang, "High-speed high-security signatures."
+//      J. Crypto. Eng., vol 2, issue 2, pp 77--89, September 2012.
+//      http://ed25519.cr.yp.to/ed25519-20110926.pdf
+
+// XXX
+#include <stdio.h>
+
+static void swu_help(const unsigned jp_num, const mpz_t u) {
+    // compute numerator and denominator of X0(u)
+    sqr_modp(mpz_tmp[0], u);                      // u^2
+    sqr_modp(mpz_tmp[1], mpz_tmp[0]);             // u^4
+    mpz_sub(mpz_tmp[1], mpz_tmp[1], mpz_tmp[0]);  // u^4 - u^2
+    mpz_add_ui(mpz_tmp[2], mpz_tmp[1], 1);        // u^4 - u^2 + 1
+    mul_modp(mpz_tmp[2], mpz_tmp[2], ellp_Mb);    // -b * (u^4 - u^2 + 1)               => X0num
+    mul_modp(mpz_tmp[1], mpz_tmp[1], ellp_a);     // a * (u^4 - u^2)                    => Xden
+
+    // compute numerator and denominator of X0(u)^3 + aX0(u) + b
+    // for X0(u) = num/den, this is (num^3 + a * num * den^2 + b den^3) / den^3
+    sqr_modp(mpz_tmp[3], mpz_tmp[1]);              // den^2
+    mul_modp(mpz_tmp[4], mpz_tmp[2], mpz_tmp[3]);  // num * den^2
+    mul_modp(mpz_tmp[4], mpz_tmp[4], ellp_a);      // a * num * den^2
+                                                   //
+    mul_modp(mpz_tmp[3], mpz_tmp[3], mpz_tmp[1]);  // den^3
+    mul_modp(mpz_tmp[5], mpz_tmp[3], ellp_Mb);     // -b * den^3
+    mpz_sub(mpz_tmp[4], mpz_tmp[4], mpz_tmp[5]);   // a * num * den^2 + b * den^3
+                                                   //
+    sqr_modp(mpz_tmp[5], mpz_tmp[2]);              // num^2
+    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[2]);  // num^3
+    mpz_add(mpz_tmp[4], mpz_tmp[4], mpz_tmp[5]);   // (num^3 + a * num * den^2 + b * den^3)
+
+    // compute sqrt(U/V) where U = (num^3 + a * num * den^2 + b * den^3), V = den^3
+    sqr_modp(mpz_tmp[5], mpz_tmp[3]);                // V^2
+    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[3]);    // V^3
+    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[4]);    // U V^3
+    mpz_powm(mpz_tmp[5], mpz_tmp[5], pm3o4, fld_p);  // (U V^3)^((p-3)/4)
+    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[4]);    // U * (U V^3)^((p-3)/4)
+    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[3]);    // U * V * (U V^3)^((p-3)/4)
+
+    // test if this is the correct sqrt: sqrtCand^2 * V - U = 0 mod p
+    sqr_modp(mpz_tmp[6], mpz_tmp[5]);              // sqrtCand^2
+    mul_modp(mpz_tmp[6], mpz_tmp[6], mpz_tmp[3]);  // sqrtCand^2 * V
+    mpz_sub(mpz_tmp[6], mpz_tmp[6], mpz_tmp[4]);   // sqrtCand^2 * V - U
+    mpz_mod(mpz_tmp[6], mpz_tmp[6], fld_p);        // sqrtCand^2 * V - U mod p
+    if (mpz_cmp_ui(mpz_tmp[6], 0) != 0) {
+        // g(X0(u)) was nonsquare, so convert to g(X1(u))
+        // NOTE: multiplying by u^3 preserves sign of u, so no need to apply sgn0(u) to y
+        mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[0]);  // u^2 * sqrtCand
+        mul_modp(mpz_tmp[5], mpz_tmp[5], u);           // u^3 * sqrtCand
+        mul_modp(mpz_tmp[2], mpz_tmp[2], mpz_tmp[0]);  // -b * u^2 * (u^4 - u^2 + 1)
+        mpz_sub(mpz_tmp[2], fld_p, mpz_tmp[2]);        // b * u^2 * (u^4 - u^2 + 1)     => X1num
+    } else if (mpz_cmp(pp1o2, u) <= 0) {
+        // g(X0(u)) was square and u is negative, so negate y
+        mpz_sub(mpz_tmp[5], fld_p, mpz_tmp[5]);  // negate y because u is negative
+    }
+
+    // now compute X, Y, and Z
+    mul_modp(mpz_tmp[2], mpz_tmp[2], mpz_tmp[1]);  // Xnum * Xden = X  =>  x = Xnum/Xden = X / Xden^2
+    sqr_modp(mpz_tmp[0], mpz_tmp[1]);              // Xden^2
+    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[0]);  // y * Xden^2 = Y/Z
+    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[1]);  // y * Xden^3 = Y
+
+    // export to jacobian point
+    bint_import_mpz(jp_tmp[jp_num].X, mpz_tmp[2]);  // X
+    bint_import_mpz(jp_tmp[jp_num].Y, mpz_tmp[5]);  // Y
+    bint_import_mpz(jp_tmp[jp_num].Z, mpz_tmp[1]);  // Z
+}
+
+void swu_map(mpz_t x, mpz_t y, mpz_t u) {
+    swu_help(0, u);
+    from_jac_point(x, y, jp_tmp);
 }
