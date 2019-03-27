@@ -39,9 +39,8 @@ int main(int argc, char **argv) {
     for (unsigned i = 0; i < opts.nreps; ++i) {
         next_prng(prng_ctx, &hash_ctx, i);
         next_modp(prng_ctx, t1);
-        svdw_map(x1, y1, t1);
         next_modp(prng_ctx, t2);
-        svdw_map(x2, y2, t2);
+        svdw_map2(x1, y1, t1, x2, y2, t2);
 
         // show results                     svdw_add2
         //   test:                          (x1, y1, x2, y2, xO, yO)

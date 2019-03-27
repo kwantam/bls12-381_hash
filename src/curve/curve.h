@@ -15,6 +15,7 @@ void curve_uninit(void);
 
 // useful curve functions
 void svdw_map(mpz_t x, mpz_t y, const mpz_t t);
+void svdw_map2(mpz_t x1, mpz_t y1, const mpz_t t1, mpz_t x2, mpz_t y2, const mpz_t t2);
 bool check_fx(mpz_t y, const mpz_t x, bool negate, bool force);
 
 // addition chain for clearing cofactor

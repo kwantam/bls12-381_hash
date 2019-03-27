@@ -9,12 +9,12 @@
 
 #include <string.h>
 
-static void mpz_init_import(mpz_t out, const uint64_t *in) {
+static inline void mpz_init_import(mpz_t out, const uint64_t *in) {
     mpz_init(out);
     mpz_import(out, 6, -1, 8, 0, 0, in);
 }
 
-#define NUM_TMP_MPZ 3
+#define NUM_TMP_MPZ 7
 static mpz_t cx1, cx2, sqrtM27, invM27, mpz_tmp[NUM_TMP_MPZ], fld_p, pp1o2, pp1o4;
 static bool init_done = false;
 void curve_init(void) {
@@ -66,33 +66,26 @@ void curve_uninit(void) {
 }
 
 // in ^ 2 mod p
-static void sqr_modp(mpz_t out, const mpz_t in) {
+static inline void sqr_modp(mpz_t out, const mpz_t in) {
     mpz_mul(out, in, in);
     mpz_mod(out, out, fld_p);
 }
 
 // in1 * in2 mod p
-static void mul_modp(mpz_t out, const mpz_t in1, const mpz_t in2) {
+static inline void mul_modp(mpz_t out, const mpz_t in1, const mpz_t in2) {
     mpz_mul(out, in1, in2);
     mpz_mod(out, out, fld_p);
 }
 
-// in ^ -1 mod p, but set out = 0 if in = 0
-static void inv0_modp(mpz_t out, const mpz_t in) {
-    if (mpz_invert(out, in, fld_p) == 0) {
-        mpz_set_ui(out, 0);
-    }
-}
-
 // modular reduction when we know that -p <= in < p
-static void condadd_p(mpz_t in) {
+static inline void condadd_p(mpz_t in) {
     if (mpz_cmp_ui(in, 0) < 0) {
         mpz_add(in, in, fld_p);
     }
 }
 
 // modular reduction when we know that 0 <= in < 2p
-static void condsub_p(mpz_t in) {
+static inline void condsub_p(mpz_t in) {
     if (mpz_cmp(in, fld_p) >= 0) {
         mpz_sub(in, in, fld_p);
     }
@@ -110,42 +103,85 @@ static void condsub_p(mpz_t in) {
 //
 // NOTE: t must be reduced mod p!
 // t == x is OK, but x and y must be distinct
-void svdw_map(mpz_t x, mpz_t y, const mpz_t t) {
-    // first, save off sign of t (because maybe t is aliased with x)
-    const bool neg_t = mpz_cmp(pp1o2, t) <= 0;  // true (negative) when t >= (p+1)/2
-
-    sqr_modp(mpz_tmp[0], t);                       // t^2
-    mpz_ui_sub(mpz_tmp[1], 23, mpz_tmp[0]);        // 23 - t^2
-                                                   //
-    mul_modp(mpz_tmp[2], mpz_tmp[1], mpz_tmp[0]);  // t^2 * (23 - t^2)
-    inv0_modp(mpz_tmp[2], mpz_tmp[2]);             // (t^2 * (23 - t^2)) ^ -1, or 0 if t == 0
-                                                   //
-    sqr_modp(mpz_tmp[0], mpz_tmp[0]);              // t^4
-    mul_modp(mpz_tmp[0], mpz_tmp[0], mpz_tmp[2]);  // t^2 / (23 - t^2)
-    mul_modp(mpz_tmp[0], mpz_tmp[0], sqrtM27);     // t^2 sqrt(-27) / (23 - t^2)
-
+// compute the map after precomp and inversion
+static inline void svdw_map_help(mpz_t x, mpz_t y, const bool neg_t, const unsigned tmp_offset) {
     // x1
-    mpz_add(x, cx1, mpz_tmp[0]);  // (3 - sqrt(-27))/2 + t^2 * sqrt(-27) / (23 - t^2)
+    mpz_add(x, cx1, mpz_tmp[tmp_offset]);  // (3 - sqrt(-27))/2 + t^2 * sqrt(-27) / (23 - t^2)
     if (check_fx(y, x, neg_t, false)) {
-        condsub_p(x);  // reduce x mod p (mpz_tmp[0] and cx1 were both reduced, so x < 2p)
+        condsub_p(x);  // reduce x mod p (mpz_tmp[tmp_offset] and cx1 were both reduced, so x < 2p)
         return;
     }
 
     // x2
-    mpz_sub(x, cx2, mpz_tmp[0]);  // (3 - sqrt(-27))/2 - t^2 * sqrt(-27) / (23 - t^2)
+    mpz_sub(x, cx2, mpz_tmp[tmp_offset]);  // (3 - sqrt(-27))/2 - t^2 * sqrt(-27) / (23 - t^2)
     if (check_fx(y, x, neg_t, false)) {
-        condadd_p(x);  // reduce x mod p (mpz_tmp[0] and cx2 were both reduced, so x > -p)
+        condadd_p(x);  // reduce x mod p (mpz_tmp[tmp_offset] and cx2 were both reduced, so x > -p)
         return;
     }
 
     // x3
-    sqr_modp(x, mpz_tmp[1]);     // (23 - t^2)^2
-    mul_modp(x, x, mpz_tmp[1]);  // (23 - t^2)^3
-    mul_modp(x, x, mpz_tmp[2]);  // (23 - t^2)^2 / t^2
-    mul_modp(x, x, invM27);      // - (23 - t^2)^2 / (27 * t^2)
-    mpz_sub_ui(x, x, 3);         // -3 - (23 - t^2)^2 / (27 * t^2)
-    condadd_p(x);                // reduce x mod p (subtracted p from a reduced value, so x >= -3)
+    sqr_modp(x, mpz_tmp[tmp_offset + 1]);     // (23 - t^2)^2
+    mul_modp(x, x, mpz_tmp[tmp_offset + 1]);  // (23 - t^2)^3
+    mul_modp(x, x, mpz_tmp[tmp_offset + 2]);  // (23 - t^2)^2 / t^2
+    mul_modp(x, x, invM27);                   // - (23 - t^2)^2 / (27 * t^2)
+    mpz_sub_ui(x, x, 3);                      // -3 - (23 - t^2)^2 / (27 * t^2)
+    condadd_p(x);                             // reduce x mod p (subtracted p from a reduced value, so x >= -3)
     check_fx(y, x, neg_t, true);
+}
+
+// pre-inversion precomp
+static inline void svdw_precomp1(const mpz_t t, const unsigned tmp_offset) {
+    sqr_modp(mpz_tmp[tmp_offset], t);                                                 // t^2
+    mpz_ui_sub(mpz_tmp[tmp_offset + 1], 23, mpz_tmp[tmp_offset]);                     // 23 - t^2
+    mul_modp(mpz_tmp[tmp_offset + 2], mpz_tmp[tmp_offset + 1], mpz_tmp[tmp_offset]);  // t^2 * (23 - t^2)
+}
+
+// post-inversion precomp
+static inline void svdw_precomp2(const unsigned tmp_offset) {
+    sqr_modp(mpz_tmp[tmp_offset], mpz_tmp[tmp_offset]);                           // t^4
+    mul_modp(mpz_tmp[tmp_offset], mpz_tmp[tmp_offset], mpz_tmp[tmp_offset + 2]);  // t^2 / (23 - t^2)
+    mul_modp(mpz_tmp[tmp_offset], mpz_tmp[tmp_offset], sqrtM27);                  // t^2 sqrt(-27) / (23 - t^2)
+}
+
+// apply the SvdW map to point t
+void svdw_map(mpz_t x, mpz_t y, const mpz_t t) {
+    svdw_precomp1(t, 0);  // compute input to inversion in mpz_tmp[2]
+    if (mpz_cmp_ui(mpz_tmp[2], 0) != 0) {
+        mpz_invert(mpz_tmp[2], mpz_tmp[2], fld_p);  // invert if nonzero
+    }
+    svdw_precomp2(0);                           // compute non-constant part of x1 and x2 in tmp0
+    const bool neg_t = mpz_cmp(pp1o2, t) <= 0;  // true (negative) when t >= (p+1)/2
+    svdw_map_help(x, y, neg_t, 0);              // finish computing the map
+}
+
+// Apply the SvdW map to two points simultaneously
+// This saves an inversion vs two calls to svdw_map().
+void svdw_map2(mpz_t x1, mpz_t y1, const mpz_t t1, mpz_t x2, mpz_t y2, const mpz_t t2) {
+    svdw_precomp1(t1, 0);  // inversion input for t1
+    svdw_precomp1(t2, 3);  // inversion input for t2
+
+    // invert one or both of mpz_tmp[2] and mpz_tmp[5]
+    const bool p10 = mpz_cmp_ui(mpz_tmp[2], 0) == 0;  // t1^2 * (23 - t1^2) != 0
+    const bool p20 = mpz_cmp_ui(mpz_tmp[5], 0) == 0;  // t2^2 * (23 - t2^2) != 0
+    if (p10 && !p20) {
+        mpz_invert(mpz_tmp[5], mpz_tmp[5], fld_p);  // (t2^2 * (23 - t2^2)) ^ -1
+    } else if (!p10 && p20) {
+        mpz_invert(mpz_tmp[2], mpz_tmp[2], fld_p);  // (t1^2 * (23 - t1^2)) ^ -1
+    } else if (!p10 && !p20) {
+        mul_modp(mpz_tmp[7], mpz_tmp[5], mpz_tmp[2]);  // (t1^2 * (23 - t1^2) * t2^2 * (23 - t2^2))
+        mpz_invert(mpz_tmp[7], mpz_tmp[7], fld_p);     // (t1^2 * (23 - t1^2) * t2^2 * (23 - t2^2)) ^ -1
+        mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[7]);  // (t1^2 * (23 - t1^2)) ^ -1
+        mul_modp(mpz_tmp[2], mpz_tmp[2], mpz_tmp[7]);  // (t2^2 * (23 - t2^2)) ^ -1
+        mpz_swap(mpz_tmp[2], mpz_tmp[5]);              // [2] should hold t1 val, [5] should hold t2 val
+    }
+
+    svdw_precomp2(0);  // non-constant part of x11 and x12
+    svdw_precomp2(3);  // non-constant part of x21 and x22
+
+    const bool neg_t1 = mpz_cmp(pp1o2, t1) <= 0;  // t1 negative
+    svdw_map_help(x1, y1, neg_t1, 0);             // finish computing the first map
+    const bool neg_t2 = mpz_cmp(pp1o2, t2) <= 0;  // t2 negative
+    svdw_map_help(x2, y2, neg_t2, 3);             // finish computing the second map
 }
 
 // check if x is a point on the curve; if so, compute the corresponding y-coord with given sign
@@ -183,7 +219,7 @@ static uint64_t bint_tmp[NUM_TMP_BINT][BINT_NWORDS];
 // double a point in Jacobian coordinates
 // out == in is OK
 // from EFD: https://www.hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-0.html#doubling-dbl-2009-l
-static void point_double(struct jac_point *out, const struct jac_point *in) {
+static inline void point_double(struct jac_point *out, const struct jac_point *in) {
     bint_sqr(bint_tmp[0], in->X);                        // A = X^2                      v = 2   w = 1
     bint_sqr(bint_tmp[1], in->Y);                        // B = Y^2                      v = 2   w = 1
     bint_sqr(bint_tmp[2], bint_tmp[1]);                  // C = B^2                      v = 2   w = 1
@@ -217,7 +253,7 @@ static void point_double(struct jac_point *out, const struct jac_point *in) {
 // out == in1 or out == in2 is OK
 // NOTE: out->Y remains unreduced, but it meets numerical stability criteria
 // from EFD: https://www.hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-0.html#addition-add-2007-bl
-static void point_add(struct jac_point *out, const struct jac_point *in1, const struct jac_point *in2) {
+static inline void point_add(struct jac_point *out, const struct jac_point *in1, const struct jac_point *in2) {
     bint_sqr(bint_tmp[0], in1->Z);                       // Z1Z1 = Z1^2                  v = 2   w = 1
                                                          //
     bint_sqr(bint_tmp[1], in2->Z);                       // Z2Z2 = Z2^2                  v = 2   w = 1
@@ -263,7 +299,7 @@ static void point_add(struct jac_point *out, const struct jac_point *in1, const 
 }
 
 // convert from a jac_point to a pair of mpz_t
-static void from_jac_point(mpz_t outX, mpz_t outY, const struct jac_point *jp) {
+static inline void from_jac_point(mpz_t outX, mpz_t outY, const struct jac_point *jp) {
     // convert from bint to gmp
     bint_export_mpz(outX, jp->X);
     bint_export_mpz(outY, jp->Y);
@@ -278,7 +314,7 @@ static void from_jac_point(mpz_t outX, mpz_t outY, const struct jac_point *jp) {
 }
 
 // convert from a pair of mpz_t to a jac_point
-static void to_jac_point(struct jac_point *jp, const mpz_t inX, const mpz_t inY) {
+static inline void to_jac_point(struct jac_point *jp, const mpz_t inX, const mpz_t inY) {
     bint_import_mpz(jp->X, inX);
     bint_import_mpz(jp->Y, inY);
     bint_set1(jp->Z);
@@ -287,7 +323,7 @@ static void to_jac_point(struct jac_point *jp, const mpz_t inX, const mpz_t inY)
 // Addition chain: Bos-Coster (win=7) : 147 links, 8 variables
 // input point is taken from jp_tmp[1]
 // TODO(rsw): is there a faster addition-subtraction chain?
-static void clear_h_chain(mpz_t outX, mpz_t outY) {
+static inline void clear_h_chain(mpz_t outX, mpz_t outY) {
     point_double(jp_tmp + 3, jp_tmp + 1);
     point_add(jp_tmp + 2, jp_tmp + 3, jp_tmp + 1);
     point_double(jp_tmp + 5, jp_tmp + 3);
@@ -403,7 +439,7 @@ void precomp_init(void) {
 }
 
 // precompute the part of the addrG table that involves the input point
-static void precomp_finish(void) {
+static inline void precomp_finish(void) {
     // precondition: bint_precomp[1][0][0] is the point we need to fill the table with
     point_double(&bint_precomp[2][0][0], &bint_precomp[1][0][0]);
     point_add(&bint_precomp[3][0][0], &bint_precomp[2][0][0], &bint_precomp[1][0][0]);
