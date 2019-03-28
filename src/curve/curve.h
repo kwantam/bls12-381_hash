@@ -13,12 +13,15 @@ void curve_init(void);
 void precomp_init(void);
 void curve_uninit(void);
 
-// functions for mapping to curve
+// functions for Shallue and van de Woestijne's map to curve
 void svdw_map(mpz_t x, mpz_t y, const mpz_t t);
 void svdw_map2(mpz_t x1, mpz_t y1, const mpz_t t1, mpz_t x2, mpz_t y2, const mpz_t t2);
 bool check_fx(mpz_t y, const mpz_t x, bool negate, bool force);
-void swu_map(mpz_t x, mpz_t y, mpz_t u);
-void swu_map2(mpz_t x, mpz_t y, mpz_t u1, mpz_t u2);
+
+// functions for simplified Brier et al. / Shallue, van de Woestijne, and Ulam map to curve
+void swu_map(mpz_t x, mpz_t y, const mpz_t u);
+void swu_map2(mpz_t x, mpz_t y, const mpz_t u1, const mpz_t u2);
+void swu_map_rG(mpz_t x, mpz_t y, const mpz_t u, const uint8_t *r);
 
 // addition chain for clearing cofactor
 void clear_h(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY);

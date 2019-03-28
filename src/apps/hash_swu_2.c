@@ -36,7 +36,17 @@ int main(int argc, char **argv) {
         next_modp(prng_ctx, u2);
         swu_map2(x1, y1, u1, u2);
 
-        gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, u1, u2);
+        // show results
+        //   test:              (xO, yO, u1, u2)
+        //   quiet && !test:    <<nothing>>
+        //   !quiet && !test:   (xO, yO)
+
+        // maybe output the points
+        if (opts.test) {
+            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, u1, u2);
+        } else if (!opts.quiet) {
+            gmp_printf("(0x%Zx, 0x%Zx, )\n", x1, y1);
+        }
     }
 
     // free

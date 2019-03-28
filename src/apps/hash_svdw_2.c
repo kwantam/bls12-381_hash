@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
         svdw_map2(x1, y1, t1, x2, y2, t2);
 
         // show results                     svdw_add2
-        //   test:                          (x1, y1, x2, y2, xO, yO)
+        //   test:                          (t1, t2, xO, yO)
         //   quiet && !test:                <<nothing>>
         //   !quiet && !test && clear_h:    (xO, yO)
         //   !quiet && !test && !clear_h:   (x1, y1, x2, y2)

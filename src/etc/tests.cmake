@@ -1,7 +1,11 @@
 enable_testing()
 
 add_test(NAME t_hash_and_try COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_and_try" "${PROJECT_SOURCE_DIR}/test/test.sage" "try")
+
 add_test(NAME t_hash_svdw_1 COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_svdw_1" "${PROJECT_SOURCE_DIR}/test/test.sage" "1")
 add_test(NAME t_hash_svdw_2 COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_svdw_2" "${PROJECT_SOURCE_DIR}/test/test.sage" "2")
 add_test(NAME t_hash_svdw_rG COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_svdw_rG" "${PROJECT_SOURCE_DIR}/test/test.sage" "rG")
-add_test(NAME t_swu_test COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/swu_test" "${PROJECT_SOURCE_DIR}/test/test.sage" "swu_test")
+
+add_test(NAME t_hash_swu_1 COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_1" "${PROJECT_SOURCE_DIR}/test/test.sage" "u1")
+add_test(NAME t_hash_swu_2 COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_2" "${PROJECT_SOURCE_DIR}/test/test.sage" "u2")
+add_test(NAME t_hash_swu_rG COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_rG" "${PROJECT_SOURCE_DIR}/test/test.sage" "urG")

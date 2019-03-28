@@ -64,7 +64,7 @@ static inline bool lt_be(const uint8_t *a, const uint8_t *b, size_t len) {
 // clang-format off
 static uint8_t ZEROS[P_LEN] = {0,};
 // clang-format on
-static int next_com(EVP_CIPHER_CTX *cctx, uint8_t *out, int len, const uint8_t *max, uint8_t mask) {
+static inline int next_com(EVP_CIPHER_CTX *cctx, uint8_t *out, int len, const uint8_t *max, uint8_t mask) {
     int outl = len;
     CHECK_CRYPTO(EVP_EncryptUpdate(cctx, out, &outl, ZEROS, len));
     CHECK_CRYPTO(outl == len);

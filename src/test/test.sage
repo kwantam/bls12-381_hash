@@ -12,7 +12,16 @@ gPrime = Ell(0x12d016e80c318f8a0097be925a89b9407479550d744e573a9438f1b2b41e750a2
 
 EllP_a = 12190336318893619529228877361869031420615612348429846051986726275283378313155663745811710833465465981901188123677
 EllP_b = 2906670324641927570491258158026293881577086121416628140204402091718288198173574630967936031029026176254968826637280
+kpoly = [ 2955185177626169647543871026716143749798776473583611826109464091094397474242531465369792566109106337274460167892487
+        , 368290328279919699380600918531504139062319804596715301915067438724165980997443279928362378653594520746075110864816
+        , 2956695361339193066682181833380513374227982887255347166494009902960246484641139874171795235175561134113346246778169
+        , 1426262776564302641609273031767820829543220110075666692709214249985201803031422328413319637086750536774929261013316
+        , 721398571713745716315313195033211010796752582794315199168745550044278639029030032465331939076562082409261408087685
+        , 1
+        ]
 EllP = EllipticCurve(F, [EllP_a, EllP_b])
+# this is the isogeny, but with the opposite sign for y (Sage, you are weird)
+iso = EllipticCurveIsogeny(EllP, kpoly, codomain=Ell, degree=11)
 
 cx1 = F((F(3) + sqrt(F(-27))) / F(2))
 cx2 = F((F(3) - sqrt(F(-27))) / F(2))
@@ -53,10 +62,13 @@ def swu(u):
         return EllP(x0, sqrtCand * negate)
     return EllP(F(-u^2 * x0), F(u^3 * sqrtCand))
 
+def usage():
+    print("Usage: %s <type>\n<type> is one of 'try', '1', '2', 'rG', 'u1', 'u2', 'urG'\n")
+    sys.exit(1)
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: %s <type>\n<type> is one of 'try', '1', '2', 'rG'\n")
-        sys.exit(1)
+        usage()
 
     if sys.argv[1] == "try":
         assert all( Ell(xOut, yOut) == h * Ell(xIn, yIn)
@@ -74,6 +86,17 @@ if __name__ == "__main__":
         assert all( Ell(xOut, yOut) == h * svdw(t) + r * gPrime
                     for (t, r, xOut, yOut) in ( eval(l) for l in sys.stdin.readlines() ) )
 
-    elif sys.argv[1] == "swu_test":
-        assert all( EllP(xOut, yOut) == swu(u1) + swu(u2)
+    elif sys.argv[1] == "u1":
+        assert all( Ell(xOut, yOut) == -h * iso(swu(u))
+                    for (xOut, yOut, u) in ( eval(l) for l in sys.stdin.readlines() ) )
+
+    elif sys.argv[1] == "u2":
+        assert all( Ell(xOut, yOut) == -h * iso(swu(u1) + swu(u2))
                     for (xOut, yOut, u1, u2) in ( eval(l) for l in sys.stdin.readlines() ) )
+
+    elif sys.argv[1] == "urG":
+        assert all( Ell(xOut, yOut) == -h * iso(swu(u)) + r * gPrime
+                    for (xOut, yOut, u, r) in ( eval(l) for l in sys.stdin.readlines() ) )
+
+    else:
+        usage()

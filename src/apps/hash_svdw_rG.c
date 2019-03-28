@@ -41,10 +41,10 @@ int main(int argc, char **argv) {
         const uint8_t *r = next_modq(prng_ctx, opts.test ? &rr : NULL);
 
         // show results                     svdw_addrG
-        //   test:                          (xI, yI, r, xO, yO)
+        //   test:                          (t, r, xO, yO)
         //   quiet && !test:                <<nothing>>
         //   !quiet && !test && clear_h:    (xO, yO)
-        //   !quiet && !test && !clear_h:   (xI, yI, r)
+        //   !quiet && !test && !clear_h:   (xI, yI)
         if (first_print || second_print) {
             printf("(");
         }
