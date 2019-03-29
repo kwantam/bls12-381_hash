@@ -27,11 +27,17 @@ cx1 = F((F(3) + sqrt(F(-27))) / F(2))
 cx2 = F((F(3) - sqrt(F(-27))) / F(2))
 
 def svdw(t):
-    x12val = F(t ** 2) * sqrt(F(-27)) / F(23 - t ** 2)
+    if t == 0:
+        x12val = 0
+    else:
+        x12val = F(t ** 2) * sqrt(F(-27)) / F(23 - t ** 2)
 
     x1 = F(cx1 + x12val)
     x2 = F(cx2 - x12val)
-    x3 = F(-3 - (23 - t ** 2) ** 2 / F(27 * t ** 2))
+    if t == 0:
+        x3 = 0
+    else:
+        x3 = F(-3 - (23 - t ** 2) ** 2 / F(27 * t ** 2))
 
     fx1 = F(x1 ** 3 + 4)
     fx2 = F(x2 ** 3 + 4)
@@ -50,16 +56,18 @@ def svdw(t):
     return Ell(x3, y * negate)
 
 def swu(u):
-    if u in (-1, 0, 1):
-        return EllP(0, 1, 0)
-
-    x0 = F(-EllP_b / F(EllP_a) * (1 + 1 / F(u^4 - u^2)))
+    if u in (p-1, 0, 1):
+        x0 = -EllP_b / EllP_a
+        u = p - u  # sign disagreement between this impl and curve/curve.c
+    else:
+        x0 = F(-EllP_b / F(EllP_a) * (1 + 1 / F(u^4 - u^2)))
     gx0 = F(x0^3 + EllP_a * x0 + EllP_b)
     sqrtCand = pow(gx0, (p+1)//4, p)
 
     if F(sqrtCand^2) == gx0:
         negate = 1 if u < (p + 1) // 2 else -1
         return EllP(x0, sqrtCand * negate)
+
     return EllP(F(-u^2 * x0), F(u^3 * sqrtCand))
 
 def usage():

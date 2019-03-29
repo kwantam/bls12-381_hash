@@ -35,7 +35,12 @@ int main(int argc, char **argv) {
     // loop through different resulting PRNG keys
     for (unsigned i = 0; i < opts.nreps; ++i) {
         next_prng(prng_ctx, &hash_ctx, i);
-        next_modp(prng_ctx, t);
+        if (opts.test && i == 0) {
+            // in test mode, make sure exceptional input gives correct result
+            mpz_set_ui(t, 0);
+        } else {
+            next_modp(prng_ctx, t);
+        }
         svdw_map(x1, y1, t);
 
         // show results                     svdw_basic

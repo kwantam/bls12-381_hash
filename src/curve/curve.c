@@ -618,6 +618,10 @@ static inline void swu_help(const unsigned jp_num, const mpz_t u) {
     mpz_ui_sub(mpz_tmp[2], 1, mpz_tmp[1]);        // u^4 - u^2 + 1
     mul_modp(mpz_tmp[2], mpz_tmp[2], ellp_b);     // b * (u^4 - u^2 + 1)                => X0num
     mul_modp(mpz_tmp[1], mpz_tmp[1], ellp_a);     // a * (u^2 - u^4)                    => Xden
+    if (mpz_cmp_ui(mpz_tmp[1], 0) == 0) {
+        // u was 0, -1, 1, so num is b and den is 0; set den to -a, because -b/a is square in Fp
+        mpz_neg(mpz_tmp[1], ellp_a);
+    }
 
     // compute numerator and denominator of X0(u)^3 + aX0(u) + b
     // for X0(u) = num/den, this is (num^3 + a * num * den^2 + b den^3) / den^3

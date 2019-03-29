@@ -13,6 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 
+// hash stdin into an OpenSSL SHA256_CTX
 #define RDBUF_SIZE 4096
 void hash_stdin(SHA256_CTX *ctx) {
     char buf[RDBUF_SIZE];
@@ -32,6 +33,9 @@ void hash_stdin(SHA256_CTX *ctx) {
 }
 #undef RDBUF_SIZE
 
+// given a SHA256_CTX that contains a hash of stdin:
+//   1. append little endian representation of 32-bit idx and finalize the hash
+//   2. set the key and IV of the supplied AES-CTR cipher context from the hash output
 void next_prng(EVP_CIPHER_CTX *cctx, const SHA256_CTX *hctx, uint32_t idx) {
     // make a copy of the context
     SHA256_CTX lctx;
@@ -49,6 +53,7 @@ void next_prng(EVP_CIPHER_CTX *cctx, const SHA256_CTX *hctx, uint32_t idx) {
     CHECK_CRYPTO(EVP_EncryptInit(cctx, EVP_aes_128_ctr(), key_iv, key_iv + 16));
 }
 
+// compare buffer representing bigint in big endian format
 static inline bool lt_be(const uint8_t *a, const uint8_t *b, size_t len) {
     for (size_t i = 0; i < len; ++i) {
         if (a[i] < b[i]) {
@@ -61,6 +66,7 @@ static inline bool lt_be(const uint8_t *a, const uint8_t *b, size_t len) {
     return false;
 }
 
+// output the required number of bytes into the output buffer, mask, and compare to the max value
 // clang-format off
 static uint8_t ZEROS[P_LEN] = {0,};
 // clang-format on
@@ -76,6 +82,7 @@ static inline int next_com(EVP_CIPHER_CTX *cctx, uint8_t *out, int len, const ui
     return -1;
 }
 
+// return the next value mod p from the PRNG represented by the supplied cipher context
 bool next_modp(EVP_CIPHER_CTX *cctx, mpz_t ret) {
     uint8_t p_out[P_LEN];
     int b;
@@ -85,6 +92,16 @@ bool next_modp(EVP_CIPHER_CTX *cctx, mpz_t ret) {
     return b != 0;
 }
 
+// set supplied mpz_t to p-1, i.e., -1 mod p
+void mpz_set_pm1(mpz_t out) {
+    mpz_import(out, P_LEN, 1, 1, 1, 0, BLS12_381_p);
+    mpz_sub_ui(out, out, 1);
+}
+
+// return the next value mod q from the PRNG represented by the supplied cipher context
+// return value is pointer to static buffer containing bytes of value mod q
+// (this is because the multiexp routine in curve/curve.c expects this format)
+// Also, if out is not NULL, convert byte buffer to mpz_t (used for testing)
 uint8_t *next_modq(EVP_CIPHER_CTX *cctx, mpz_t *out) {
     static uint8_t ret[Q_LEN];
     while (next_com(cctx, ret, Q_LEN, BLS12_381_q, 0x73) < 0) {
@@ -95,6 +112,7 @@ uint8_t *next_modq(EVP_CIPHER_CTX *cctx, mpz_t *out) {
     return ret;
 }
 
+// process commandline options into a struct cmdline_opts
 struct cmdline_opts get_cmdline_opts(int argc, char **argv) {
     struct cmdline_opts ret = {0, true, false, false};
     int opt_ret;
