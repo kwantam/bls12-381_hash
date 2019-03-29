@@ -33,7 +33,7 @@ static inline void mpz_init_import(mpz_t out, const uint64_t *in) {
 // initialize the temporary variables and constants uesd in this file
 #define NUM_TMP_MPZ 33  // NOTE: needs to be at least 3 + ELLP_YMAP_DEN_LEN + ELLP_YMAP_NUM_LEN
 static mpz_t cx1, cx2, sqrtM27, invM27, mpz_tmp[NUM_TMP_MPZ], fld_p, pp1o2, pp1o4, pm3o4;
-static mpz_t ellp_a, ellp_Mb, pm2, pm1o2;
+static mpz_t ellp_a, ellp_b, pm2, pm1o2;
 static mpz_t xmap_num[ELLP_XMAP_NUM_LEN], xmap_den[ELLP_XMAP_DEN_LEN];
 static mpz_t ymap_num[ELLP_YMAP_NUM_LEN], ymap_den[ELLP_YMAP_DEN_LEN];
 static bool init_done = false;
@@ -66,7 +66,7 @@ void curve_init(void) {
 
         // 11-isogeny constants
         mpz_init_import(ellp_a, ELLP_a);
-        mpz_init_import(ellp_Mb, ELLP_negB);
+        mpz_init_import(ellp_b, ELLP_b);
         for (unsigned i = 0; i < ELLP_XMAP_NUM_LEN; ++i) {
             mpz_init_import(xmap_num[i], ELLP_XMAP_NUM[i]);
         }
@@ -108,7 +108,7 @@ void curve_uninit(void) {
 
         // 11-isogeny constants
         mpz_clear(ellp_a);
-        mpz_clear(ellp_Mb);
+        mpz_clear(ellp_b);
         for (unsigned i = 0; i < ELLP_XMAP_NUM_LEN; ++i) {
             mpz_clear(xmap_num[i]);
         }
@@ -614,10 +614,10 @@ static inline void swu_help(const unsigned jp_num, const mpz_t u) {
     // compute numerator and denominator of X0(u)
     sqr_modp(mpz_tmp[0], u);                      // u^2
     sqr_modp(mpz_tmp[1], mpz_tmp[0]);             // u^4
-    mpz_sub(mpz_tmp[1], mpz_tmp[1], mpz_tmp[0]);  // u^4 - u^2
-    mpz_add_ui(mpz_tmp[2], mpz_tmp[1], 1);        // u^4 - u^2 + 1
-    mul_modp(mpz_tmp[2], mpz_tmp[2], ellp_Mb);    // -b * (u^4 - u^2 + 1)               => X0num
-    mul_modp(mpz_tmp[1], mpz_tmp[1], ellp_a);     // a * (u^4 - u^2)                    => Xden
+    mpz_sub(mpz_tmp[1], mpz_tmp[0], mpz_tmp[1]);  // u^2 - u^4
+    mpz_ui_sub(mpz_tmp[2], 1, mpz_tmp[1]);        // u^4 - u^2 + 1
+    mul_modp(mpz_tmp[2], mpz_tmp[2], ellp_b);     // b * (u^4 - u^2 + 1)                => X0num
+    mul_modp(mpz_tmp[1], mpz_tmp[1], ellp_a);     // a * (u^2 - u^4)                    => Xden
 
     // compute numerator and denominator of X0(u)^3 + aX0(u) + b
     // for X0(u) = num/den, this is (num^3 + a * num * den^2 + b den^3) / den^3
@@ -626,8 +626,8 @@ static inline void swu_help(const unsigned jp_num, const mpz_t u) {
     mul_modp(mpz_tmp[4], mpz_tmp[4], ellp_a);      // a * num * den^2
                                                    //
     mul_modp(mpz_tmp[3], mpz_tmp[3], mpz_tmp[1]);  // den^3
-    mul_modp(mpz_tmp[5], mpz_tmp[3], ellp_Mb);     // -b * den^3
-    mpz_sub(mpz_tmp[4], mpz_tmp[4], mpz_tmp[5]);   // a * num * den^2 + b * den^3
+    mul_modp(mpz_tmp[5], mpz_tmp[3], ellp_b);      // b * den^3
+    mpz_add(mpz_tmp[4], mpz_tmp[4], mpz_tmp[5]);   // a * num * den^2 + b * den^3
                                                    //
     sqr_modp(mpz_tmp[5], mpz_tmp[2]);              // num^2
     mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[2]);  // num^3

@@ -5,7 +5,7 @@
 
 static const uint64_t ELLP_a[] = { 0x5cf428082d584c1dLL, 0x98936f8da0e0f97fLL, 0xd8e8981aefd881acLL, 0xb0ea985383ee66a8LL, 0x3d693a02c96d4982LL, 0x144698a3b8e943LL, };
 
-static const uint64_t ELLP_negB[] = { 0xe832b71671e87ecbLL, 0xc488dea47fe71559LL, 0xc677115127bd972eLL, 0x446089940135d24eLL, 0x499094cdce0cbe9cLL, 0x71e815d2817666aLL, };
+static const uint64_t ELLP_b[] = { 0xd1cc48e98e172be0LL, 0x5a23215a316ceaa5LL, 0xa0b9c14fcef35ef5LL, 0x2016c1f0f24f4070LL, 0x18b12e8753eee3bLL, 0x12e2908d11688030LL, };
 
 #define ELLP_XMAP_NUM_LEN 12
 static const uint64_t ELLP_XMAP_NUM[][6] = {

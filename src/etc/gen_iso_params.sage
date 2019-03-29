@@ -74,7 +74,7 @@ print "#include <stdint.h>"
 print
 
 show_int(EllP.a4(), "ELLP_a")
-show_int(p - EllP.a6(), "ELLP_negB")
+show_int(EllP.a6(), "ELLP_b")
 
 show_rmap(iso.rational_maps()[0], "ELLP_XMAP")
 show_rmap(iso.rational_maps()[1], "ELLP_YMAP")
