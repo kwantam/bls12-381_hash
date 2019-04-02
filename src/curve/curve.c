@@ -10,9 +10,9 @@
 
 #include <string.h>
 
-// ***********************************
-// static consts and utility functions
-// ***********************************
+// ******************************
+// static data setup and teardown
+// ******************************
 // init an mpz_t and set it from a constant defined in bls12_381_consts.h
 static inline void mpz_init_import(mpz_t out, const uint64_t *in) {
     mpz_init(out);
@@ -118,6 +118,10 @@ void curve_uninit(void) {
     }
 }
 
+// ********************
+// arithmetic utilities
+// ********************
+
 // in ^ 2 mod p
 static inline void sqr_modp(mpz_t out, const mpz_t in) {
     mpz_mul(out, in, in);
@@ -149,11 +153,13 @@ static inline bool divsqrt(mpz_t out, mpz_t tmp, const mpz_t u, const mpz_t v, b
 }
 
 // check if x is a point on the curve; if so, compute the corresponding y-coord with given sign
+// This is used by the SvdW map and by hash_and_check.
 bool check_fx(mpz_t y, const mpz_t x, const bool negate, const bool force, const bool field_only) {
     sqr_modp(mpz_tmp[10], x);                 // x^2
     mul_modp(mpz_tmp[10], mpz_tmp[10], x);    // x^3
     mpz_add_ui(mpz_tmp[10], mpz_tmp[10], 4);  // x^3 + 4
 
+    // non-field-only case: if not forcing, check Legendre symbol
     if (!field_only && !force && mpz_legendre(mpz_tmp[10], fld_p) != 1) {
         // f(x) is not a residue
         return false;
@@ -162,6 +168,7 @@ bool check_fx(mpz_t y, const mpz_t x, const bool negate, const bool force, const
     // compute sqrt of f(x)
     mpz_powm(y, mpz_tmp[10], pp1o4, fld_p);
 
+    // field-only case: if not forcing, square and compare
     if (field_only && !force) {
         sqr_modp(mpz_tmp[11], y);
         mpz_sub(mpz_tmp[11], mpz_tmp[11], mpz_tmp[10]);
@@ -170,6 +177,7 @@ bool check_fx(mpz_t y, const mpz_t x, const bool negate, const bool force, const
         }
     }
 
+    // fix up sign of y
     if (negate) {
         mpz_sub(y, fld_p, y);
     }
@@ -231,14 +239,14 @@ static inline void svdw_map_help(mpz_t x, mpz_t y, const bool neg_t, const unsig
     check_fx(y, x, neg_t, true, false);
 }
 
-// pre-inversion precomp
+// pre-inversion precomp: input to inverse
 static inline void svdw_precomp1(const mpz_t t, const unsigned tmp_offset) {
     sqr_modp(mpz_tmp[tmp_offset], t);                                                 // t^2
     mpz_ui_sub(mpz_tmp[tmp_offset + 1], 23, mpz_tmp[tmp_offset]);                     // 23 - t^2
     mul_modp(mpz_tmp[tmp_offset + 2], mpz_tmp[tmp_offset + 1], mpz_tmp[tmp_offset]);  // t^2 * (23 - t^2)
 }
 
-// post-inversion precomp
+// post-inversion precomp: compute one addend of x1 and x2
 static inline void svdw_precomp2(const unsigned tmp_offset) {
     sqr_modp(mpz_tmp[tmp_offset], mpz_tmp[tmp_offset]);                           // t^4
     mul_modp(mpz_tmp[tmp_offset], mpz_tmp[tmp_offset], mpz_tmp[tmp_offset + 2]);  // t^2 / (23 - t^2)
@@ -286,6 +294,9 @@ void svdw_map2(mpz_t x1, mpz_t y1, const mpz_t t1, mpz_t x2, mpz_t y2, const mpz
     svdw_map_help(x2, y2, neg_t2, 3);             // finish computing the second map
 }
 
+// **
+// ** the following two functions implement the SvdW map using only field operations
+// **
 // helper for svdw_map_fo: try sqrt of f(x/z), converting to projective if we found one
 static inline bool check_fxOverZ(mpz_t x, mpz_t y, mpz_t z, const bool negate, const bool force) {
     sqr_modp(mpz_tmp[2], x);                      // x^2
@@ -346,8 +357,6 @@ struct jac_point {
     uint64_t Y[BINT_NWORDS];
     uint64_t Z[BINT_NWORDS];
 };
-#define NUM_TMP_JP 8
-static struct jac_point jp_tmp[NUM_TMP_JP];
 
 // temporary bigints
 #define NUM_TMP_BINT 11
@@ -435,21 +444,9 @@ static inline void point_add(struct jac_point *out, const struct jac_point *in1,
     bint_mul(out->Z, out->Z, bint_tmp[6]);               // Z3 = 2 * Z1 * Z2 * H         v = 2   w = 1
 }
 
-// convert from a jac_point to a pair of mpz_t
-static inline void from_jac_point(mpz_t X, mpz_t Y, mpz_t Z, const struct jac_point *jp) {
-    // convert from bint to gmp
-    bint_export_mpz(X, jp->X);
-    bint_export_mpz(Y, jp->Y);
-    bint_export_mpz(Z, jp->Z);
-}
-
-// convert from a pair of mpz_t to a jac_point
-static inline void to_jac_point(struct jac_point *jp, const mpz_t X, const mpz_t Y, const mpz_t Z) {
-    bint_import_mpz(jp->X, X);
-    bint_import_mpz(jp->Y, Y);
-    bint_import_mpz(jp->Z, Z);
-}
-
+// temporary points for intermediate computations (mostly used in clear_h_chain())
+#define NUM_TMP_JP 8
+static struct jac_point jp_tmp[NUM_TMP_JP];
 // Addition chain: Bos-Coster (win=7) : 147 links, 8 variables
 // input point is taken from jp_tmp[1], output is in jp_tmp[7]
 // TODO(rsw): is there a faster addition-subtraction chain?
@@ -517,6 +514,21 @@ static inline void clear_h_chain(void) {
     point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp);
 }
 
+// helper: convert from a jac_point to a pair of mpz_t
+static inline void from_jac_point(mpz_t X, mpz_t Y, mpz_t Z, const struct jac_point *jp) {
+    // convert from bint to gmp
+    bint_export_mpz(X, jp->X);
+    bint_export_mpz(Y, jp->Y);
+    bint_export_mpz(Z, jp->Z);
+}
+
+// helper: convert from a pair of mpz_t to a jac_point
+static inline void to_jac_point(struct jac_point *jp, const mpz_t X, const mpz_t Y, const mpz_t Z) {
+    bint_import_mpz(jp->X, X);
+    bint_import_mpz(jp->Y, Y);
+    bint_import_mpz(jp->Z, Z);
+}
+
 // clear BLS12-381 cofactor
 void clear_h(mpz_t X, mpz_t Y, mpz_t Z) {
     to_jac_point(jp_tmp + 1, X, Y, Z);
@@ -524,7 +536,7 @@ void clear_h(mpz_t X, mpz_t Y, mpz_t Z) {
     from_jac_point(X, Y, Z, jp_tmp + 7);
 }
 
-// add two points together, leave result in jp_tmp[1]
+// add two points together, leaving result in jp_tmp[1]
 static inline void add2_help(const mpz_t X1, const mpz_t Y1, const mpz_t Z1, const mpz_t X2, const mpz_t Y2,
                              const mpz_t Z2) {
     to_jac_point(jp_tmp, X1, Y1, Z1);
@@ -662,6 +674,10 @@ void addrG_clear_h(mpz_t X, mpz_t Y, mpz_t Z, const uint8_t *r) {
 //      J. Crypto. Eng., vol 2, issue 2, pp 77--89, September 2012.
 //      http://ed25519.cr.yp.to/ed25519-20110926.pdf
 //
+// There are two versions: one uses GMP and is not constant-time,
+// the other uses bint and is constant time.
+
+// GMP-based non-constant-time SWU impl
 // This function outputs a point in Jacobian coordinates in jp_tmp[jp_num].
 static inline void swu_help(const unsigned jp_num, const mpz_t u) {
     // compute numerator and denominator of X0(u)
@@ -799,6 +815,12 @@ static void eval_iso11(void) {
     bint_import_mpz(jp_tmp[1].X, mpz_tmp[11]);
     bint_import_mpz(jp_tmp[1].Y, mpz_tmp[10]);
     bint_import_mpz(jp_tmp[1].Z, mpz_tmp[12]);
+}
+
+// bint-based constant-time SWU impl
+static inline void swu_help_ct(const unsigned jp_num, const uint64_t *u) {
+    (void) jp_num;
+    (void) u;
 }
 
 // evaluate the SWU map once, apply isogeny map, and clear cofactor

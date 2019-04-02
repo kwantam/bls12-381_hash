@@ -4,6 +4,7 @@
 
 #include "bint_internal.h"
 
+// compare ina and inb, returning -1, 0, 1 for <, =, > respectively
 static inline int _bint_compare(const uint64_t *ina, const uint64_t *inb) {
     bool gt = false;
     bool eq = true;
@@ -15,6 +16,7 @@ static inline int _bint_compare(const uint64_t *ina, const uint64_t *inb) {
     return 2 * gt + eq - 1;
 }
 
+// conditionally subtract p from io
 static inline void _bint_condsub_p(uint64_t *io) {
     bool geq = _bint_compare(io, p) >= 0;
     uint64_t c = 0;
@@ -24,6 +26,22 @@ static inline void _bint_condsub_p(uint64_t *io) {
         c = io[i] >> BITS_PER_WORD;
         io[i] &= LO_MASK;
     }
+}
+
+// conditionally subtract p from io and compare to cmpval (which must be fully reduced!)
+static inline bool _bint_condsub_p_eq(uint64_t *io, const uint64_t *cmpval) {
+    bool match = true;
+    bool geq = _bint_compare(io, p) >= 0;
+    uint64_t tmp;
+    uint64_t c = 0;
+    for (int i = 0; i < NWORDS; i++) {
+        tmp = io[i] + mp[i] + c;
+        io[i] = geq ? tmp : io[i];
+        c = io[i] >> BITS_PER_WORD;
+        io[i] &= LO_MASK;
+        match &= io[i] == cmpval[i];
+    }
+    return match;
 }
 
 static inline void _bint_monty_help(uint64_t *out, uint64_t *tmp) {
@@ -187,4 +205,26 @@ void bint_export_mpz(mpz_t out, const uint64_t *in) {
     uint64_t tmp[NWORDS];
     _bint_from_monty(tmp, in);
     mpz_import(out, NWORDS, -1, 8, 0, 64 - BITS_PER_WORD, tmp);
+}
+
+bool bint_divsqrt(uint64_t *__restrict__ out, const uint64_t *u, const uint64_t *v, const bool force) {
+    uint64_t uvk1[NWORDS], uvk2[NWORDS];
+    bint_mul(uvk1, u, v);        // uv
+    bint_sqr(uvk2, v);           // v^2
+    bint_mul(uvk2, uvk2, uvk1);  // uv^3
+    divsqrt_chain(out, uvk2);    // (uv^3)^((p-3)/4)
+    bint_mul(out, out, uvk1);    // uv(uv^3)^((p-3)/4)
+
+    // don't check for equality if we're asked to force
+    if (force) {
+        return true;
+    }
+
+    // completely reduce u for comparison
+    bint_redc(uvk1, u);
+    _bint_condsub_p(uvk1);
+
+    bint_sqr(uvk2, out);      // out^2
+    bint_mul(uvk2, uvk2, v);  // v * out^2
+    return _bint_condsub_p_eq(uvk2, uvk1);
 }

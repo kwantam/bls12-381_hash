@@ -18,6 +18,8 @@ void bint_mul(uint64_t *out, const uint64_t *ina, const uint64_t *inb);
 void bint_sqr(uint64_t *out, const uint64_t *ina);
 void bint_redc(uint64_t *out, const uint64_t *in);
 
+bool bint_divsqrt(uint64_t *__restrict__ out, const uint64_t *u, const uint64_t *v, const bool force);
+
 void bint_import_mpz(uint64_t *out, const mpz_t in);
 void bint_export_mpz(mpz_t out, const uint64_t *in);
 

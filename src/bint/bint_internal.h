@@ -16,6 +16,8 @@ static inline void _bint_mul(uint64_t *out, const uint64_t *ina, const uint64_t 
 static inline void _bint_mul_low(uint64_t *out, const uint64_t *ina, const uint64_t *inb);
 static inline void _bint_sqr(uint64_t *out, const uint64_t *ina);
 
+#include "bint_chains.h"
+
 #define BINT_INTERNAL
 #include "bint.h"
 #undef BINT_INTERNAL
