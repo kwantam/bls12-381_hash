@@ -5,6 +5,9 @@
 #include "curve.h"
 #include "util.h"
 
+#include <stdio.h>
+#include <time.h>
+
 int main(int argc, char **argv) {
     struct cmdline_opts opts = get_cmdline_opts(argc, argv);
 
@@ -30,6 +33,8 @@ int main(int argc, char **argv) {
     // hash the contents of stdin
     hash_stdin(&hash_ctx);
 
+    struct timespec start, end;
+    clock_gettime(CLOCK_MONOTONIC, &start);
     // loop through different resulting PRNG keys
     for (unsigned i = 0; i < opts.nreps; ++i) {
         next_prng(prng_ctx, &hash_ctx, i);
@@ -54,6 +59,9 @@ int main(int argc, char **argv) {
             gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, z1);
         }
     }
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    long elapsed = 1000000000 * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
+    fprintf(opts.quiet ? stdout : stderr, "%ld\n", elapsed);
 
     // free
     EVP_CIPHER_CTX_free(prng_ctx);

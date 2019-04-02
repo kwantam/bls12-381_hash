@@ -15,3 +15,5 @@ add_test(NAME t_hash_svdw_rG_fo COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh"
 add_test(NAME t_hash_swu_1 COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_1" "${PROJECT_SOURCE_DIR}/test/test.sage" u1)
 add_test(NAME t_hash_swu_2 COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_2" "${PROJECT_SOURCE_DIR}/test/test.sage" u2)
 add_test(NAME t_hash_swu_rG COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_rG" "${PROJECT_SOURCE_DIR}/test/test.sage" urG)
+
+add_test(NAME t_bench COMMAND "${PROJECT_SOURCE_DIR}/test/run_bench.sh" "${CMAKE_BINARY_DIR}")
