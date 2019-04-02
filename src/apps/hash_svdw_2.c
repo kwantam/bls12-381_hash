@@ -13,12 +13,14 @@ int main(int argc, char **argv) {
     precomp_init();
 
     // get libgmp ready
-    mpz_t x1, y1, t1, x2, y2, t2;
+    mpz_t x1, y1, z1, t1, x2, y2, z2, t2;
     mpz_init(x1);
     mpz_init(y1);
+    mpz_init(z1);
     mpz_init(t1);
     mpz_init(x2);
     mpz_init(y2);
+    mpz_init(z2);
     mpz_init(t2);
 
     // load libcrypto error strings and set up SHA and PRNG
@@ -40,13 +42,20 @@ int main(int argc, char **argv) {
         next_prng(prng_ctx, &hash_ctx, i);
         next_modp(prng_ctx, t1);
         next_modp(prng_ctx, t2);
-        svdw_map2(x1, y1, t1, x2, y2, t2);
+        if (opts.field_only) {
+            svdw_map_fo(x1, y1, z1, t1);
+            svdw_map_fo(x2, y2, z2, t2);
+        } else {
+            svdw_map2(x1, y1, t1, x2, y2, t2);
+            mpz_set_ui(z1, 1);
+            mpz_set_ui(z2, 1);
+        }
 
         // show results                     svdw_add2
-        //   test:                          (t1, t2, xO, yO)
+        //   test:                          (t1, t2, xO, yO, zO)
         //   quiet && !test:                <<nothing>>
         //   !quiet && !test && clear_h:    (xO, yO)
-        //   !quiet && !test && !clear_h:   (x1, y1, x2, y2)
+        //   !quiet && !test && !clear_h:   (x1, y1, z1, x2, y2, z2)
         if (first_print || second_print) {
             printf("(");
         }
@@ -55,19 +64,19 @@ int main(int argc, char **argv) {
         if (opts.test) {
             gmp_printf("0x%Zx, 0x%Zx, ", t1, t2);
         } else if (first_print) {
-            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, ", x1, y1, x2, y2);
+            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, ", x1, y1, z1, x2, y2, z2);
         }
 
         // add the points together, and possibly clear the cofactor
         if (do_clear) {
-            add2_clear_h(x1, y1, x1, y1, x2, y2);
+            add2_clear_h(x1, y1, z1, x2, y2, z2);
         } else {
-            add2(x1, y1, x1, y1, x2, y2);
+            add2(x1, y1, z1, x2, y2, z2);
         }
 
         // maybe output the result
         if (second_print) {
-            gmp_printf("0x%Zx, 0x%Zx, ", x1, y1);
+            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, ", x1, y1, z1);
         }
 
         if (first_print || second_print) {
@@ -78,9 +87,11 @@ int main(int argc, char **argv) {
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
     mpz_clear(t2);
+    mpz_clear(z2);
     mpz_clear(y2);
     mpz_clear(x2);
     mpz_clear(t1);
+    mpz_clear(z1);
     mpz_clear(y1);
     mpz_clear(x1);
     curve_uninit();

@@ -24,6 +24,7 @@ struct cmdline_opts {
     bool clear_h;
     bool quiet;
     bool test;
+    bool field_only;
 };
 struct cmdline_opts get_cmdline_opts(int argc, char **argv);
 

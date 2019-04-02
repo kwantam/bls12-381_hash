@@ -174,7 +174,12 @@ static inline void _bint_sqr(uint64_t *out, const uint64_t *ina) {
 }
 
 void bint_import_mpz(uint64_t *out, const mpz_t in) {
-    mpz_export(out, NULL, -1, 8, 0, 64 - BITS_PER_WORD, in);
+    size_t count = 0;
+    mpz_export(out, &count, -1, 8, 0, 64 - BITS_PER_WORD, in);
+    // clear remaining words, if any
+    for (; count < NWORDS; ++count) {
+        out[count] = 0;
+    }
     _bint_to_monty(out, out);
 }
 

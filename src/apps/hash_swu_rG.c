@@ -13,9 +13,10 @@ int main(int argc, char **argv) {
     precomp_init();
 
     // get libgmp ready
-    mpz_t x1, y1, u, rr;
+    mpz_t x1, y1, z1, u, rr;
     mpz_init(x1);
     mpz_init(y1);
+    mpz_init(z1);
     mpz_init(u);
     mpz_init(rr);
 
@@ -34,18 +35,18 @@ int main(int argc, char **argv) {
         next_prng(prng_ctx, &hash_ctx, i);
         next_modp(prng_ctx, u);
         const uint8_t *r = next_modq(prng_ctx, opts.test ? &rr : NULL);
-        swu_map_rG(x1, y1, u, r);
+        swu_map_rG(x1, y1, z1, u, r);
 
         // show results
-        //   test:              (xO, yO, u, r)
+        //   test:              (xO, yO, zO, u, r)
         //   quiet && !test:    <<nothing>>
-        //   !quiet && !test:   (xO, yO)
+        //   !quiet && !test:   (xO, yO, zO)
 
         // maybe output the points
         if (opts.test) {
-            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, u, rr);
+            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, z1, u, rr);
         } else if (!opts.quiet) {
-            gmp_printf("(0x%Zx, 0x%Zx, )\n", x1, y1);
+            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, z1);
         }
     }
 
@@ -53,6 +54,7 @@ int main(int argc, char **argv) {
     EVP_CIPHER_CTX_free(prng_ctx);
     mpz_clear(rr);
     mpz_clear(u);
+    mpz_clear(z1);
     mpz_clear(y1);
     mpz_clear(x1);
     curve_uninit();

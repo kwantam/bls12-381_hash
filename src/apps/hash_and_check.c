@@ -12,9 +12,10 @@ int main(int argc, char **argv) {
     curve_init();
 
     // get libgmp ready
-    mpz_t x, y;
+    mpz_t x, y, z;
     mpz_init(x);
     mpz_init(y);
+    mpz_init(z);
 
     // load libcrypto error strings and set up SHA and PRNG
     ERR_load_crypto_strings();
@@ -36,20 +37,21 @@ int main(int argc, char **argv) {
         for (j = 0; j < 256; ++j) {
             next_prng(prng_ctx, &hash_ctx, (i << 8) + j);
             const bool negate = next_modp(prng_ctx, x);
-            if (check_fx(y, x, negate, false)) {
+            if (check_fx(y, x, negate, false, opts.field_only)) {
                 break;
             }
         }
         if (j == 256) {
             fprintf(stderr, "no point found!\n");
-            continue;
+            exit(1);
         }
+        mpz_set_ui(z, 1);
 
         // show results
-        //   test:                          (xin, yin, xout, yout)
+        //   test:                          (xin, yin, zin, xout, yout, zout)
         //   quiet && !test:                <<nothing>>
-        //   !quiet && !test && clear_h:    (xout, yout)
-        //   !quiet && !test && !clear_h:   (xin, yin)
+        //   !quiet && !test && clear_h:    (xout, yout, zout)
+        //   !quiet && !test && !clear_h:   (xin, yin, zin)
         //
         if (first_print || second_print) {
             printf("(");
@@ -57,17 +59,17 @@ int main(int argc, char **argv) {
 
         // maybe output the input point
         if (first_print) {
-            gmp_printf("0x%Zx, 0x%Zx, ", x, y);
+            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, ", x, y, z);
         }
 
         // maybe clear the cofactor
         if (do_clear) {
-            clear_h(x, y, x, y);
+            clear_h(x, y, z);
         }
 
         // maybe output the result
         if (second_print) {
-            gmp_printf("0x%Zx, 0x%Zx, ", x, y);
+            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, ", x, y, z);
         }
 
         if (first_print || second_print) {
@@ -77,6 +79,7 @@ int main(int argc, char **argv) {
 
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
+    mpz_clear(z);
     mpz_clear(y);
     mpz_clear(x);
     curve_uninit();

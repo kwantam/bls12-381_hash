@@ -26,6 +26,12 @@ iso.switch_sign()  # this is the isogeny, but with the opposite sign for y
 cx1 = F((F(3) + sqrt(F(-27))) / F(2))
 cx2 = F((F(3) - sqrt(F(-27))) / F(2))
 
+def JEll(x, y, z):
+    if z == 0:
+        return Ell(0, 1, 0)
+    else:
+        return Ell(F(x)/F(z^2), F(y)/F(z^3))
+
 def svdw(t):
     if t == 0:
         x12val = 0
@@ -79,32 +85,32 @@ if __name__ == "__main__":
         usage()
 
     if sys.argv[1] == "hac":
-        assert all( Ell(xOut, yOut) == h * Ell(xIn, yIn)
-                    for (xIn, yIn, xOut, yOut) in ( eval(l) for l in sys.stdin.readlines() ) )
+        assert all( JEll(xOut, yOut, zOut) == h * JEll(xIn, yIn, zIn)
+                    for (xIn, yIn, zIn, xOut, yOut, zOut) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "1":
-        assert all( Ell(xOut, yOut) == h * svdw(t)
-                    for (t, xOut, yOut) in ( eval(l) for l in sys.stdin.readlines() ) )
+        assert all( JEll(xOut, yOut, zOut) == h * svdw(t)
+                    for (t, xOut, yOut, zOut) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "2":
-        assert all( Ell(xOut, yOut) == h * (svdw(t1) + svdw(t2))
-                    for (t1, t2, xOut, yOut) in ( eval(l) for l in sys.stdin.readlines() ) )
+        assert all( JEll(xOut, yOut, zOut) == h * (svdw(t1) + svdw(t2))
+                    for (t1, t2, xOut, yOut, zOut) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "rG":
-        assert all( Ell(xOut, yOut) == h * svdw(t) + r * gPrime
-                    for (t, r, xOut, yOut) in ( eval(l) for l in sys.stdin.readlines() ) )
+        assert all( JEll(xOut, yOut, zOut) == h * svdw(t) + r * gPrime
+                    for (t, r, xOut, yOut, zOut) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "u1":
-        assert all( Ell(xOut, yOut) == h * iso(swu(u))
-                    for (xOut, yOut, u) in ( eval(l) for l in sys.stdin.readlines() ) )
+        assert all( JEll(xOut, yOut, zOut) == h * iso(swu(u))
+                    for (xOut, yOut, zOut, u) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "u2":
-        assert all( Ell(xOut, yOut) == h * iso(swu(u1) + swu(u2))
-                    for (xOut, yOut, u1, u2) in ( eval(l) for l in sys.stdin.readlines() ) )
+        assert all( JEll(xOut, yOut, zOut) == h * iso(swu(u1) + swu(u2))
+                    for (xOut, yOut, zOut, u1, u2) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "urG":
-        assert all( Ell(xOut, yOut) == h * iso(swu(u)) + r * gPrime
-                    for (xOut, yOut, u, r) in ( eval(l) for l in sys.stdin.readlines() ) )
+        assert all( JEll(xOut, yOut, zOut) == h * iso(swu(u)) + r * gPrime
+                    for (xOut, yOut, zOut, u, r) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     else:
         usage()

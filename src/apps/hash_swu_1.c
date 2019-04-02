@@ -13,9 +13,10 @@ int main(int argc, char **argv) {
     precomp_init();
 
     // get libgmp ready
-    mpz_t x1, y1, u;
+    mpz_t x1, y1, z1, u;
     mpz_init(x1);
     mpz_init(y1);
+    mpz_init(z1);
     mpz_init(u);
 
     // load libcrypto error strings and set up SHA and PRNG
@@ -37,24 +38,25 @@ int main(int argc, char **argv) {
         } else {
             next_modp(prng_ctx, u);
         }
-        swu_map(x1, y1, u);
+        swu_map(x1, y1, z1, u);
 
         // show results
-        //   test:              (xO, yO, u1, u2)
+        //   test:              (xO, yO, zO, u1, u2)
         //   quiet && !test:    <<nothing>>
-        //   !quiet && !test:   (xO, yO)
+        //   !quiet && !test:   (xO, yO, zO)
 
         // maybe output the points
         if (opts.test) {
-            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, u);
+            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, z1, u);
         } else if (!opts.quiet) {
-            gmp_printf("(0x%Zx, 0x%Zx, )\n", x1, y1);
+            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, z1);
         }
     }
 
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
     mpz_clear(u);
+    mpz_clear(z1);
     mpz_clear(y1);
     mpz_clear(x1);
     curve_uninit();

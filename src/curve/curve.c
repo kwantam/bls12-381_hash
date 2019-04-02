@@ -8,17 +8,6 @@
 #include "bls12_381_consts.h"
 #include "iso_params.h"
 
-#define FIELD_ONLY
-#ifdef FIELD_ONLY
-#define INVERT(OUT, IN) mpz_powm(OUT, IN, pm2, fld_p)
-#define LEGENDRE(IN) mpz_legendre_slow(IN)
-#else
-#define INVERT(OUT, IN) mpz_invert(OUT, IN, fld_p)
-#define LEGENDRE(IN) mpz_legendre(IN, fld_p)
-#endif
-
-#define MAX(A, B) (((A) > (B)) ? (A) : (B))
-
 #include <string.h>
 
 // ***********************************
@@ -141,6 +130,52 @@ static inline void mul_modp(mpz_t out, const mpz_t in1, const mpz_t in2) {
     mpz_mod(out, out, fld_p);
 }
 
+// sqrt(U/V) ; return whether we actually found a sqrt
+// out is the result, tmp is garbage
+static inline bool divsqrt(mpz_t out, mpz_t tmp, const mpz_t u, const mpz_t v, bool force) {
+    sqr_modp(out, v);                  // V^2
+    mul_modp(tmp, u, v);               // UV
+    mul_modp(out, out, tmp);           // UV^3
+    mpz_powm(out, out, pm3o4, fld_p);  // (UV^3)^((p-3)/4)
+    mul_modp(out, out, tmp);           // UV(UV^3)^((p-3)/4)
+
+    if (!force) {
+        sqr_modp(tmp, out);     // out^2
+        mul_modp(tmp, tmp, v);  // out^2 * V
+        mpz_sub(tmp, tmp, u);   // out^2 * V - U
+        return mpz_divisible_p(tmp, fld_p);
+    }
+    return true;
+}
+
+// check if x is a point on the curve; if so, compute the corresponding y-coord with given sign
+bool check_fx(mpz_t y, const mpz_t x, const bool negate, const bool force, const bool field_only) {
+    sqr_modp(mpz_tmp[10], x);                 // x^2
+    mul_modp(mpz_tmp[10], mpz_tmp[10], x);    // x^3
+    mpz_add_ui(mpz_tmp[10], mpz_tmp[10], 4);  // x^3 + 4
+
+    if (!field_only && !force && mpz_legendre(mpz_tmp[10], fld_p) != 1) {
+        // f(x) is not a residue
+        return false;
+    }
+
+    // compute sqrt of f(x)
+    mpz_powm(y, mpz_tmp[10], pp1o4, fld_p);
+
+    if (field_only && !force) {
+        sqr_modp(mpz_tmp[11], y);
+        mpz_sub(mpz_tmp[11], mpz_tmp[11], mpz_tmp[10]);
+        if (!mpz_divisible_p(mpz_tmp[11], fld_p)) {  // did we actually find a sqrt?
+            return false;
+        }
+    }
+
+    if (negate) {
+        mpz_sub(y, fld_p, y);
+    }
+    return true;
+}
+
 // modular reduction when we know that -p <= in < p
 static inline void condadd_p(mpz_t in) {
     if (mpz_cmp_ui(in, 0) < 0) {
@@ -153,12 +188,6 @@ static inline void condsub_p(mpz_t in) {
     if (mpz_cmp(in, fld_p) >= 0) {
         mpz_sub(in, in, fld_p);
     }
-}
-
-// Legendre using only exponentiation (uses mpz_tmp[7]!!!)
-static inline int mpz_legendre_slow(const mpz_t in) {
-    mpz_powm(mpz_tmp[7], in, pm1o2, fld_p);
-    return mpz_get_si(mpz_tmp[7]);
 }
 
 // *********************
@@ -180,14 +209,14 @@ static inline int mpz_legendre_slow(const mpz_t in) {
 static inline void svdw_map_help(mpz_t x, mpz_t y, const bool neg_t, const unsigned tmp_offset) {
     // x1
     mpz_add(x, cx1, mpz_tmp[tmp_offset]);  // (3 - sqrt(-27))/2 + t^2 * sqrt(-27) / (23 - t^2)
-    if (check_fx(y, x, neg_t, false)) {
+    if (check_fx(y, x, neg_t, false, false)) {
         condsub_p(x);  // reduce x mod p (mpz_tmp[tmp_offset] and cx1 were both reduced, so x < 2p)
         return;
     }
 
     // x2
     mpz_sub(x, cx2, mpz_tmp[tmp_offset]);  // (3 - sqrt(-27))/2 - t^2 * sqrt(-27) / (23 - t^2)
-    if (check_fx(y, x, neg_t, false)) {
+    if (check_fx(y, x, neg_t, false, false)) {
         condadd_p(x);  // reduce x mod p (mpz_tmp[tmp_offset] and cx2 were both reduced, so x > -p)
         return;
     }
@@ -199,7 +228,7 @@ static inline void svdw_map_help(mpz_t x, mpz_t y, const bool neg_t, const unsig
     mul_modp(x, x, invM27);                   // - (23 - t^2)^2 / (27 * t^2)
     mpz_sub_ui(x, x, 3);                      // -3 - (23 - t^2)^2 / (27 * t^2)
     condadd_p(x);                             // reduce x mod p (subtracted p from a reduced value, so x >= -3)
-    check_fx(y, x, neg_t, true);
+    check_fx(y, x, neg_t, true, false);
 }
 
 // pre-inversion precomp
@@ -216,11 +245,11 @@ static inline void svdw_precomp2(const unsigned tmp_offset) {
     mul_modp(mpz_tmp[tmp_offset], mpz_tmp[tmp_offset], sqrtM27);                  // t^2 sqrt(-27) / (23 - t^2)
 }
 
-// apply the SvdW map to point t
+// apply the SvdW map to input t
 void svdw_map(mpz_t x, mpz_t y, const mpz_t t) {
     svdw_precomp1(t, 0);  // compute input to inversion in mpz_tmp[2]
     if (mpz_cmp_ui(mpz_tmp[2], 0) != 0) {
-        INVERT(mpz_tmp[2], mpz_tmp[2]);  // invert if nonzero
+        mpz_invert(mpz_tmp[2], mpz_tmp[2], fld_p);  // invert if nonzero
     }
     svdw_precomp2(0);                           // compute non-constant part of x1 and x2 in tmp0
     const bool neg_t = mpz_cmp(pp1o2, t) <= 0;  // true (negative) when t >= (p+1)/2
@@ -237,12 +266,12 @@ void svdw_map2(mpz_t x1, mpz_t y1, const mpz_t t1, mpz_t x2, mpz_t y2, const mpz
     const bool p10 = mpz_cmp_ui(mpz_tmp[2], 0) == 0;  // t1^2 * (23 - t1^2) != 0
     const bool p20 = mpz_cmp_ui(mpz_tmp[5], 0) == 0;  // t2^2 * (23 - t2^2) != 0
     if (p10 && !p20) {
-        INVERT(mpz_tmp[5], mpz_tmp[5]);  // (t2^2 * (23 - t2^2)) ^ -1
+        mpz_invert(mpz_tmp[5], mpz_tmp[5], fld_p);  // (t2^2 * (23 - t2^2)) ^ -1
     } else if (!p10 && p20) {
-        INVERT(mpz_tmp[2], mpz_tmp[2]);  // (t1^2 * (23 - t1^2)) ^ -1
+        mpz_invert(mpz_tmp[2], mpz_tmp[2], fld_p);  // (t1^2 * (23 - t1^2)) ^ -1
     } else if (!p10 && !p20) {
         mul_modp(mpz_tmp[6], mpz_tmp[5], mpz_tmp[2]);  // (t1^2 * (23 - t1^2) * t2^2 * (23 - t2^2))
-        INVERT(mpz_tmp[6], mpz_tmp[6]);                // (t1^2 * (23 - t1^2) * t2^2 * (23 - t2^2)) ^ -1
+        mpz_invert(mpz_tmp[6], mpz_tmp[6], fld_p);     // (t1^2 * (23 - t1^2) * t2^2 * (23 - t2^2)) ^ -1
         mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[6]);  // (t1^2 * (23 - t1^2)) ^ -1
         mul_modp(mpz_tmp[2], mpz_tmp[2], mpz_tmp[6]);  // (t2^2 * (23 - t2^2)) ^ -1
         mpz_swap(mpz_tmp[2], mpz_tmp[5]);              // [2] should hold t1 val, [5] should hold t2 val
@@ -257,23 +286,55 @@ void svdw_map2(mpz_t x1, mpz_t y1, const mpz_t t1, mpz_t x2, mpz_t y2, const mpz
     svdw_map_help(x2, y2, neg_t2, 3);             // finish computing the second map
 }
 
-// check if x is a point on the curve; if so, compute the corresponding y-coord with given sign
-bool check_fx(mpz_t y, const mpz_t x, bool negate, bool force) {
-    sqr_modp(y, x);       // x^2
-    mpz_mul(y, y, x);     // x^3
-    mpz_add_ui(y, y, 4);  // x^3 + 4
-    condsub_p(y);         // modular reduction (y was reduced before adding 4, so y < 2p)
-    if (!force && LEGENDRE(y) != 1) {
-        // f(x) is not a residue
-        return false;
+// helper for svdw_map_fo: try sqrt of f(x/z), converting to projective if we found one
+static inline bool check_fxOverZ(mpz_t x, mpz_t y, mpz_t z, const bool negate, const bool force) {
+    sqr_modp(mpz_tmp[2], x);                      // x^2
+    mul_modp(mpz_tmp[2], mpz_tmp[2], x);          // x^3
+    sqr_modp(mpz_tmp[5], z);                      // z^2
+    mul_modp(mpz_tmp[3], mpz_tmp[5], z);          // z^3
+    mpz_mul_2exp(mpz_tmp[4], mpz_tmp[3], 2);      // 4 z^3
+    mpz_add(mpz_tmp[2], mpz_tmp[2], mpz_tmp[4]);  // x^3 + 4 z^3
+    if (divsqrt(y, mpz_tmp[4], mpz_tmp[2], mpz_tmp[3], force)) {
+        mul_modp(x, x, z);           // X = x z
+        mul_modp(y, y, mpz_tmp[5]);  // Y = y z^2
+        mul_modp(y, y, z);           // Y = y z^3
+        mpz_mod(z, z, fld_p);        // reduce z
+        if (negate) {
+            mpz_sub(y, fld_p, y);  // fix sign of y
+        }
+        return true;
+    }
+    return false;
+}
+
+// svdw map using field ops only
+void svdw_map_fo(mpz_t x, mpz_t y, mpz_t z, const mpz_t t) {
+    const bool neg_t = mpz_cmp(pp1o2, t) <= 0;  // true (negative) when t >= (p+1)/2
+
+    sqr_modp(mpz_tmp[0], t);                    // t^2
+    mpz_ui_sub(z, 23, mpz_tmp[0]);              // 23 - t^2               = V
+    mul_modp(mpz_tmp[1], mpz_tmp[0], sqrtM27);  // t^2 * sqrt(-27)
+
+    // x1 : (cx1 * (23 - t^2) + t^2 * sqrt(-27)) / (23 - t^2)
+    mul_modp(x, cx1, z);        // cx1 * (23 - t^2)
+    mpz_add(x, x, mpz_tmp[1]);  // cx1 * (23 - t^2) + t^2 * sqrt(-27)     = U
+    if (check_fxOverZ(x, y, z, neg_t, false)) {
+        return;
     }
 
-    // found a residue; compute sqrt and sign of y
-    mpz_powm(y, y, pp1o4, fld_p);
-    if (negate) {
-        mpz_sub(y, fld_p, y);
+    // x2 : (cx2 * (23 - t^2) - t^2 * sqrt(-27)) / (23 - t^2)
+    mul_modp(x, cx2, z);        // cx2 * (23 - t^2)
+    mpz_sub(x, x, mpz_tmp[1]);  // cx2 * (23 - t^2) - t^2 * sqrt(-27)     = U
+    if (check_fxOverZ(x, y, z, neg_t, false)) {
+        return;
     }
-    return true;
+
+    // x3 : ((23 - t^2)^2 + 81t^2) / (-27 t^2)
+    sqr_modp(x, z);                          // (23 - t^2)^2
+    mpz_mul_si(z, mpz_tmp[0], -27);          // -27 t^2                   = V
+    mpz_mul_ui(mpz_tmp[0], mpz_tmp[0], 81);  // 81 t^2
+    mpz_add(x, x, mpz_tmp[0]);               // (23 - t^2)^2 + 81t^2      = U
+    check_fxOverZ(x, y, z, neg_t, true);
 }
 
 // **************************
@@ -375,25 +436,18 @@ static inline void point_add(struct jac_point *out, const struct jac_point *in1,
 }
 
 // convert from a jac_point to a pair of mpz_t
-static inline void from_jac_point(mpz_t outX, mpz_t outY, const struct jac_point *jp) {
+static inline void from_jac_point(mpz_t X, mpz_t Y, mpz_t Z, const struct jac_point *jp) {
     // convert from bint to gmp
-    bint_export_mpz(outX, jp->X);
-    bint_export_mpz(outY, jp->Y);
-    bint_export_mpz(mpz_tmp[0], jp->Z);
-
-    // convert from Jacobian to affine coordinates
-    INVERT(mpz_tmp[0], mpz_tmp[0]);    // Z^-1
-    mul_modp(outY, outY, mpz_tmp[0]);  // Y / Z
-    sqr_modp(mpz_tmp[0], mpz_tmp[0]);  // Z^-2
-    mul_modp(outY, outY, mpz_tmp[0]);  // Y / Z^3
-    mul_modp(outX, outX, mpz_tmp[0]);  // X / Z^2
+    bint_export_mpz(X, jp->X);
+    bint_export_mpz(Y, jp->Y);
+    bint_export_mpz(Z, jp->Z);
 }
 
 // convert from a pair of mpz_t to a jac_point
-static inline void to_jac_point(struct jac_point *jp, const mpz_t inX, const mpz_t inY) {
-    bint_import_mpz(jp->X, inX);
-    bint_import_mpz(jp->Y, inY);
-    bint_set1(jp->Z);
+static inline void to_jac_point(struct jac_point *jp, const mpz_t X, const mpz_t Y, const mpz_t Z) {
+    bint_import_mpz(jp->X, X);
+    bint_import_mpz(jp->Y, Y);
+    bint_import_mpz(jp->Z, Z);
 }
 
 // Addition chain: Bos-Coster (win=7) : 147 links, 8 variables
@@ -464,32 +518,31 @@ static inline void clear_h_chain(void) {
 }
 
 // clear BLS12-381 cofactor
-// outX == inX and/or outY == inY is OK
-void clear_h(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY) {
-    to_jac_point(jp_tmp + 1, inX, inY);
+void clear_h(mpz_t X, mpz_t Y, mpz_t Z) {
+    to_jac_point(jp_tmp + 1, X, Y, Z);
     clear_h_chain();
-    from_jac_point(outX, outY, jp_tmp + 7);
+    from_jac_point(X, Y, Z, jp_tmp + 7);
 }
 
 // add two points together, leave result in jp_tmp[1]
-static inline void add2_help(const mpz_t inX1, const mpz_t inY1, const mpz_t inX2, const mpz_t inY2) {
-    to_jac_point(jp_tmp, inX1, inY1);
-    to_jac_point(jp_tmp + 1, inX2, inY2);
+static inline void add2_help(const mpz_t X1, const mpz_t Y1, const mpz_t Z1, const mpz_t X2, const mpz_t Y2,
+                             const mpz_t Z2) {
+    to_jac_point(jp_tmp, X1, Y1, Z1);
+    to_jac_point(jp_tmp + 1, X2, Y2, Z2);
     point_add(jp_tmp + 1, jp_tmp + 1, jp_tmp);
 }
 
 // add 2 points together; don't clear cofactor
-void add2(mpz_t outX, mpz_t outY, const mpz_t inX1, const mpz_t inY1, const mpz_t inX2, const mpz_t inY2) {
-    add2_help(inX1, inY1, inX2, inY2);
-    from_jac_point(outX, outY, jp_tmp + 1);
+void add2(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, const mpz_t Z2) {
+    add2_help(X1, Y1, Z1, X2, Y2, Z2);
+    from_jac_point(X1, Y1, Z1, jp_tmp + 1);
 }
 
 // add 2 points together, then clear cofactor
-// ouX == inX{1,2} and/or outY == inY{1,2} is OK
-void add2_clear_h(mpz_t outX, mpz_t outY, const mpz_t inX1, const mpz_t inY1, const mpz_t inX2, const mpz_t inY2) {
-    add2_help(inX1, inY1, inX2, inY2);
+void add2_clear_h(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, const mpz_t Z2) {
+    add2_help(X1, Y1, Z1, X2, Y2, Z2);
     clear_h_chain();
-    from_jac_point(outX, outY, jp_tmp + 7);
+    from_jac_point(X1, Y1, Z1, jp_tmp + 7);
 }
 
 // precompute the fixed part of the table (based on G' and 2^128 * G') for addrG
@@ -570,11 +623,11 @@ static inline void addrG_clear_h_help(const uint8_t *r) {
 }
 
 // compute h*(inX, inY) + r*gPrime via multi-point multiplication
-void addrG_clear_h(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY, const uint8_t *r) {
-    to_jac_point(&bint_precomp[1][0][0], inX, inY);  // convert input point
-    precomp_finish();                                // precompute the values for the multi-point mult table
-    addrG_clear_h_help(r);                           // do the multi-point multiplication
-    from_jac_point(outX, outY, jp_tmp);              // conver the output back to affine coords
+void addrG_clear_h(mpz_t X, mpz_t Y, mpz_t Z, const uint8_t *r) {
+    to_jac_point(&bint_precomp[1][0][0], X, Y, Z);  // convert input point
+    precomp_finish();                               // precompute the values for the multi-point mult table
+    addrG_clear_h_help(r);                          // do the multi-point multiplication
+    from_jac_point(X, Y, Z, jp_tmp);                // conver the output back to affine coords
 }
 
 // *************************************************************
@@ -625,11 +678,11 @@ static inline void swu_help(const unsigned jp_num, const mpz_t u) {
 
     // compute numerator and denominator of X0(u)^3 + aX0(u) + b
     // for X0(u) = num/den, this is (num^3 + a * num * den^2 + b den^3) / den^3
-    sqr_modp(mpz_tmp[3], mpz_tmp[1]);              // den^2
-    mul_modp(mpz_tmp[4], mpz_tmp[2], mpz_tmp[3]);  // num * den^2
+    sqr_modp(mpz_tmp[7], mpz_tmp[1]);              // den^2
+    mul_modp(mpz_tmp[4], mpz_tmp[2], mpz_tmp[7]);  // num * den^2
     mul_modp(mpz_tmp[4], mpz_tmp[4], ellp_a);      // a * num * den^2
                                                    //
-    mul_modp(mpz_tmp[3], mpz_tmp[3], mpz_tmp[1]);  // den^3
+    mul_modp(mpz_tmp[3], mpz_tmp[7], mpz_tmp[1]);  // den^3
     mul_modp(mpz_tmp[5], mpz_tmp[3], ellp_b);      // b * den^3
     mpz_add(mpz_tmp[4], mpz_tmp[4], mpz_tmp[5]);   // a * num * den^2 + b * den^3
                                                    //
@@ -638,25 +691,13 @@ static inline void swu_help(const unsigned jp_num, const mpz_t u) {
     mpz_add(mpz_tmp[4], mpz_tmp[4], mpz_tmp[5]);   // (num^3 + a * num * den^2 + b * den^3)
 
     // compute sqrt(U/V) where U = (num^3 + a * num * den^2 + b * den^3), V = den^3
-    sqr_modp(mpz_tmp[5], mpz_tmp[3]);                // V^2
-    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[3]);    // V^3
-    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[4]);    // U V^3
-    mpz_powm(mpz_tmp[5], mpz_tmp[5], pm3o4, fld_p);  // (U V^3)^((p-3)/4)
-    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[4]);    // U * (U V^3)^((p-3)/4)
-    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[3]);    // U * V * (U V^3)^((p-3)/4)
-
-    // test if this is the correct sqrt: sqrtCand^2 * V - U = 0 mod p
-    sqr_modp(mpz_tmp[6], mpz_tmp[5]);              // sqrtCand^2
-    mul_modp(mpz_tmp[6], mpz_tmp[6], mpz_tmp[3]);  // sqrtCand^2 * V
-    mpz_sub(mpz_tmp[6], mpz_tmp[6], mpz_tmp[4]);   // sqrtCand^2 * V - U
-    mpz_mod(mpz_tmp[6], mpz_tmp[6], fld_p);        // sqrtCand^2 * V - U mod p
-    if (mpz_cmp_ui(mpz_tmp[6], 0) != 0) {
+    if (!divsqrt(mpz_tmp[5], mpz_tmp[6], mpz_tmp[4], mpz_tmp[3], false)) {
         // g(X0(u)) was nonsquare, so convert to g(X1(u))
         // NOTE: multiplying by u^3 preserves sign of u, so no need to apply sgn0(u) to y
         mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[0]);  // u^2 * sqrtCand
         mul_modp(mpz_tmp[5], mpz_tmp[5], u);           // u^3 * sqrtCand
         mul_modp(mpz_tmp[2], mpz_tmp[2], mpz_tmp[0]);  // -b * u^2 * (u^4 - u^2 + 1)
-        mpz_sub(mpz_tmp[2], fld_p, mpz_tmp[2]);        // b * u^2 * (u^4 - u^2 + 1)     => X1num
+        mpz_neg(mpz_tmp[2], mpz_tmp[2]);               // b * u^2 * (u^4 - u^2 + 1)     => X1num
     } else if (mpz_cmp(pp1o2, u) <= 0) {
         // g(X0(u)) was square and u is negative, so negate y
         mpz_sub(mpz_tmp[5], fld_p, mpz_tmp[5]);  // negate y because u is negative
@@ -664,8 +705,7 @@ static inline void swu_help(const unsigned jp_num, const mpz_t u) {
 
     // now compute X, Y, and Z
     mul_modp(mpz_tmp[2], mpz_tmp[2], mpz_tmp[1]);  // Xnum * Xden = X  =>  x = Xnum/Xden = X / Xden^2
-    sqr_modp(mpz_tmp[0], mpz_tmp[1]);              // Xden^2
-    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[0]);  // y * Xden^2 = Y/Z
+    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[7]);  // y * Xden^2 = Y/Z
     mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[1]);  // y * Xden^3 = Y
 
     // export to jacobian point
@@ -676,7 +716,7 @@ static inline void swu_help(const unsigned jp_num, const mpz_t u) {
 
 // evaluate polynomial via Horner's method
 static inline void horner_eval(mpz_t out, const mpz_t x, const int startval) {
-    for (int i = startval ; i >= 0; --i) {
+    for (int i = startval; i >= 0; --i) {
         mul_modp(out, out, x);
         mpz_add(out, out, mpz_tmp[i]);
     }
@@ -690,8 +730,8 @@ static inline void compute_map_terms(mpz_t *inv, mpz_t *zv, const unsigned len) 
 }
 
 // evaluate the 11-isogeny map from EllP to Ell
-static void eval_iso11(const unsigned jp_num) {
-    bint_export_mpz(mpz_tmp[32], jp_tmp[jp_num].Z);   // extract Jacobian coord Z
+static void eval_iso11(void) {
+    bint_export_mpz(mpz_tmp[32], jp_tmp[1].Z);  // extract Jacobian coord Z
     // precompute even powers of Z up to Z^30
     sqr_modp(mpz_tmp[31], mpz_tmp[32]);               // Z^2
     mul_modp(mpz_tmp[32], mpz_tmp[32], mpz_tmp[31]);  // Z^3
@@ -701,7 +741,7 @@ static void eval_iso11(const unsigned jp_num) {
     for (unsigned i = 0; i < 3; ++i) {
         mul_modp(mpz_tmp[27 - i], mpz_tmp[28 - i], mpz_tmp[31]);  // Z^10, Z^12, Z^14
     }
-    sqr_modp(mpz_tmp[24], mpz_tmp[28]);               // Z^16
+    sqr_modp(mpz_tmp[24], mpz_tmp[28]);  // Z^16
     for (unsigned i = 0; i < 7; ++i) {
         mul_modp(mpz_tmp[23 - i], mpz_tmp[24 - i], mpz_tmp[31]);  // Z^18, ..., Z^28
     }
@@ -719,7 +759,7 @@ static void eval_iso11(const unsigned jp_num) {
 
     // Ymap denominator
     compute_map_terms(ymap_den, mpz_tmp + 17, ELLP_YMAP_DEN_LEN);       // Compute k_(15-i) Z^(2i) terms for ymap den
-    bint_export_mpz(mpz_tmp[15], jp_tmp[jp_num].X);                     // extract Jacobian coord X
+    bint_export_mpz(mpz_tmp[15], jp_tmp[1].X);                          // extract Jacobian coord X
     mpz_add(mpz_tmp[16], mpz_tmp[15], mpz_tmp[ELLP_YMAP_DEN_LEN - 1]);  // X + k_14 Z^2 (denominator is monic)
     horner_eval(mpz_tmp[16], mpz_tmp[15], ELLP_YMAP_DEN_LEN - 2);       // Horner for rest
     mul_modp(mpz_tmp[32], mpz_tmp[32], mpz_tmp[16]);                    // Z^3 * denom because y = Y/Z^3 is in numer
@@ -729,7 +769,7 @@ static void eval_iso11(const unsigned jp_num) {
     mul_modp(mpz_tmp[16], mpz_tmp[15], ymap_num[ELLP_YMAP_NUM_LEN - 1]);  // k_15 * X
     mpz_add(mpz_tmp[16], mpz_tmp[16], mpz_tmp[ELLP_YMAP_NUM_LEN - 2]);    // k_15 * X + k_14 Z^2
     horner_eval(mpz_tmp[16], mpz_tmp[15], ELLP_YMAP_NUM_LEN - 3);         // Horner for rest
-    bint_export_mpz(mpz_tmp[14], jp_tmp[jp_num].Y);                       // extract Jacobian coord Y
+    bint_export_mpz(mpz_tmp[14], jp_tmp[1].Y);                            // extract Jacobian coord Y
     mul_modp(mpz_tmp[16], mpz_tmp[16], mpz_tmp[14]);                      // numerator * Y
     // at this point: numerator of Ymap is in mpz_tmp[16], denominator in mpz_tmp[32]
 
@@ -756,40 +796,40 @@ static void eval_iso11(const unsigned jp_num) {
     mul_modp(mpz_tmp[10], mpz_tmp[10], mpz_tmp[9]);   // Yout = Yout' * Zout^2 = y * Zout^3, so y = Yout / Zout^3
 
     // write to the jacobian point representation
-    bint_import_mpz(jp_tmp[jp_num].X, mpz_tmp[11]);
-    bint_import_mpz(jp_tmp[jp_num].Y, mpz_tmp[10]);
-    bint_import_mpz(jp_tmp[jp_num].Z, mpz_tmp[12]);
+    bint_import_mpz(jp_tmp[1].X, mpz_tmp[11]);
+    bint_import_mpz(jp_tmp[1].Y, mpz_tmp[10]);
+    bint_import_mpz(jp_tmp[1].Z, mpz_tmp[12]);
 }
 
 // evaluate the SWU map once, apply isogeny map, and clear cofactor
-void swu_map(mpz_t x, mpz_t y, const mpz_t u) {
+void swu_map(mpz_t x, mpz_t y, mpz_t z, const mpz_t u) {
     swu_help(1, u);
-    eval_iso11(1);
+    eval_iso11();
     clear_h_chain();
-    from_jac_point(x, y, jp_tmp + 7);
+    from_jac_point(x, y, z, jp_tmp + 7);
 }
 
 // evaluate the SWU map twice, add result together, apply isogeny map, and clear cofactor
-void swu_map2(mpz_t x, mpz_t y, const mpz_t u1, const mpz_t u2) {
+void swu_map2(mpz_t x, mpz_t y, mpz_t z, const mpz_t u1, const mpz_t u2) {
     swu_help(0, u1);
     swu_help(1, u2);
     // point_add is independent of curve constants, so we can use it on points from the 11-isogenous curve
     point_add(jp_tmp + 1, jp_tmp, jp_tmp + 1);
-    eval_iso11(1);
+    eval_iso11();
     clear_h_chain();
-    from_jac_point(x, y, jp_tmp + 7);
+    from_jac_point(x, y, z, jp_tmp + 7);
 }
 
 // evalute the SWU map once, apply isogeny map, and clear cofactor while adding a random point in subgroup
-void swu_map_rG(mpz_t x, mpz_t y, const mpz_t u, const uint8_t *r) {
+void swu_map_rG(mpz_t x, mpz_t y, mpz_t z, const mpz_t u, const uint8_t *r) {
     // evaluate SWU map and isogeny
     swu_help(1, u);
-    eval_iso11(1);
+    eval_iso11();
 
     // precompute values for the multi-point mult table
     memcpy(&bint_precomp[1][0][0], jp_tmp + 1, sizeof(struct jac_point));
     precomp_finish();
 
     addrG_clear_h_help(r);  // multi-point multiplication
-    from_jac_point(x, y, jp_tmp);
+    from_jac_point(x, y, z, jp_tmp);
 }

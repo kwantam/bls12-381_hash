@@ -13,9 +13,10 @@ int main(int argc, char **argv) {
     precomp_init();
 
     // get libgmp ready
-    mpz_t x1, y1, t, rr;
+    mpz_t x1, y1, z1, t, rr;
     mpz_init(x1);
     mpz_init(y1);
+    mpz_init(z1);
     mpz_init(t);
     mpz_init(rr);
 
@@ -37,14 +38,19 @@ int main(int argc, char **argv) {
     for (unsigned i = 0; i < opts.nreps; ++i) {
         next_prng(prng_ctx, &hash_ctx, i);
         next_modp(prng_ctx, t);
-        svdw_map(x1, y1, t);
+        if (opts.field_only) {
+            svdw_map_fo(x1, y1, z1, t);
+        } else {
+            svdw_map(x1, y1, t);
+            mpz_set_ui(z1, 1);
+        }
         const uint8_t *r = next_modq(prng_ctx, opts.test ? &rr : NULL);
 
         // show results                     svdw_addrG
-        //   test:                          (t, r, xO, yO)
+        //   test:                          (t, r, xO, yO, zO)
         //   quiet && !test:                <<nothing>>
-        //   !quiet && !test && clear_h:    (xO, yO)
-        //   !quiet && !test && !clear_h:   (xI, yI)
+        //   !quiet && !test && clear_h:    (xO, yO, zO)
+        //   !quiet && !test && !clear_h:   (xI, yI, zI)
         if (first_print || second_print) {
             printf("(");
         }
@@ -53,17 +59,17 @@ int main(int argc, char **argv) {
         if (opts.test) {
             gmp_printf("0x%Zx, 0x%Zx, ", t, rr);
         } else if (first_print) {
-            gmp_printf("0x%Zx, 0x%Zx, ", x1, y1);
+            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, ", x1, y1, z1);
         }
 
         // maybe do the addition
         if (do_clear) {
-            addrG_clear_h(x1, y1, x1, y1, r);
+            addrG_clear_h(x1, y1, z1, r);
         }
 
         // maybe output the result
         if (second_print) {
-            gmp_printf("0x%Zx, 0x%Zx, ", x1, y1);
+            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, ", x1, y1, z1);
         }
 
         if (first_print || second_print) {
@@ -75,6 +81,7 @@ int main(int argc, char **argv) {
     EVP_CIPHER_CTX_free(prng_ctx);
     mpz_clear(rr);
     mpz_clear(t);
+    mpz_clear(z1);
     mpz_clear(y1);
     mpz_clear(x1);
     curve_uninit();

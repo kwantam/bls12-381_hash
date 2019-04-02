@@ -13,9 +13,10 @@ int main(int argc, char **argv) {
     precomp_init();
 
     // get libgmp ready
-    mpz_t x1, y1, u1, u2;
+    mpz_t x1, y1, z1, u1, u2;
     mpz_init(x1);
     mpz_init(y1);
+    mpz_init(z1);
     mpz_init(u1);
     mpz_init(u2);
 
@@ -39,18 +40,18 @@ int main(int argc, char **argv) {
             next_modp(prng_ctx, u1);
         }
         next_modp(prng_ctx, u2);
-        swu_map2(x1, y1, u1, u2);
+        swu_map2(x1, y1, z1, u1, u2);
 
         // show results
-        //   test:              (xO, yO, u1, u2)
+        //   test:              (xO, yO, zO, u1, u2)
         //   quiet && !test:    <<nothing>>
-        //   !quiet && !test:   (xO, yO)
+        //   !quiet && !test:   (xO, yO, zO)
 
         // maybe output the points
         if (opts.test) {
-            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, u1, u2);
+            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, z1, u1, u2);
         } else if (!opts.quiet) {
-            gmp_printf("(0x%Zx, 0x%Zx, )\n", x1, y1);
+            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, z1);
         }
     }
 
@@ -58,6 +59,7 @@ int main(int argc, char **argv) {
     EVP_CIPHER_CTX_free(prng_ctx);
     mpz_clear(u2);
     mpz_clear(u1);
+    mpz_clear(z1);
     mpz_clear(y1);
     mpz_clear(x1);
     curve_uninit();
