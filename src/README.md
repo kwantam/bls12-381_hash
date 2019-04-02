@@ -59,10 +59,7 @@ The following targets are supported:
 - `Debug` - debug symbols and `-Og`
 - `RelASan` - release build with [ASan](https://en.wikipedia.org/wiki/AddressSanitizer) and
   [UBSan](https://developers.redhat.com/blog/2014/10/16/gcc-undefined-behavior-sanitizer-ubsan/)
-- `RelTSan` - release build with
-  [ThreadSan](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Thread_Sanitizer)
 - `DebugASan` - debug build with ASan and UBSan
-- `DebugTSan` - debug build with ThreadSan
 
 And of course you can combine the above, e.g.,
 
