@@ -29,7 +29,7 @@ void clear_h(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY);
 // clear cofactor, add random subgroup element via 3-point multi-multiplication
 void addrG_clear_h(mpz_t outX, mpz_t outY, const mpz_t inX, const mpz_t inY, const uint8_t *r);
 
-// add two points together and then clear cofactor
+// add two points together (and clear cofactor in the second case)
 void add2(mpz_t outX, mpz_t outY, const mpz_t inX1, const mpz_t inY1, const mpz_t inX2, const mpz_t inY2);
 void add2_clear_h(mpz_t outX, mpz_t outY, const mpz_t inX1, const mpz_t inY1, const mpz_t inX2, const mpz_t inY2);
 

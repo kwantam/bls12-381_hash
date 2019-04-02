@@ -71,14 +71,14 @@ def swu(u):
     return EllP(F(-u^2 * x0), F(u^3 * sqrtCand))
 
 def usage():
-    print("Usage: %s <type>\n<type> is one of 'try', '1', '2', 'rG', 'u1', 'u2', 'urG'\n")
+    print("Usage: %s <type>\n<type> is one of 'hac', '1', '2', 'rG', 'u1', 'u2', 'urG'\n")
     sys.exit(1)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         usage()
 
-    if sys.argv[1] == "try":
+    if sys.argv[1] == "hac":
         assert all( Ell(xOut, yOut) == h * Ell(xIn, yIn)
                     for (xIn, yIn, xOut, yOut) in ( eval(l) for l in sys.stdin.readlines() ) )
 

@@ -26,7 +26,7 @@ static const uint8_t BLS12_381_h[] = {
     0x39, 0x6c, 0x8c, 0x00, 0x55, 0x55, 0xe1, 0x56, 0x8c, 0x00, 0xaa, 0xab, 0x00, 0x00, 0xaa, 0xab,
 };
 
-// base point G' : ./hash_and_try -n 1 <<< "bls12_381 random base point"
+// base point G' : ./hash_and_check -n 1 <<< "bls12_381 random base point"
 // NOTE this is in Montgomery repr suitable for use with bint.
 //      You can show its value using something like
 //          bint_export_mpz(x, g_prime_x);
