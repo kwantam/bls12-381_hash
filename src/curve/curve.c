@@ -92,7 +92,7 @@ void curve_init(void) {
         bint_import_mpz(bint_ellp_a, ellp_a);
         bint_import_mpz(bint_ellp_b, ellp_b);
         bint_set1(bint_one);
-        mpz_set_si(mpz_tmp[0], -27);
+        mpz_sub_ui(mpz_tmp[0], fld_p, 27);
         bint_import_mpz(bint_M27, mpz_tmp[0]);
         mpz_set_ui(mpz_tmp[0], 23);
         bint_import_mpz(bint_23, mpz_tmp[0]);
@@ -365,10 +365,11 @@ void svdw_map_fo(mpz_t x, mpz_t y, mpz_t z, const mpz_t t) {
     }
 
     // x3 : ((23 - t^2)^2 + 81t^2) / (-27 t^2)
-    sqr_modp(x, z);                          // (23 - t^2)^2
-    mpz_mul_si(z, mpz_tmp[0], -27);          // -27 t^2                   = V
-    mpz_mul_ui(mpz_tmp[0], mpz_tmp[0], 81);  // 81 t^2
-    mpz_add(x, x, mpz_tmp[0]);               // (23 - t^2)^2 + 81t^2      = U
+    sqr_modp(x, z);                      // (23 - t^2)^2
+    mpz_mul_si(z, mpz_tmp[0], -27);      // -27 t^2                       = V
+    mpz_mul_2exp(mpz_tmp[0], z, 1);      // -54 t^2
+    mpz_add(mpz_tmp[0], mpz_tmp[0], z);  // -81 t^2
+    mpz_sub(x, x, mpz_tmp[0]);           // (23 - t^2)^2 + 81t^2          = U
     check_fxOverZ(x, y, z, neg_t, true);
 }
 
