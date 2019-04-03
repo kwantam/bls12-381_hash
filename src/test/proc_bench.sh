@@ -17,50 +17,65 @@ div_round() {
     echo $(($(($1 + 50000000)) / 100000000))
 }
 
-show_next() {
-    div_round ${amd_vals[$idx]}
-    echo "$\\vert$"
-    div_round ${intel_vals[$idx]}
-    let idx++ 1
+show_q_fq_cq() {
+    [ "$#" != "2" ] && { echo "bad args"; exit 1; }
+
+    if [ "$1" = "1" ]; then
+        div_round ${amd_vals[$idx]}
+        echo "$\\vert$"
+        div_round ${intel_vals[$idx]}
+        let idx++ 1
+    else
+        echo "---"
+    fi
+
+    if [ "$2" = "1" ]; then
+        echo "\\\\"
+    else
+        echo "&"
+    fi
 }
 
 idx=0
 
-echo "Hash-and-check & & "
-show_next; echo " & "
-show_next; echo " & --- \\\\"
-echo "%"; echo "%"
+echo "Hash-and-check & &"
+show_q_fq_cq 1 0
+show_q_fq_cq 1 0
+show_q_fq_cq 0 1
 echo "\\midrule"
 
-echo "Construction \\#1 & \\S\\ref{sec:blsmap} & "
-show_next; echo " & "
-show_next; echo " & "
-show_next; echo "\\\\"
-echo "%"; echo "%"
+echo "Construction \\#1 & \\S\\ref{sec:blsmap} &"
+show_q_fq_cq 1 0
+show_q_fq_cq 1 0
+show_q_fq_cq 1 1
+echo "%"
 
-echo " & \\S\\ref{sec:blsmap2} & --- & "
-show_next; echo " & "
-show_next; echo "\\\\"
-echo "%"; echo "%"
+echo "& \\S\\ref{sec:blsmap2} &"
+show_q_fq_cq 0 0
+show_q_fq_cq 1 0
+show_q_fq_cq 1 1
 echo "\\midrule"
 
-echo "Construction \\#2 & \\S\\ref{sec:blsmap} & "
-show_next; echo " & "
-show_next; echo " & "
-show_next; echo "\\\\"
-echo "%"; echo "%"
+echo "Construction \\#2 & \\S\\ref{sec:blsmap} &"
+show_q_fq_cq 1 0
+show_q_fq_cq 1 0
+show_q_fq_cq 1 1
+echo "%"
 
-echo " & \\S\\ref{sec:blsmap2} & --- & "
-show_next; echo " & "
-show_next; echo "\\\\"
-echo "%"; echo "%"
+echo "& \\S\\ref{sec:blsmap2} &"
+show_q_fq_cq 0 0
+show_q_fq_cq 1 0
+show_q_fq_cq 1 1
 echo "\\midrule"
 
-echo "Construction \\#3 & \\S\\ref{sec:blsmap} & "
-show_next; echo " & "
-show_next; echo " & --- \\\\"
-echo "%"; echo "%"
+echo "Construction \\#3 & \\S\\ref{sec:blsmap} &"
+show_q_fq_cq 1 0
+show_q_fq_cq 1 0
+show_q_fq_cq 0 1
+echo "%"
 
-echo " & \\S\\ref{sec:blsmap2} & --- & "
-show_next; echo " & --- \\\\"
-echo "%"; echo "%"
+echo "& \\S\\ref{sec:blsmap2} &"
+show_q_fq_cq 0 0
+show_q_fq_cq 1 0
+show_q_fq_cq 0 1
+echo "%"
