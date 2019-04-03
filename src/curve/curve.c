@@ -645,6 +645,10 @@ void add2_clear_h(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, 
 // precompute the fixed part of the table (based on G' and 2^128 * G') for addrG
 static struct jac_point bint_precomp[4][4][4];
 void precomp_init(void) {
+    memset(bint_precomp[0][0][0].X, 0, BINT_NWORDS * sizeof(int64_t));
+    bint_set1(bint_precomp[0][0][0].Y);
+    memset(bint_precomp[0][0][0].Z, 0, BINT_NWORDS * sizeof(int64_t));
+
     memcpy(bint_precomp[0][0][1].X, g_prime_x, sizeof(g_prime_x));
     memcpy(bint_precomp[0][0][1].Y, g_prime_y, sizeof(g_prime_y));
     bint_set1(bint_precomp[0][0][1].Z);
@@ -724,7 +728,7 @@ void addrG_clear_h(mpz_t X, mpz_t Y, mpz_t Z, const uint8_t *r) {
     to_jac_point(&bint_precomp[1][0][0], X, Y, Z);  // convert input point
     precomp_finish();                               // precompute the values for the multi-point mult table
     addrG_clear_h_help(r);                          // do the multi-point multiplication
-    from_jac_point(X, Y, Z, jp_tmp);                // conver the output back to affine coords
+    from_jac_point(X, Y, Z, jp_tmp);                // convert result
 }
 
 // *************************************************************
@@ -903,8 +907,10 @@ static void eval_iso11(void) {
 }
 
 // bint-based constant-time SWU impl
-// assumes that the argument u is passed in bint_tmp[10]
-static inline void swu_help_ct(const unsigned jp_num) {
+static inline void swu_help_ct(const unsigned jp_num, const mpz_t u) {
+    // mpz to bint
+    bint_import_mpz(bint_tmp[10], u);
+
     // compute numerator and denominator of X0(u)
     bint_sqr(bint_tmp[0], bint_tmp[10]);                 // u^2                                 v = 2   w = 1
     bint_sqr(bint_tmp[1], bint_tmp[0]);                  // u^4                                 v = 2   w = 1
@@ -1024,55 +1030,50 @@ static inline void eval_iso11_ct(void) {
 }
 
 // evaluate the SWU map once, apply isogeny map, and clear cofactor
-void swu_map(mpz_t x, mpz_t y, mpz_t z, const mpz_t u) {
-    swu_help(1, u);
-    eval_iso11();
+void swu_map(mpz_t x, mpz_t y, mpz_t z, const mpz_t u, const bool constant_time) {
+    if (constant_time) {
+        swu_help_ct(1, u);
+        eval_iso11_ct();
+    } else {
+        swu_help(1, u);
+        eval_iso11();
+    }
+
     clear_h_chain();
     from_jac_point(x, y, z, jp_tmp + 7);
 }
 
-// constant-time version of swu_map
-void swu_map_ct(mpz_t x, mpz_t y, mpz_t z, const mpz_t u) {
-    bint_import_mpz(bint_tmp[10], u);
-    swu_help_ct(1);
-    eval_iso11_ct();
-    clear_h_chain();
-    from_jac_point(x, y, z, jp_tmp + 7);
-}
+// evaluate the SWU map twice, add results together, apply isogeny map, clear cofactor
+void swu_map2(mpz_t x, mpz_t y, mpz_t z, const mpz_t u1, const mpz_t u2, const bool constant_time) {
+    if (constant_time) {
+        swu_help_ct(0, u1);
+        swu_help_ct(1, u2);
+    } else {
+        swu_help(0, u1);
+        swu_help(1, u2);
+    }
 
-// evaluate the SWU map twice, add result together, apply isogeny map, and clear cofactor
-void swu_map2(mpz_t x, mpz_t y, mpz_t z, const mpz_t u1, const mpz_t u2) {
-    swu_help(0, u1);
-    swu_help(1, u2);
-    // point_add is independent of curve constants, so we can use it on points from the 11-isogenous curve
     point_add(jp_tmp + 1, jp_tmp, jp_tmp + 1);
-    eval_iso11();
-    clear_h_chain();
-    from_jac_point(x, y, z, jp_tmp + 7);
-}
 
-// constant-time version of swu_map2
-void swu_map2_ct(mpz_t x, mpz_t y, mpz_t z, const mpz_t u1, const mpz_t u2) {
-    bint_import_mpz(bint_tmp[10], u1);
-    swu_help_ct(0);
-    bint_import_mpz(bint_tmp[10], u2);
-    swu_help_ct(1);
-    point_add(jp_tmp + 1, jp_tmp, jp_tmp + 1);
-    eval_iso11_ct();
+    if (constant_time) {
+        eval_iso11_ct();
+    } else {
+        eval_iso11();
+    }
+
     clear_h_chain();
     from_jac_point(x, y, z, jp_tmp + 7);
 }
 
 // evalute the SWU map once, apply isogeny map, and clear cofactor while adding a random point in subgroup
 void swu_map_rG(mpz_t x, mpz_t y, mpz_t z, const mpz_t u, const uint8_t *r) {
-    // evaluate SWU map and isogeny
-    swu_help(1, u);
-    eval_iso11();
+    swu_help(1, u);  // evaluate SWU map...
+    eval_iso11();    // ...and isogeny
 
     // precompute values for the multi-point mult table
     memcpy(&bint_precomp[1][0][0], jp_tmp + 1, sizeof(struct jac_point));
     precomp_finish();
 
-    addrG_clear_h_help(r);  // multi-point multiplication
-    from_jac_point(x, y, z, jp_tmp);
+    addrG_clear_h_help(r);            // do the multi-point multiplication
+    from_jac_point(x, y, z, jp_tmp);  // convert the result
 }

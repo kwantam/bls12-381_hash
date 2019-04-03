@@ -45,11 +45,7 @@ int main(int argc, char **argv) {
             next_modp(prng_ctx, u1);
         }
         next_modp(prng_ctx, u2);
-        if (opts.constant_time) {
-            swu_map2_ct(x1, y1, z1, u1, u2);
-        } else {
-            swu_map2(x1, y1, z1, u1, u2);
-        }
+        swu_map2(x1, y1, z1, u1, u2, opts.constant_time);
 
         // show results
         //   test:              (xO, yO, zO, u1, u2)
