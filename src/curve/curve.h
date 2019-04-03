@@ -25,6 +25,8 @@ void svdw_map_fo(mpz_t x, mpz_t y, mpz_t z, const mpz_t t);
 void swu_map(mpz_t x, mpz_t y, mpz_t z, const mpz_t u);
 void swu_map2(mpz_t x, mpz_t y, mpz_t z, const mpz_t u1, const mpz_t u2);
 void swu_map_rG(mpz_t x, mpz_t y, mpz_t z, const mpz_t u, const uint8_t *r);
+void swu_map_ct(mpz_t x, mpz_t y, mpz_t z, const mpz_t u);
+void swu_map2_ct(mpz_t x, mpz_t y, mpz_t z, const mpz_t u1, const mpz_t u2);
 
 // addition chain for clearing cofactor
 void clear_h(mpz_t X, mpz_t Y, mpz_t Z);

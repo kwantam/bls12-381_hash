@@ -7,14 +7,15 @@
 #include <stdint.h>
 #include <string.h>
 
-static inline void _bint_to_monty(uint64_t *out, const uint64_t *in);
-static inline void _bint_from_monty(uint64_t *out, const uint64_t *in);
-static inline int _bint_compare(const uint64_t *ina, const uint64_t *inb);
-static inline void _bint_condsub_p(uint64_t *io);
-static inline void _bint_monty_help(uint64_t *out, uint64_t *tmp);
-static inline void _bint_mul(uint64_t *out, const uint64_t *ina, const uint64_t *inb);
-static inline void _bint_mul_low(uint64_t *out, const uint64_t *ina, const uint64_t *inb);
-static inline void _bint_sqr(uint64_t *out, const uint64_t *ina);
+static inline void _bint_to_monty(int64_t *out, const int64_t *in);
+static inline void _bint_from_monty(int64_t *out, const int64_t *in);
+static inline int _bint_compare(const int64_t *ina, const int64_t *inb);
+static inline void _bint_condsub_p(int64_t *io);
+static inline bool _bint_condsub_p_eq(int64_t *io, const int64_t *cmpval);
+static inline void _bint_monty_help(int64_t *out, int64_t *tmp);
+static inline void _bint_mul(int64_t *out, const int64_t *ina, const int64_t *inb);
+static inline void _bint_mul_low(int64_t *out, const int64_t *ina, const int64_t *inb);
+static inline void _bint_sqr(int64_t *out, const int64_t *ina);
 
 #include "bint_chains.h"
 
@@ -23,7 +24,7 @@ static inline void _bint_sqr(uint64_t *out, const uint64_t *ina);
 #undef BINT_INTERNAL
 
 // clang-format off
-static const uint64_t zero[NWORDS] = {0,};
+static const int64_t zero[NWORDS] = {0,};
 // clang-format on
 
 #define __bls_hash__src__bint__bint_internal_h__

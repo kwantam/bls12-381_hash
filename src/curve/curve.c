@@ -21,10 +21,13 @@ static inline void mpz_init_import(mpz_t out, const uint64_t *in) {
 
 // initialize the temporary variables and constants uesd in this file
 #define NUM_TMP_MPZ 33  // NOTE: needs to be at least 3 + ELLP_YMAP_DEN_LEN + ELLP_YMAP_NUM_LEN
-static mpz_t cx1, cx2, sqrtM27, invM27, mpz_tmp[NUM_TMP_MPZ], fld_p, pp1o2, pp1o4, pm3o4;
+static mpz_t cx1, cx2, sqrtM27, invM27, mpz_tmp[NUM_TMP_MPZ], fld_p, pp1o4, pm3o4;
 static mpz_t ellp_a, ellp_b, pm2, pm1o2;
 static mpz_t xmap_num[ELLP_XMAP_NUM_LEN], xmap_den[ELLP_XMAP_DEN_LEN];
 static mpz_t ymap_num[ELLP_YMAP_NUM_LEN], ymap_den[ELLP_YMAP_DEN_LEN];
+static int64_t bint_ellp_b[BINT_NWORDS], bint_ellp_a[BINT_NWORDS], bint_one[BINT_NWORDS];
+static int64_t bint_xnum[ELLP_XMAP_NUM_LEN][BINT_NWORDS], bint_xden[ELLP_XMAP_DEN_LEN][BINT_NWORDS];
+static int64_t bint_ynum[ELLP_YMAP_NUM_LEN][BINT_NWORDS], bint_yden[ELLP_YMAP_DEN_LEN][BINT_NWORDS];
 static bool init_done = false;
 void curve_init(void) {
     if (!init_done) {
@@ -33,13 +36,11 @@ void curve_init(void) {
         // p, (p+1)/4, (p+1)/2
         mpz_init(fld_p);
         mpz_init(pp1o4);
-        mpz_init(pp1o2);
         mpz_init(pm3o4);
         mpz_init(pm2);
         mpz_init(pm1o2);
         mpz_import(fld_p, P_LEN, 1, 1, 1, 0, BLS12_381_p);
         mpz_add_ui(pp1o4, fld_p, 1);       // p+1
-        mpz_fdiv_q_2exp(pp1o2, pp1o4, 1);  // (p+1)/2  (for "sign")
         mpz_fdiv_q_2exp(pp1o4, pp1o4, 2);  // (p+1)/4  (for square root)
         mpz_sub_ui(pm3o4, fld_p, 3);       // p-3
         mpz_fdiv_q_2exp(pm3o4, pm3o4, 2);  // (p-3)/4  (for simultaneous invert--square root)
@@ -58,21 +59,30 @@ void curve_init(void) {
         mpz_init_import(ellp_b, ELLP_b);
         for (unsigned i = 0; i < ELLP_XMAP_NUM_LEN; ++i) {
             mpz_init_import(xmap_num[i], ELLP_XMAP_NUM[i]);
+            bint_import_mpz(bint_xnum[i], xmap_num[i]);
         }
         for (unsigned i = 0; i < ELLP_XMAP_DEN_LEN; ++i) {
             mpz_init_import(xmap_den[i], ELLP_XMAP_DEN[i]);
+            bint_import_mpz(bint_xden[i], xmap_den[i]);
         }
         for (unsigned i = 0; i < ELLP_YMAP_NUM_LEN; ++i) {
             mpz_init_import(ymap_num[i], ELLP_YMAP_NUM[i]);
+            bint_import_mpz(bint_ynum[i], ymap_num[i]);
         }
         for (unsigned i = 0; i < ELLP_YMAP_DEN_LEN; ++i) {
             mpz_init_import(ymap_den[i], ELLP_YMAP_DEN[i]);
+            bint_import_mpz(bint_yden[i], ymap_den[i]);
         }
 
         // temp variables
         for (unsigned i = 0; i < NUM_TMP_MPZ; ++i) {
             mpz_init(mpz_tmp[i]);
         }
+
+        // bint temps
+        bint_import_mpz(bint_ellp_a, ellp_a);
+        bint_import_mpz(bint_ellp_b, ellp_b);
+        bint_set1(bint_one);
     }
 }
 
@@ -84,7 +94,6 @@ void curve_uninit(void) {
         // p, (p+1)/4, (p+1)/2
         mpz_clear(fld_p);
         mpz_clear(pp1o4);
-        mpz_clear(pp1o2);
         mpz_clear(pm3o4);
         mpz_clear(pm2);
         mpz_clear(pm1o2);
@@ -259,9 +268,9 @@ void svdw_map(mpz_t x, mpz_t y, const mpz_t t) {
     if (mpz_cmp_ui(mpz_tmp[2], 0) != 0) {
         mpz_invert(mpz_tmp[2], mpz_tmp[2], fld_p);  // invert if nonzero
     }
-    svdw_precomp2(0);                           // compute non-constant part of x1 and x2 in tmp0
-    const bool neg_t = mpz_cmp(pp1o2, t) <= 0;  // true (negative) when t >= (p+1)/2
-    svdw_map_help(x, y, neg_t, 0);              // finish computing the map
+    svdw_precomp2(0);                          // compute non-constant part of x1 and x2 in tmp0
+    const bool neg_t = mpz_cmp(pm1o2, t) < 0;  // true (negative) when t > (p-1)/2
+    svdw_map_help(x, y, neg_t, 0);             // finish computing the map
 }
 
 // Apply the SvdW map to two points simultaneously
@@ -288,10 +297,10 @@ void svdw_map2(mpz_t x1, mpz_t y1, const mpz_t t1, mpz_t x2, mpz_t y2, const mpz
     svdw_precomp2(0);  // non-constant part of x11 and x12
     svdw_precomp2(3);  // non-constant part of x21 and x22
 
-    const bool neg_t1 = mpz_cmp(pp1o2, t1) <= 0;  // t1 negative
-    svdw_map_help(x1, y1, neg_t1, 0);             // finish computing the first map
-    const bool neg_t2 = mpz_cmp(pp1o2, t2) <= 0;  // t2 negative
-    svdw_map_help(x2, y2, neg_t2, 3);             // finish computing the second map
+    const bool neg_t1 = mpz_cmp(pm1o2, t1) < 0;  // t1 negative
+    svdw_map_help(x1, y1, neg_t1, 0);            // finish computing the first map
+    const bool neg_t2 = mpz_cmp(pm1o2, t2) < 0;  // t2 negative
+    svdw_map_help(x2, y2, neg_t2, 3);            // finish computing the second map
 }
 
 // **
@@ -320,7 +329,7 @@ static inline bool check_fxOverZ(mpz_t x, mpz_t y, mpz_t z, const bool negate, c
 
 // svdw map using field ops only
 void svdw_map_fo(mpz_t x, mpz_t y, mpz_t z, const mpz_t t) {
-    const bool neg_t = mpz_cmp(pp1o2, t) <= 0;  // true (negative) when t >= (p+1)/2
+    const bool neg_t = mpz_cmp(pm1o2, t) < 0;  // true (negative) when t >= (p+1)/2
 
     sqr_modp(mpz_tmp[0], t);                    // t^2
     mpz_ui_sub(z, 23, mpz_tmp[0]);              // 23 - t^2               = V
@@ -353,14 +362,14 @@ void svdw_map_fo(mpz_t x, mpz_t y, mpz_t z, const mpz_t t) {
 // **************************
 // Jacobian coordinates: x = X/Z^2, y = Y/Z^3
 struct jac_point {
-    uint64_t X[BINT_NWORDS];
-    uint64_t Y[BINT_NWORDS];
-    uint64_t Z[BINT_NWORDS];
+    int64_t X[BINT_NWORDS];
+    int64_t Y[BINT_NWORDS];
+    int64_t Z[BINT_NWORDS];
 };
 
 // temporary bigints
-#define NUM_TMP_BINT 11
-static uint64_t bint_tmp[NUM_TMP_BINT][BINT_NWORDS];
+#define NUM_TMP_BINT 32
+static int64_t bint_tmp[NUM_TMP_BINT][BINT_NWORDS];
 
 // double a point in Jacobian coordinates
 // out == in is OK
@@ -373,25 +382,25 @@ static inline void point_double(struct jac_point *out, const struct jac_point *i
     bint_add(bint_tmp[3], in->X, bint_tmp[1]);           // X + B                        v = 4   w = 2
     bint_sqr(bint_tmp[3], bint_tmp[3]);                  // (X + B)^2                    v = 2   w = 1
     bint_add(bint_tmp[4], bint_tmp[0], bint_tmp[2]);     // (A + C)                      v = 4   w = 2
-    bint_sub(bint_tmp[3], bint_tmp[3], bint_tmp[4], 3);  // (X + B)^2 - A - C            v = 10  w = 9
-    bint_lsh(bint_tmp[3], bint_tmp[3], 1);               // D = 2 * ((X + B)^2 - A - C)  v = 20  w = 18
+    bint_sub(bint_tmp[3], bint_tmp[3], bint_tmp[4], 2);  // (X + B)^2 - A - C            v = 6   w = 5
+    bint_lsh(bint_tmp[3], bint_tmp[3], 1);               // D = 2 * ((X + B)^2 - A - C)  v = 12  w = 10
                                                          //
     bint_lsh(bint_tmp[4], bint_tmp[0], 1);               // 2 * A                        v = 4   w = 2
     bint_add(bint_tmp[4], bint_tmp[4], bint_tmp[0]);     // E = 3 * A                    v = 6   w = 3
                                                          //
     bint_sqr(bint_tmp[5], bint_tmp[4]);                  // F = E^2                      v = 2   w = 1
                                                          //
-    bint_lsh(bint_tmp[6], bint_tmp[3], 1);               // 2 * D                        v = 40  w = 36
-    bint_sub(bint_tmp[6], bint_tmp[5], bint_tmp[6], 6);  // F - 2 * D                    v = 66  w = 65
+    bint_lsh(bint_tmp[6], bint_tmp[3], 1);               // 2 * D                        v = 24  w = 20
+    bint_sub(bint_tmp[6], bint_tmp[5], bint_tmp[6], 5);  // F - 2 * D                    v = 34  w = 33
     bint_redc(out->X, bint_tmp[6]);                      // X3 = F - 2 * D               v = 2   w = 1
                                                          //
     bint_lsh(bint_tmp[6], in->Z, 1);                     // 2 * Z                        v = 4   w = 2
     bint_mul(out->Z, bint_tmp[6], in->Y);                // 2 * Z * Y                    v = 2   w = 1
                                                          //
     bint_lsh(bint_tmp[2], bint_tmp[2], 3);               // 8 * C                        v = 16  w = 8
-    bint_sub(bint_tmp[6], bint_tmp[3], out->X, 2);       // D - X3                       v = 24  w = 22
+    bint_sub(bint_tmp[6], bint_tmp[3], out->X, 1);       // D - X3                       v = 16  w = 14
     bint_mul(bint_tmp[6], bint_tmp[6], bint_tmp[4]);     // E * (D - X3)                 v = 2   w = 1
-    bint_sub(bint_tmp[6], bint_tmp[6], bint_tmp[2], 5);  // E * (D - X3) - 8 * C         v = 34  w = 33
+    bint_sub(bint_tmp[6], bint_tmp[6], bint_tmp[2], 4);  // E * (D - X3) - 8 * C         v = 18  w = 17
     bint_redc(out->Y, bint_tmp[6]);                      // Y = E * (D - X3) - 8 * C     v = 2   w = 1
 }
 
@@ -413,34 +422,34 @@ static inline void point_add(struct jac_point *out, const struct jac_point *in1,
     bint_mul(bint_tmp[5], in2->Y, in1->Z);               // Y2 * Z1                      v = 2   w = 1
     bint_mul(bint_tmp[5], bint_tmp[5], bint_tmp[0]);     // S2 = Y2 * Z1 * Z1Z1          v = 2   w = 1
                                                          //
-    bint_sub(bint_tmp[6], bint_tmp[3], bint_tmp[2], 2);  // H = U2 - U1                  v = 6   w = 5
+    bint_sub(bint_tmp[6], bint_tmp[3], bint_tmp[2], 1);  // H = U2 - U1                  v = 4   w = 3
                                                          //
-    bint_lsh(bint_tmp[7], bint_tmp[6], 1);               // 2 * H                        v = 12  w = 10
+    bint_lsh(bint_tmp[7], bint_tmp[6], 1);               // 2 * H                        v = 8   w = 6
     bint_sqr(bint_tmp[7], bint_tmp[7]);                  // I = (2 * H)^2                v = 2   w = 1
                                                          //
     bint_mul(bint_tmp[8], bint_tmp[7], bint_tmp[6]);     // J = H * I                    v = 2   w = 1
                                                          //
-    bint_sub(bint_tmp[9], bint_tmp[5], bint_tmp[4], 2);  // S2 - S1                      v = 6   w = 5
-    bint_lsh(bint_tmp[9], bint_tmp[9], 1);               // r = 2 * (S2 - S1)            v = 12  w = 10
+    bint_sub(bint_tmp[9], bint_tmp[5], bint_tmp[4], 1);  // S2 - S1                      v = 4   w = 3
+    bint_lsh(bint_tmp[9], bint_tmp[9], 1);               // r = 2 * (S2 - S1)            v = 8   w = 6
                                                          //
     bint_mul(bint_tmp[10], bint_tmp[2], bint_tmp[7]);    // V = U1 * I                   v = 2   w = 1
                                                          //
     bint_lsh(out->X, bint_tmp[10], 1);                   // 2 * V                        v = 4   w = 2
     bint_add(out->X, out->X, bint_tmp[8]);               // J + 2 * V                    v = 6   w = 3
     bint_sqr(bint_tmp[7], bint_tmp[9]);                  // r^2                          v = 2   w = 1
-    bint_sub(out->X, bint_tmp[7], out->X, 4);            // r^2 - J - 2 * V              v = 18  w = 17
+    bint_sub(out->X, bint_tmp[7], out->X, 3);            // r^2 - J - 2 * V              v = 10  w = 9
     bint_redc(out->X, out->X);                           // X3 = r^2 - J - 2 * V         v = 2   w = 1
                                                          //
     bint_lsh(bint_tmp[4], bint_tmp[4], 1);               // 2 * S1                       v = 4   w = 2
     bint_mul(bint_tmp[4], bint_tmp[4], bint_tmp[8]);     // 2 * S1 * J                   v = 2   w = 1
-    bint_sub(out->Y, bint_tmp[10], out->X, 2);           // V - X3                       v = 6   w = 5
+    bint_sub(out->Y, bint_tmp[10], out->X, 1);           // V - X3                       v = 4   w = 3
     bint_mul(out->Y, out->Y, bint_tmp[9]);               // r * (V - X3)                 v = 2   w = 1
-    bint_sub(out->Y, out->Y, bint_tmp[4], 2);            // r * (V - X3) - 2 * S1 * J    v = 6   w = 5
+    bint_sub(out->Y, out->Y, bint_tmp[4], 1);            // r * (V - X3) - 2 * S1 * J    v = 4   w = 3
                                                          //
     bint_add(out->Z, in1->Z, in2->Z);                    // Z1 + Z2                      v = 4   w = 2
     bint_sqr(out->Z, out->Z);                            // (Z1 + Z2)^2                  v = 2   w = 1
     bint_add(bint_tmp[0], bint_tmp[0], bint_tmp[1]);     // Z1Z1 + Z2Z2                  v = 4   w = 2
-    bint_sub(out->Z, out->Z, bint_tmp[0], 3);            // (Z1 + Z2)^2 - Z1Z1 - Z2Z2    v = 10  w = 9
+    bint_sub(out->Z, out->Z, bint_tmp[0], 2);            // (Z1 + Z2)^2 - Z1Z1 - Z2Z2    v = 6   w = 5
     bint_mul(out->Z, out->Z, bint_tmp[6]);               // Z3 = 2 * Z1 * Z2 * H         v = 2   w = 1
 }
 
@@ -689,7 +698,7 @@ static inline void swu_help(const unsigned jp_num, const mpz_t u) {
     mul_modp(mpz_tmp[1], mpz_tmp[1], ellp_a);     // a * (u^2 - u^4)                    => Xden
     if (mpz_cmp_ui(mpz_tmp[1], 0) == 0) {
         // u was 0, -1, 1, so num is b and den is 0; set den to -a, because -b/a is square in Fp
-        mpz_neg(mpz_tmp[1], ellp_a);
+        mpz_sub(mpz_tmp[1], fld_p, ellp_a);
     }
 
     // compute numerator and denominator of X0(u)^3 + aX0(u) + b
@@ -712,9 +721,9 @@ static inline void swu_help(const unsigned jp_num, const mpz_t u) {
         // NOTE: multiplying by u^3 preserves sign of u, so no need to apply sgn0(u) to y
         mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[0]);  // u^2 * sqrtCand
         mul_modp(mpz_tmp[5], mpz_tmp[5], u);           // u^3 * sqrtCand
-        mul_modp(mpz_tmp[2], mpz_tmp[2], mpz_tmp[0]);  // -b * u^2 * (u^4 - u^2 + 1)
-        mpz_neg(mpz_tmp[2], mpz_tmp[2]);               // b * u^2 * (u^4 - u^2 + 1)     => X1num
-    } else if (mpz_cmp(pp1o2, u) <= 0) {
+        mul_modp(mpz_tmp[2], mpz_tmp[2], mpz_tmp[0]);  // b * u^2 * (u^4 - u^2 + 1)
+        mpz_sub(mpz_tmp[2], fld_p, mpz_tmp[2]);        // - b * u^2 * (u^4 - u^2 + 1)   => X1num
+    } else if (mpz_cmp(pm1o2, u) < 0) {
         // g(X0(u)) was square and u is negative, so negate y
         mpz_sub(mpz_tmp[5], fld_p, mpz_tmp[5]);  // negate y because u is negative
     }
@@ -759,7 +768,7 @@ static void eval_iso11(void) {
     }
     sqr_modp(mpz_tmp[24], mpz_tmp[28]);  // Z^16
     for (unsigned i = 0; i < 7; ++i) {
-        mul_modp(mpz_tmp[23 - i], mpz_tmp[24 - i], mpz_tmp[31]);  // Z^18, ..., Z^28
+        mul_modp(mpz_tmp[23 - i], mpz_tmp[24 - i], mpz_tmp[31]);  // Z^18, ..., Z^30
     }
     // last unused tmp at this point is mpz_tmp[16]
 
@@ -818,15 +827,139 @@ static void eval_iso11(void) {
 }
 
 // bint-based constant-time SWU impl
-static inline void swu_help_ct(const unsigned jp_num, const uint64_t *u) {
-    (void) jp_num;
-    (void) u;
+// assumes that the argument u is passed in bint_tmp[10]
+static inline void swu_help_ct(const unsigned jp_num) {
+    // compute numerator and denominator of X0(u)
+    bint_sqr(bint_tmp[0], bint_tmp[10]);                 // u^2                                 v = 2   w = 1
+    bint_sqr(bint_tmp[1], bint_tmp[0]);                  // u^4                                 v = 2   w = 1
+    bint_sub(bint_tmp[1], bint_tmp[0], bint_tmp[1], 2);  // u^2 - u^4                           v = 6   w = 5
+    bint_sub(bint_tmp[2], bint_one, bint_tmp[1], 3);     // u^4 - u^2 + 1                       v = 9   w = 9
+    bint_mul(bint_tmp[2], bint_tmp[2], bint_ellp_b);     // b * (u^4 - u^2 + 1)    X0_num       v = 2   w = 1
+    bint_mul(bint_tmp[1], bint_tmp[1], bint_ellp_a);     // a * (u^2 - u^4)        X0_den       v = 2   w = 1
+    bint_neg(bint_tmp[3], bint_ellp_a, 1);               // -a                                  v = 4   w = 3
+
+    // check if denominator is zero and set to -a if so
+    const bool den0 = bint_eq0(bint_tmp[1]);                       //                           v = 1   w = 1
+    bint_condassign(bint_tmp[1], den0, bint_tmp[3], bint_tmp[1]);  // -a or a(u^2-u^4)          v = 4   w = 3
+
+    // compute numerator and denominator of X0(u)^3 + aX0(u) + b
+    // i.e., (num^3 + a num den^2 + b den^3) / den^3
+    bint_sqr(bint_tmp[9], bint_tmp[1]);               // den^2                                  v = 2   w = 1
+    bint_mul(bint_tmp[4], bint_tmp[2], bint_tmp[9]);  // num den^2                              v = 2   w = 1
+    bint_mul(bint_tmp[4], bint_tmp[4], bint_ellp_a);  // a num den^2                            v = 2   w = 1
+                                                      //
+    bint_mul(bint_tmp[3], bint_tmp[9], bint_tmp[1]);  // den^3                                  v = 2   w = 1
+    bint_mul(bint_tmp[5], bint_tmp[3], bint_ellp_b);  // b den^3                                v = 2   w = 1
+    bint_add(bint_tmp[4], bint_tmp[4], bint_tmp[5]);  // a num den^2 + b den^3                  v = 4   w = 2
+                                                      //
+    bint_sqr(bint_tmp[5], bint_tmp[2]);               // num^2                                  v = 2   w = 1
+    bint_mul(bint_tmp[5], bint_tmp[5], bint_tmp[2]);  // num^3                                  v = 2   w = 1
+    bint_add(bint_tmp[4], bint_tmp[4], bint_tmp[5]);  // num^3 + a num den^2 + b den^3          v = 6   w = 3
+
+    // compute sqrt(bint_tmp[4] / bint_tmp[3])
+    const bool x0_good = bint_divsqrt(bint_tmp[5], bint_tmp[4], bint_tmp[3], false);  //        v = 2   w = 1
+
+    // compute value for the case that x0 was good, y needs to be negative
+    const bool u_neg = bint_is_neg(bint_tmp[10]);
+    bint_neg(bint_tmp[8], bint_tmp[5], 1);  // -sqrtCand                                        v = 2   w = 2
+
+    // compute values for the case that x0 was bad
+    bint_mul(bint_tmp[6], bint_tmp[5], bint_tmp[0]);   // u^2 * sqrtCand                        v = 2   w = 1
+    bint_mul(bint_tmp[6], bint_tmp[6], bint_tmp[10]);  // u^3 * sqrtCand                        v = 2   w = 1
+    bint_mul(bint_tmp[7], bint_tmp[2], bint_tmp[0]);   // b u^2 (u^4 - u^2 + 1)                 v = 2   w = 1
+    bint_neg(bint_tmp[7], bint_tmp[7], 1);             // -b u^2 (u^4 - u^2 + 1)                v = 2   w = 2
+
+    // now choose the right values for x and y
+    bint_condassign(bint_tmp[5], u_neg, bint_tmp[8], bint_tmp[5]);    // Sgn0(u) * sqrtCand     v = 2   w = 2
+    bint_condassign(bint_tmp[5], x0_good, bint_tmp[5], bint_tmp[6]);  // y =  yu^3 if !x0_good  v = 2   w = 2
+    bint_condassign(bint_tmp[2], x0_good, bint_tmp[2], bint_tmp[7]);  // x = -xu^2 if !x0_good  v = 2   w = 2
+
+    // compute X, Y, Z
+    bint_mul(jp_tmp[jp_num].X, bint_tmp[2], bint_tmp[1]);  // x = X / Z^2                       v = 2   w = 1
+    bint_mul(bint_tmp[5], bint_tmp[5], bint_tmp[9]);       // y * Z^2                           v = 2   w = 1
+    bint_mul(jp_tmp[jp_num].Y, bint_tmp[5], bint_tmp[1]);  // y = Y / Z^3                       v = 2   w = 1
+    bint_redc(jp_tmp[jp_num].Z, bint_tmp[1]);              // Z
+}
+
+static inline void bint_horner(int64_t *out, const int64_t *x, const int startval) {
+    for (int i = startval; i >= 0; --i) {
+        bint_mul(out, out, x);            // tot *= x               v = 2   w = 1
+        bint_add(out, out, bint_tmp[i]);  // tot += next_val        v = 4   w = 2
+    }
+}
+
+static inline void compute_map_bint(int64_t inv[][BINT_NWORDS], int64_t zv[][BINT_NWORDS], const unsigned len) {
+    for (unsigned i = 0; i < len; ++i) {
+        bint_mul(bint_tmp[i], inv[i], zv[i]);
+    }
+}
+
+// bint-based constant-time 11-isogeny impl
+static inline void eval_iso11_ct(void) {
+    // precompute even powers of Z up to Z^30
+    bint_sqr(bint_tmp[31], jp_tmp[1].Z);                 // Z^2
+    bint_sqr(bint_tmp[30], bint_tmp[31]);                // Z^4
+    bint_mul(bint_tmp[29], bint_tmp[30], bint_tmp[31]);  // Z^6
+    bint_sqr(bint_tmp[28], bint_tmp[30]);                // Z^8
+    for (unsigned i = 0; i < 3; ++i) {
+        bint_mul(bint_tmp[27 - i], bint_tmp[28 - i], bint_tmp[31]);  // Z^10, Z^12, Z^14
+    }
+    bint_sqr(bint_tmp[24], bint_tmp[28]);  // Z^16
+    for (unsigned i = 0; i < 7; ++i) {
+        bint_mul(bint_tmp[23 - i], bint_tmp[24 - i], bint_tmp[31]);  // Z^18, ..., Z^30
+    }
+
+    // Ymap denominator
+    compute_map_bint(bint_yden, bint_tmp + 17, ELLP_YMAP_DEN_LEN);         // k_(15-i) Z^(2i)
+    bint_add(bint_tmp[16], jp_tmp[1].X, bint_tmp[ELLP_YMAP_DEN_LEN - 1]);  // X + k_14 Z^2 (denom is monic)
+    bint_horner(bint_tmp[16], jp_tmp[1].X, ELLP_YMAP_DEN_LEN - 2);         // Horner for rest
+    bint_mul(bint_tmp[15], bint_tmp[16], bint_tmp[31]);                    // Yden * Z^2
+    bint_mul(bint_tmp[15], bint_tmp[15], jp_tmp[1].Z);                     // Yden * Z^3
+
+    // Ymap numerator
+    compute_map_bint(bint_ynum, bint_tmp + 17, ELLP_YMAP_NUM_LEN - 1);      // k_(15-i) Z^(2i)
+    bint_mul(bint_tmp[16], jp_tmp[1].X, bint_ynum[ELLP_YMAP_NUM_LEN - 1]);  // k_15 * X
+    bint_add(bint_tmp[16], bint_tmp[16], bint_tmp[ELLP_YMAP_NUM_LEN - 2]);  // k_15 * X + k_14 Z^2
+    bint_horner(bint_tmp[16], jp_tmp[1].X, ELLP_YMAP_NUM_LEN - 3);          // Horner for rest
+    bint_mul(bint_tmp[16], bint_tmp[16], jp_tmp[1].Y);                      // Ynum * Y
+    // at this point, ymap num/den are in bint_tmp[16]/bint_tmp[15]
+
+    // Xmap denominator
+    compute_map_bint(bint_xden, bint_tmp + 22, ELLP_XMAP_DEN_LEN);         // k_(10-i) Z^(2i)
+    bint_add(bint_tmp[14], jp_tmp[1].X, bint_tmp[ELLP_XMAP_DEN_LEN - 1]);  // X + k_9 Z^2 (denom is monic)
+    bint_horner(bint_tmp[14], jp_tmp[1].X, ELLP_XMAP_DEN_LEN - 2);         // Horner for rest
+    // mul by Z^2 because numerator has degree one greater than denominator
+    bint_mul(bint_tmp[14], bint_tmp[14], bint_tmp[31]);
+
+    // Xmap numerator
+    compute_map_bint(bint_xnum, bint_tmp + 21, ELLP_XMAP_NUM_LEN - 1);      // k_(11-i) Z^(2i)
+    bint_mul(bint_tmp[13], jp_tmp[1].X, bint_xnum[ELLP_XMAP_NUM_LEN - 1]);  // k_11 * X
+    bint_add(bint_tmp[13], bint_tmp[13], bint_tmp[ELLP_XMAP_NUM_LEN - 2]);  // k_11 * X + k_10 * Z^2
+    bint_horner(bint_tmp[13], jp_tmp[1].X, ELLP_XMAP_NUM_LEN - 3);          // Horner for rest
+
+    // at this point, xmap num/den are in bint_tmp[13]/bint_tmp[14]
+    // now compute Jacobian projective coordinates
+    bint_mul(jp_tmp[1].Z, bint_tmp[14], bint_tmp[15]);  // Zout = Xden Yden
+    bint_mul(jp_tmp[1].X, bint_tmp[13], bint_tmp[15]);  // Xnum Yden
+    bint_mul(jp_tmp[1].X, jp_tmp[1].X, jp_tmp[1].Z);    // Xnum Xden Yden^2 = Xout => Xout / Zout^2 = Xnum / Xden
+    bint_sqr(bint_tmp[12], jp_tmp[1].Z);                // Zout^2
+    bint_mul(jp_tmp[1].Y, bint_tmp[16], bint_tmp[14]);  // Ynum Xden
+    bint_mul(jp_tmp[1].Y, jp_tmp[1].Y, bint_tmp[12]);   // Ynum Xden Zout^2 = Yout => Yout / Zout^3 = Ynum / Yden
 }
 
 // evaluate the SWU map once, apply isogeny map, and clear cofactor
 void swu_map(mpz_t x, mpz_t y, mpz_t z, const mpz_t u) {
     swu_help(1, u);
     eval_iso11();
+    clear_h_chain();
+    from_jac_point(x, y, z, jp_tmp + 7);
+}
+
+// constant-time version of swu_map
+void swu_map_ct(mpz_t x, mpz_t y, mpz_t z, const mpz_t u) {
+    bint_import_mpz(bint_tmp[10], u);
+    swu_help_ct(1);
+    eval_iso11_ct();
     clear_h_chain();
     from_jac_point(x, y, z, jp_tmp + 7);
 }
@@ -838,6 +971,18 @@ void swu_map2(mpz_t x, mpz_t y, mpz_t z, const mpz_t u1, const mpz_t u2) {
     // point_add is independent of curve constants, so we can use it on points from the 11-isogenous curve
     point_add(jp_tmp + 1, jp_tmp, jp_tmp + 1);
     eval_iso11();
+    clear_h_chain();
+    from_jac_point(x, y, z, jp_tmp + 7);
+}
+
+// constant-time version of swu_map2
+void swu_map2_ct(mpz_t x, mpz_t y, mpz_t z, const mpz_t u1, const mpz_t u2) {
+    bint_import_mpz(bint_tmp[10], u1);
+    swu_help_ct(0);
+    bint_import_mpz(bint_tmp[10], u2);
+    swu_help_ct(1);
+    point_add(jp_tmp + 1, jp_tmp, jp_tmp + 1);
+    eval_iso11_ct();
     clear_h_chain();
     from_jac_point(x, y, z, jp_tmp + 7);
 }

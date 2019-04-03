@@ -114,10 +114,10 @@ uint8_t *next_modq(EVP_CIPHER_CTX *cctx, mpz_t *out) {
 
 // process commandline options into a struct cmdline_opts
 struct cmdline_opts get_cmdline_opts(int argc, char **argv) {
-    struct cmdline_opts ret = {0, true, false, false, false};
+    struct cmdline_opts ret = {0, true, false, false, false, false};
     int opt_ret;
     bool found_err = false;
-    while ((opt_ret = getopt(argc, argv, "n:Cqtf")) >= 0) {
+    while ((opt_ret = getopt(argc, argv, "n:Cqtfc")) >= 0) {
         switch (opt_ret) {
             case 'n':
                 ret.nreps = atoi(optarg);  // NOLINT(cert-err34-c)
@@ -139,6 +139,10 @@ struct cmdline_opts get_cmdline_opts(int argc, char **argv) {
                 ret.field_only = true;
                 break;
 
+            case 'c':
+                ret.constant_time = true;
+                break;
+
             default:
                 found_err = true;
         }
@@ -147,7 +151,7 @@ struct cmdline_opts get_cmdline_opts(int argc, char **argv) {
         }
     }
     if (found_err || optind != argc) {
-        printf("Usage: %s [-n <npoints>] [-q] [-C]\n", argv[0]);
+        printf("Usage: %s [-n <npoints>] [-q] [-C] [-t] [-f] [-c]\n", argv[0]);
         exit(1);
     }
     if (ret.nreps == 0) {

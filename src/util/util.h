@@ -25,6 +25,7 @@ struct cmdline_opts {
     bool quiet;
     bool test;
     bool field_only;
+    bool constant_time;
 };
 struct cmdline_opts get_cmdline_opts(int argc, char **argv);
 

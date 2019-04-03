@@ -64,7 +64,6 @@ def svdw(t):
 def swu(u):
     if u in (p-1, 0, 1):
         x0 = -EllP_b / EllP_a
-        u = p - u  # sign disagreement between this impl and curve/curve.c
     else:
         x0 = F(-EllP_b / F(EllP_a) * (1 + 1 / F(u^4 - u^2)))
     gx0 = F(x0^3 + EllP_a * x0 + EllP_b)
