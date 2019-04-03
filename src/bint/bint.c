@@ -32,10 +32,9 @@ static inline void _bint_condsub_p(int64_t *io) {
 static inline bool _bint_condsub_p_eq(int64_t *io, const int64_t *cmpval) {
     bool match = true;
     bool geq = _bint_compare(io, p) >= 0;
-    int64_t tmp;
     int64_t c = 0;
     for (int i = 0; i < NWORDS; ++i) {
-        tmp = io[i] + mp[i] + c;
+        int64_t tmp = io[i] + mp[i] + c;
         io[i] = geq ? tmp : io[i];
         c = io[i] >> BITS_PER_WORD;
         io[i] &= LO_MASK;
