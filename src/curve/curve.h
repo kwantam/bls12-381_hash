@@ -20,6 +20,7 @@ bool check_fx(mpz_t y, const mpz_t x, const bool negate, const bool force, const
 void svdw_map(mpz_t x, mpz_t y, const mpz_t t);
 void svdw_map2(mpz_t x1, mpz_t y1, const mpz_t t1, mpz_t x2, mpz_t y2, const mpz_t t2);
 void svdw_map_fo(mpz_t x, mpz_t y, mpz_t z, const mpz_t t);
+void svdw_map_ct(mpz_t x, mpz_t y, mpz_t z, const mpz_t t);
 
 // functions for simplified Brier et al. / Shallue, van de Woestijne, and Ulam map to curve
 void swu_map(mpz_t x, mpz_t y, mpz_t z, const mpz_t u);

@@ -19,6 +19,10 @@ static inline void mpz_init_import(mpz_t out, const uint64_t *in) {
     mpz_import(out, 6, -1, 8, 0, 0, in);
 }
 
+// temporary bigints
+#define NUM_TMP_BINT 32
+static int64_t bint_tmp[NUM_TMP_BINT][BINT_NWORDS];
+
 // initialize the temporary variables and constants uesd in this file
 #define NUM_TMP_MPZ 33  // NOTE: needs to be at least 3 + ELLP_YMAP_DEN_LEN + ELLP_YMAP_NUM_LEN
 static mpz_t cx1, cx2, sqrtM27, invM27, mpz_tmp[NUM_TMP_MPZ], fld_p, pp1o4, pm3o4;
@@ -28,6 +32,8 @@ static mpz_t ymap_num[ELLP_YMAP_NUM_LEN], ymap_den[ELLP_YMAP_DEN_LEN];
 static int64_t bint_ellp_b[BINT_NWORDS], bint_ellp_a[BINT_NWORDS], bint_one[BINT_NWORDS];
 static int64_t bint_xnum[ELLP_XMAP_NUM_LEN][BINT_NWORDS], bint_xden[ELLP_XMAP_DEN_LEN][BINT_NWORDS];
 static int64_t bint_ynum[ELLP_YMAP_NUM_LEN][BINT_NWORDS], bint_yden[ELLP_YMAP_DEN_LEN][BINT_NWORDS];
+static int64_t bint_cx1[BINT_NWORDS], bint_cx2[BINT_NWORDS], bint_sqrtM27[BINT_NWORDS];
+static int64_t bint_23[BINT_NWORDS], bint_M27[BINT_NWORDS], bint_81[BINT_NWORDS];
 static bool init_done = false;
 void curve_init(void) {
     if (!init_done) {
@@ -50,8 +56,11 @@ void curve_init(void) {
 
         // SvdW constants
         mpz_init_import(cx1, Icx1);
+        bint_import_mpz(bint_cx1, cx1);
         mpz_init_import(cx2, Icx2);
+        bint_import_mpz(bint_cx2, cx2);
         mpz_init_import(sqrtM27, IsqrtM27);
+        bint_import_mpz(bint_sqrtM27, sqrtM27);
         mpz_init_import(invM27, IinvM27);
 
         // 11-isogeny constants
@@ -79,10 +88,16 @@ void curve_init(void) {
             mpz_init(mpz_tmp[i]);
         }
 
-        // bint temps
+        // other bint temps
         bint_import_mpz(bint_ellp_a, ellp_a);
         bint_import_mpz(bint_ellp_b, ellp_b);
         bint_set1(bint_one);
+        mpz_set_si(mpz_tmp[0], -27);
+        bint_import_mpz(bint_M27, mpz_tmp[0]);
+        mpz_set_ui(mpz_tmp[0], 23);
+        bint_import_mpz(bint_23, mpz_tmp[0]);
+        mpz_set_ui(mpz_tmp[0], 81);
+        bint_import_mpz(bint_81, mpz_tmp[0]);
     }
 }
 
@@ -357,6 +372,70 @@ void svdw_map_fo(mpz_t x, mpz_t y, mpz_t z, const mpz_t t) {
     check_fxOverZ(x, y, z, neg_t, true);
 }
 
+// f(x) helper for constant-time svdw map
+static inline bool check_fxOverZ_ct(const unsigned x, const unsigned y, const unsigned z) {
+    bint_sqr(bint_tmp[12], bint_tmp[x]);                 // x^2                                 v = 2   w = 1
+    bint_mul(bint_tmp[12], bint_tmp[12], bint_tmp[x]);   // x^3                                 v = 2   w = 1
+    bint_sqr(bint_tmp[15], bint_tmp[z]);                 // z^2                                 v = 2   w = 1
+    bint_mul(bint_tmp[13], bint_tmp[15], bint_tmp[z]);   // z^3              (DEN)              v = 2   w = 1
+    bint_lsh(bint_tmp[14], bint_tmp[13], 2);             // 4 z^3                               v = 8   w = 4
+    bint_add(bint_tmp[12], bint_tmp[12], bint_tmp[14]);  // x^3 + 4 z^3      (NUM)              v = 10  w = 5
+    return bint_divsqrt(bint_tmp[y], bint_tmp[12], bint_tmp[13], false);  // y = sqrt(NUM/DEN)  v = 2   w = 1
+}
+
+// svdw map that runs in constant time
+void svdw_map_ct(mpz_t x, mpz_t y, mpz_t z, const mpz_t t) {
+    bint_import_mpz(bint_tmp[0], t);
+    const bool neg_t = bint_is_neg(bint_tmp[0]);
+
+    bint_sqr(bint_tmp[0], bint_tmp[0]);                // t^2                                   v = 2   w = 1
+    bint_sub(bint_tmp[2], bint_23, bint_tmp[0], 1);    // 23 - t^2                              v = 4   w = 3
+    bint_mul(bint_tmp[1], bint_tmp[0], bint_sqrtM27);  // t^2 * sqrt(-27)                       v = 2   w = 1
+
+    // x1: (cx1 * (23 - t^2) + t^2 * sqrt(-27)) / (23 - t^2)
+    bint_mul(bint_tmp[3], bint_cx1, bint_tmp[2]);     // cx1 * (23 - t^2)                       v = 2   w = 1
+    bint_add(bint_tmp[3], bint_tmp[3], bint_tmp[1]);  // cx1 * (23 - t^2) + t^2 * sqrt(-27)     v = 4   w = 2
+    const bool x1g = check_fxOverZ_ct(3, 4, 2);       // bint_tmp[4] is y1                      v = 2   w = 1
+
+    // x2: (cx2 * (23 - t^2) - t^2 * sqrt(-27)) / (23 - t^2)
+    bint_mul(bint_tmp[5], bint_cx2, bint_tmp[2]);        // cx2 * (23 - t^2)
+    bint_sub(bint_tmp[5], bint_tmp[5], bint_tmp[1], 1);  // cx2 * (23 - t^2) - t^2 * sqrt(-27)  v = 4   w = 3
+    const bool x2g = check_fxOverZ_ct(5, 6, 2);          // bint_tmp[6] is y2                   v = 2   w = 1
+
+    // select output from either x1 or x2
+    bint_condassign(bint_tmp[10], x1g, bint_tmp[3], bint_tmp[5]);  // Xout = x1g ? x1 : x2      v = 4   w = 3
+    bint_condassign(bint_tmp[11], x1g, bint_tmp[4], bint_tmp[6]);  // Yout = x1g ? y1 : y2      v = 2   w = 1
+    const bool found = x1g | x2g;
+
+    // x3 : ((23 - t^2)^2 + 81t^2) / (-27 t^2)
+    bint_sqr(bint_tmp[7], bint_tmp[2]);                  // (23 - t^2)^2                        v = 2   w = 1
+    bint_mul(bint_tmp[8], bint_tmp[0], bint_M27);        // -27 t^2                             v = 2   w = 1
+    bint_lsh(bint_tmp[9], bint_tmp[8], 1);               // -54 t^2                             v = 4   w = 2
+    bint_add(bint_tmp[9], bint_tmp[9], bint_tmp[8]);     // -81 t^2                             v = 6   w = 3
+    bint_sub(bint_tmp[7], bint_tmp[7], bint_tmp[9], 3);  // (23 - t^2)^2 + 81 t^2               v = 10  w = 9
+    check_fxOverZ_ct(7, 9, 8);                           // bint_tmp[9] is y3                   v = 2   w = 1
+
+    // if we hadn't already found it, now we have
+    bint_condassign(bint_tmp[10], found, bint_tmp[10], bint_tmp[7]);  // X'out
+    bint_condassign(bint_tmp[11], found, bint_tmp[11], bint_tmp[9]);  // Y'out
+    bint_condassign(bint_tmp[12], found, bint_tmp[2], bint_tmp[8]);   // Z'out
+
+    // negate Y if necessary
+    bint_neg(bint_tmp[5], bint_tmp[11], 1);                           // -Y                     v = 2   w = 2
+    bint_condassign(bint_tmp[11], neg_t, bint_tmp[5], bint_tmp[11]);  // Y = neg_t ? -Y : Y     v = 2   w = 2
+
+    // compute Jacobian coordinates
+    bint_mul(bint_tmp[10], bint_tmp[10], bint_tmp[12]);  // Xout = x z                          v = 2   w = 1
+    bint_sqr(bint_tmp[5], bint_tmp[12]);                 // Z'^2                                v = 2   w = 1
+    bint_mul(bint_tmp[11], bint_tmp[11], bint_tmp[5]);   // y z^2                               v = 2   w = 1
+    bint_mul(bint_tmp[11], bint_tmp[11], bint_tmp[12]);  // y z^3                               v = 2   w = 1
+
+    // export to mpz_t
+    bint_export_mpz(x, bint_tmp[10]);
+    bint_export_mpz(y, bint_tmp[11]);
+    bint_export_mpz(z, bint_tmp[12]);
+}
+
 // **************************
 // BLS12-381 curve operations
 // **************************
@@ -366,10 +445,6 @@ struct jac_point {
     int64_t Y[BINT_NWORDS];
     int64_t Z[BINT_NWORDS];
 };
-
-// temporary bigints
-#define NUM_TMP_BINT 32
-static int64_t bint_tmp[NUM_TMP_BINT][BINT_NWORDS];
 
 // double a point in Jacobian coordinates
 // out == in is OK
