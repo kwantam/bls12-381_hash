@@ -1,14 +1,19 @@
 #!/bin/bash
 
-[ "$#" != "2" ] && { echo "Usage: $0 <amd_bench> <intel_bench>"; exit 1; }
+[ -z "$1" ] && { echo "Usage: $0 <bench_file> [bench_file_2]"; exit 1; }
 
 set -e
 set -o pipefail
 
-mapfile amd_vals < "$1"
-mapfile intel_vals < "$2"
+NUM_BENCH=1
+mapfile bench1_vals < "$1"
+if [ ! -z "$2" ]; then
+    mapfile bench2_vals < "$2"
+    NUM_BENCH=2
+fi
 
-if [ "${#amd_vals[@]}" != 15 ] || [ "${#intel_vals[@]}" != 15 ]; then
+
+if [ "${#bench1_vals[@]}" != 15 ] || ( [ "$NUM_BENCH" = "2" ] && [ "${#bench2_vals[@]}" != 15 ] ); then
     echo "ERROR: input files must have 15 lines"
     exit 1
 fi
@@ -21,9 +26,11 @@ show_q_fq_cq() {
     [ "$#" != "2" ] && { echo "bad args"; exit 1; }
 
     if [ "$1" = "1" ]; then
-        div_round ${amd_vals[$idx]}
-        echo "$\\vert$"
-        div_round ${intel_vals[$idx]}
+        div_round ${bench1_vals[$idx]}
+        if [ "$NUM_BENCH" = "2" ]; then
+            echo "$\\vert$"
+            div_round ${bench2_vals[$idx]}
+        fi
         let idx++ 1
     else
         echo "---"

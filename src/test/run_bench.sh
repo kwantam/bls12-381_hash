@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NUM_RUNS=100000
+NUM_RUNS=400000
 TESTS_hash_and_check=(q fq)
 TESTS_hash_svdw_1=(q fq cq)
 TESTS_hash_svdw_2=(q fq cq)
