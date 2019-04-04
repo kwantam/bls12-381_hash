@@ -33,7 +33,7 @@ curve.
 
 - sum of one evaluation of the SWU map with cofactor cleared plus one random element of the G1 subgroup
 
-Please note that these implementations are *not* (yet) constant time!
+For several of these hashes, we've also implemented constant-time versions.
 
 ### <a name="bib">bibliography</a>
 
