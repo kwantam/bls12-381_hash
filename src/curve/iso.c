@@ -1,14 +1,15 @@
-#ifndef __bls_hash__src__curve__iso_params_h__
+// parameter definitions for 11-isogeny map
+//
+// (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 // clang-format off
 
-#include <stdint.h>
+#include "iso.h"
 
-static const uint64_t ELLP_a[] = { 0x5cf428082d584c1dLL, 0x98936f8da0e0f97fLL, 0xd8e8981aefd881acLL, 0xb0ea985383ee66a8LL, 0x3d693a02c96d4982LL, 0x144698a3b8e943LL, };
+const uint64_t ELLP_a[6] = { 0x5cf428082d584c1dLL, 0x98936f8da0e0f97fLL, 0xd8e8981aefd881acLL, 0xb0ea985383ee66a8LL, 0x3d693a02c96d4982LL, 0x144698a3b8e943LL, };
 
-static const uint64_t ELLP_b[] = { 0xd1cc48e98e172be0LL, 0x5a23215a316ceaa5LL, 0xa0b9c14fcef35ef5LL, 0x2016c1f0f24f4070LL, 0x18b12e8753eee3bLL, 0x12e2908d11688030LL, };
+const uint64_t ELLP_b[6] = { 0xd1cc48e98e172be0LL, 0x5a23215a316ceaa5LL, 0xa0b9c14fcef35ef5LL, 0x2016c1f0f24f4070LL, 0x18b12e8753eee3bLL, 0x12e2908d11688030LL, };
 
-#define ELLP_XMAP_NUM_LEN 12
-static const uint64_t ELLP_XMAP_NUM[][6] = {
+const uint64_t ELLP_XMAP_NUM[ELLP_XMAP_NUM_LEN][6] = {
     { 0xaeac1662734649b7LL, 0x5610c2d5f2e62d6eLL, 0xf2627b56cdb4e2c8LL, 0x6b303e88a2d7005fLL, 0xb809101dd9981585LL, 0x11a05f2b1e833340LL, },
     { 0xe834eef1b3cb83bbLL, 0x4838f2a6f318c356LL, 0xf565e33c70d1e86bLL, 0x7c17e75b2f6a8417LL, 0x588bab22147a81cLL, 0x17294ed3e943ab2fLL, },
     { 0xe0179f9dac9edcb0LL, 0x958c3e3d2a09729fLL, 0x6878e501ec68e25cLL, 0xce032473295983e5LL, 0x1d1048c5d10a9a1bLL, 0xd54005db97678ecLL, },
@@ -23,8 +24,7 @@ static const uint64_t ELLP_XMAP_NUM[][6] = {
     { 0xa9c8ba2e8ba2d229LL, 0xc24b1b80b64d391fLL, 0x23c0bf1bc24c6b68LL, 0x31d79d7e22c837bcLL, 0xbd1e962381edee3dLL, 0x6e08c248e260e70LL, },
 };
 
-#define ELLP_XMAP_DEN_LEN 10
-static const uint64_t ELLP_XMAP_DEN[][6] = {
+const uint64_t ELLP_XMAP_DEN[ELLP_XMAP_DEN_LEN][6] = {
     { 0x993cf9fa40d21b1cLL, 0xb558d681be343df8LL, 0x9c9588617fc8ac62LL, 0x1d5ef4ba35b48baLL, 0x18b2e62f4bd3fa6fLL, 0x8ca8d548cff19aeLL, },
     { 0xe5c8276ec82b3bffLL, 0x13daa8846cb026e9LL, 0x126c2588c48bf57LL, 0x7041e8ca0cf0800cLL, 0x48b4711298e53636LL, 0x12561a5deb559c43LL, },
     { 0xfcc239ba5cb83e19LL, 0xd6a3d0967c94fedcLL, 0xfca64e00b11aceacLL, 0x6f89416f5a718cd1LL, 0x8137e629bff2991fLL, 0xb2962fe57a3225eLL, },
@@ -37,8 +37,7 @@ static const uint64_t ELLP_XMAP_DEN[][6] = {
     { 0x2d6384d168ecdd0aLL, 0x93174e4b4b786500LL, 0x76df533978f31c15LL, 0xf682b4ee96f7d037LL, 0x476d6e3eb3a56680LL, 0x95fc13ab9e92ad4LL, },
 };
 
-#define ELLP_YMAP_NUM_LEN 16
-static const uint64_t ELLP_YMAP_NUM[][6] = {
+const uint64_t ELLP_YMAP_NUM[ELLP_YMAP_NUM_LEN][6] = {
     { 0xbe9845719707bb33LL, 0xcd0c7aee9b3ba3c2LL, 0x2b52af6c956543d3LL, 0x11ad138e48a86952LL, 0x259d1f094980dcfaLL, 0x90d97c81ba24ee0LL, },
     { 0xe097e75a2e41c696LL, 0xd6c56711962fa8bfLL, 0xf906343eb67ad34LL, 0x1223e96c254f383dLL, 0xd51036d776fb4683LL, 0x134996a104ee5811LL, },
     { 0xb8dfe240c72de1f6LL, 0xd26d521628b00523LL, 0xc344be4b91400da7LL, 0x2552e2d658a31ce2LL, 0xf4a384c86a3b4994LL, 0xcc786baa966e66LL, },
@@ -57,8 +56,7 @@ static const uint64_t ELLP_YMAP_NUM[][6] = {
     { 0x4b456be69c8b604LL, 0xb665027efec01c77LL, 0x57add4fa95af01b2LL, 0xcb181d8f84965a39LL, 0x4ea50b3b42df2eb5LL, 0x15e6be4e990f03ceLL, },
 };
 
-#define ELLP_YMAP_DEN_LEN 15
-static const uint64_t ELLP_YMAP_DEN[][6] = {
+const uint64_t ELLP_YMAP_DEN[ELLP_YMAP_DEN_LEN][6] = {
     { 0x1479253b03663c1LL, 0x7f3688ef60c206dLL, 0xeec3232b5be72e7aLL, 0x601a6de578980be6LL, 0x52181140fad0eae9LL, 0x16112c4c3a9c98b2LL, },
     { 0x32f6102c2e49a03dLL, 0x78a4260763529e35LL, 0xa4a10356f453e01fLL, 0x85c84ff731c4d59cLL, 0x1a0cbd6c43c348b8LL, 0x1962d75c2381201eLL, },
     { 0x1e2538b53dbf67f2LL, 0xa6757cd636f96f89LL, 0xc35a5dd279cd2ecLL, 0x78c4855551ae7f31LL, 0x6faaae7d6e8eb157LL, 0x58df3306640da27LL, },
@@ -77,5 +75,3 @@ static const uint64_t ELLP_YMAP_DEN[][6] = {
 };
 
 // clang-format on
-#define __bls_hash__src__curve__iso_params_h__
-#endif  // __bls_hash__src__curve__iso_params_h__

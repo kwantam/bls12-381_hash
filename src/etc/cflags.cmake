@@ -1,3 +1,9 @@
+# force use of LTO
+include(CheckIPOSupported)
+check_ipo_supported()
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+
+# pedantic build flags
 set (CMAKE_C_STANDARD 11)
 set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pedantic -pedantic-errors -Werror -Wall -Wextra -Wshadow -Wpointer-arith -Wcast-qual -Wformat=2 -Wstrict-prototypes -Wmissing-prototypes")
@@ -22,8 +28,7 @@ else ()
     set_source_files_properties("${PROJECT_SOURCE_DIR}/bint/bint.c" PROPERTIES COMPILE_OPTIONS "-funroll-all-loops")
 endif (${IS_CLANG_COMPILER})
 
-# add some flags for the Release, Debug, and DebugSan modes
-set (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
+# add some flags for the debug and sanitizer modes
 set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb3 -Og")
 set (CMAKE_C_FLAGS_DEBUGASAN "${CMAKE_C_FLAGS_DEBUG} -fsanitize=undefined -fsanitize=address")
 set (CMAKE_C_FLAGS_RELASAN "${CMAKE_C_FLAGS_RELEASE} -fsanitize=undefined -fsanitize=address")

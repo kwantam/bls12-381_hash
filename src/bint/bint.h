@@ -2,10 +2,12 @@
 //
 // (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
+#ifndef __bls_hash__src__bint__bint_h__
+
 #include "bint_consts.h"
 
-#ifndef __bls_hash__src__bint__bint_h__
 #include <gmp.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 bool bint_eq0(int64_t *io);
@@ -17,7 +19,6 @@ void bint_sub(int64_t *out, const int64_t *ina, const int64_t *inb, int bup);
 void bint_neg(int64_t *out, const int64_t *in, int bup);
 void bint_lsh(int64_t *out, const int64_t *in, int sh);
 
-void bint_condswap(int64_t *__restrict__ in1, int64_t *__restrict__ in2, const bool do_swap);
 void bint_condassign(int64_t *out, const bool first, const int64_t *in1, const int64_t *in2);
 
 void bint_mul(int64_t *out, const int64_t *ina, const int64_t *inb);

@@ -95,15 +95,6 @@ void bint_lsh(int64_t *out, const int64_t *in, int sh) {
     }
 }
 
-void bint_condswap(int64_t *__restrict__ in1, int64_t *__restrict__ in2, const bool do_swap) {
-    uint64_t swap_mask = 0LL - ((uint64_t)do_swap);
-    for (int i = 0; i < NWORDS; ++i) {
-        uint64_t word_mask = (in1[i] ^ in2[i]) & swap_mask;
-        in1[i] = in1[i] ^ word_mask;
-        in2[i] = in2[i] ^ word_mask;
-    }
-}
-
 void bint_condassign(int64_t *out, const bool first, const int64_t *in1, const int64_t *in2) {
     uint64_t mask1 = 0LL - ((uint64_t)first);
     uint64_t mask2 = ~mask1;

@@ -1,5 +1,6 @@
-cmake_minimum_required (VERSION 2.8.5)
+cmake_minimum_required (VERSION 3.9)
 cmake_policy (SET CMP0054 NEW)
+cmake_policy (SET CMP0069 NEW)
 project (bls_hash)
 
 include (etc/build_type.cmake)

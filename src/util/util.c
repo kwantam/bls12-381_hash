@@ -4,8 +4,7 @@
 
 #include "util.h"
 
-#include "bint.h"
-#include "bls12_381_consts.h"
+#include "consts.h"
 
 #include <endian.h>
 #include <errno.h>

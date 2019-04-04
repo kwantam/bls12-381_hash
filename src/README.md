@@ -4,7 +4,7 @@
 
 You will need the following:
 
-- cmake version 2.8.5 or newer
+- cmake version 3.9 or newer
 - OpenSSL 1.1.0 or newer (development headers)
 - GMPLib 5.x or newer (development headers)
 - gcc >= 8 or clang >= 7
@@ -12,6 +12,7 @@ You will need the following:
 - bash
 - a working version of `dd` (GNU coreutils or similar)
 - Optional: clang-format, clang-tidy, cppcheck
+- To run tests: sagemath
 
 ## Quickstart
 

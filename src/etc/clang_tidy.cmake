@@ -16,7 +16,7 @@ endif (NOT CLANG_TIDY)
 
 if (DEFINED CLANG_TIDY)
     file (GLOB_RECURSE ALL_CC_FILES *.c)
-    set (CLANG_TIDY_CHECKS "'*,-fuchsia-*,-hicpp-signed-bitwise,-google-build-using-namespace,-android*,-cppcoreguidelines-pro-bounds-pointer-arithmetic,-google-runtime-references,-readability-avoid-const-params-in-decls,-llvm-header-guard'")
+    set (CLANG_TIDY_CHECKS "'*,-llvm-header-guard,-readability-avoid-const-params-in-decls,-hicpp-signed-bitwise'")
     foreach (tidy_target ${ALL_CC_FILES})
         get_filename_component (basename ${tidy_target} NAME)
         get_filename_component (dirname ${tidy_target} DIRECTORY)
