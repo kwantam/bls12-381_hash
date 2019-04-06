@@ -45,7 +45,7 @@ show_q_fq_cq() {
 
 idx=0
 
-echo "Hash-and-check & &"
+echo "Hash-and-check & --- &"
 show_q_fq_cq 1 0
 show_q_fq_cq 1 0
 show_q_fq_cq 0 1
