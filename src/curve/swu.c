@@ -351,7 +351,7 @@ void swu_map_rG(mpz_t x, mpz_t y, mpz_t z, const mpz_t u, const uint8_t *r) {
     eval_iso11();    // ...and isogeny
 
     // precompute values for the multi-point mult table
-    memcpy(&bint_precomp[1][0][0], jp_tmp + 1, sizeof(struct jac_point));
+    memcpy(&bint_precomp[1][0][0], jp_tmp + 1, sizeof(jac_point));
     precomp_finish();
 
     addrG_clear_h_help(r);            // do the multi-point multiplication

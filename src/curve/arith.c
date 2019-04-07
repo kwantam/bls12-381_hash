@@ -41,6 +41,7 @@ bool check_fx(mpz_t y, const mpz_t x, const bool negate, const bool force, const
 
 // sqrt(U/V) ; return whether we actually found a sqrt
 // out is the result, tmp is garbage
+// out should not be the same as tmp, u, or v
 bool divsqrt(mpz_t out, mpz_t tmp, const mpz_t u, const mpz_t v, bool force) {
     sqr_modp(out, v);                  // V^2
     mul_modp(tmp, u, v);               // UV

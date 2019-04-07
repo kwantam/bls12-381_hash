@@ -17,7 +17,7 @@
 // double a point in Jacobian coordinates
 // out == in is OK
 // from EFD: https://www.hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-0.html#doubling-dbl-2009-l
-static inline void point_double(struct jac_point *out, const struct jac_point *in) {
+static inline void point_double(jac_point *out, const jac_point *in) {
     bint_sqr(bint_tmp[0], in->X);                        // A = X^2                      v = 2   w = 1
     bint_sqr(bint_tmp[1], in->Y);                        // B = Y^2                      v = 2   w = 1
     bint_sqr(bint_tmp[2], bint_tmp[1]);                  // C = B^2                      v = 2   w = 1
@@ -51,7 +51,7 @@ static inline void point_double(struct jac_point *out, const struct jac_point *i
 // out == in1 or out == in2 is OK
 // NOTE: out->Y remains unreduced, but it meets numerical stability criteria
 // from EFD: https://www.hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-0.html#addition-add-2007-bl
-void point_add(struct jac_point *out, const struct jac_point *in1, const struct jac_point *in2) {
+void point_add(jac_point *out, const jac_point *in1, const jac_point *in2) {
     bint_sqr(bint_tmp[0], in1->Z);                       // Z1Z1 = Z1^2                  v = 2   w = 1
                                                          //
     bint_sqr(bint_tmp[1], in2->Z);                       // Z2Z2 = Z2^2                  v = 2   w = 1
@@ -97,7 +97,7 @@ void point_add(struct jac_point *out, const struct jac_point *in1, const struct 
 }
 
 // temporary points for intermediate computations (mostly used in clear_h_chain())
-struct jac_point jp_tmp[NUM_TMP_JP];
+jac_point jp_tmp[NUM_TMP_JP];
 
 // Addition chain: Bos-Coster (win=7) : 147 links, 8 variables
 // input point is taken from jp_tmp[1], output is in jp_tmp[7]
@@ -195,7 +195,7 @@ void add2_clear_h(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, 
 }
 
 // precompute the fixed part of the table (based on G' and 2^128 * G') for addrG
-struct jac_point bint_precomp[4][4][4];
+jac_point bint_precomp[4][4][4];
 void precomp_init(void) {
     memset(bint_precomp[0][0][0].X, 0, BINT_NWORDS * sizeof(int64_t));
     bint_set1(bint_precomp[0][0][0].Y);
@@ -263,10 +263,10 @@ void addrG_clear_h_help(const uint8_t *r) {
             uint8_t r_idx = (r[idx] & mask) >> shift;
             uint8_t r2_idx = (r2[idx] & mask) >> shift;
             if ((h_idx | r_idx | r2_idx) != 0) {
-                struct jac_point *tp = &bint_precomp[h_idx][r_idx][r2_idx];
+                jac_point *tp = &bint_precomp[h_idx][r_idx][r2_idx];
                 if (is_zero) {
                     is_zero = false;
-                    memcpy(jp_tmp, tp, sizeof(struct jac_point));
+                    memcpy(jp_tmp, tp, sizeof(jac_point));
                 } else {
                     point_add(jp_tmp, jp_tmp, tp);
                 }

@@ -1,4 +1,4 @@
-// curve ops for bls12-381 hashing --- internal header file
+// globals and initialization functions for curve ops
 //
 // (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 

@@ -10,8 +10,10 @@
 
 // static data (un)initialization and access
 void curve_init(void);
-void precomp_init(void);
 void curve_uninit(void);
+void curve2_init(void);
+void curve2_uninit(void);
+void precomp_init(void);
 
 // function for use with hash-and-check (SvdW also uses this)
 bool check_fx(mpz_t y, const mpz_t x, const bool negate, const bool force, const bool field_only);
