@@ -10,10 +10,11 @@
 
 #include <gmp.h>
 
-mpz_t2 mul2tmp[2];     // temps for basic arithmetic ops in fp2
-mpz_t2 ssqrtM1[2];     // values for computing sqrts
-mpz_t swu2_eta01;      // eta0 and eta1 for SWU map (same value, just multiplied by sqrt(-1)
-mpz_t2 swu2_eta23[2];  // eta2 and eta3 for SWU map
+mpz_t2 mpz2_tmp[NUM_MPZ2_TMP];  // temps for basic arithmetic ops in fp2
+mpz_t2 mpz2mul[2];              // private temps for mul and sqr
+mpz_t2 ssqrtM1[2];              // values for computing sqrts
+mpz_t swu2_eta01;               // eta0 and eta1 for SWU map (same value, just multiplied by sqrt(-1)
+mpz_t2 swu2_eta23[2];           // eta2 and eta3 for SWU map
 
 // mpz_init for mpz_t2
 static void mpz2_init(mpz_t2 io) {
@@ -37,11 +38,12 @@ void curve2_init(void) {
 
     curve_init();  // need the globals from globals.h, too
 
-    for (unsigned i = 0; i < 2; ++i) {
-        mpz2_init(mul2tmp[i]);
+    for (unsigned i = 0; i < NUM_MPZ2_TMP; ++i) {
+        mpz2_init(mpz2_tmp[i]);
     }
 
     for (unsigned i = 0; i < 2; ++i) {
+        mpz2_init(mpz2mul[i]);
         mpz2_init(ssqrtM1[i]);
         mpz2_init(swu2_eta23[i]);
     }
@@ -69,11 +71,12 @@ void curve2_uninit(void) {
 
     curve_uninit();  // uninit globals.h, too
 
-    for (unsigned i = 0; i < 2; ++i) {
-        mpz2_clear(mul2tmp[i]);
+    for (unsigned i = 0; i < NUM_MPZ2_TMP; ++i) {
+        mpz2_clear(mpz2_tmp[i]);
     }
 
     for (unsigned i = 0; i < 2; ++i) {
+        mpz2_clear(mpz2mul[i]);
         mpz2_clear(ssqrtM1[i]);
         mpz2_clear(swu2_eta23[i]);
     }

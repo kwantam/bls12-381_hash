@@ -7,7 +7,9 @@
 #include "fp2.h"
 
 // temps for basic arithmetic in fp2
-extern mpz_t2 mul2tmp[2];
+#define NUM_MPZ2_TMP 16
+extern mpz_t2 mpz2_tmp[NUM_MPZ2_TMP];
+extern mpz_t2 mpz2mul[2];  // private temps for multiplication and squaring
 
 // values for computing sqrts
 extern mpz_t2 ssqrtM1[2];

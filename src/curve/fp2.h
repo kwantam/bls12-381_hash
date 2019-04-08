@@ -1,6 +1,6 @@
 // definitions for fp2
 //
-// (C) Riad S. Wahby <rsw@cs.stanford.edu>
+// (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
 #ifndef __bls_hash__src__curve__fp2_h__
 
