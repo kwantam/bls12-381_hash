@@ -20,8 +20,12 @@ kpoly = [ 2955185177626169647543871026716143749798776473583611826109464091094397
         , 1
         ]
 EllP = EllipticCurve(F, [EllP_a, EllP_b])
-iso = EllipticCurveIsogeny(EllP, kpoly, codomain=Ell, degree=11)
-iso.switch_sign()  # this is the isogeny, but with the opposite sign for y
+iso = None
+
+def iso_init():
+    global iso
+    iso = EllipticCurveIsogeny(EllP, kpoly, codomain=Ell, degree=11)
+    iso.switch_sign()  # this is the isogeny, but with the opposite sign for y
 
 cx1 = F((F(3) + sqrt(F(-27))) / F(2))
 cx2 = F((F(3) - sqrt(F(-27))) / F(2))
@@ -100,14 +104,17 @@ if __name__ == "__main__":
                     for (t, r, xOut, yOut, zOut) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "u1":
+        iso_init()
         assert all( JEll(xOut, yOut, zOut) == h * iso(swu(u))
                     for (xOut, yOut, zOut, u) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "u2":
+        iso_init()
         assert all( JEll(xOut, yOut, zOut) == h * iso(swu(u1) + swu(u2))
                     for (xOut, yOut, zOut, u1, u2) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "urG":
+        iso_init()
         assert all( JEll(xOut, yOut, zOut) == h * iso(swu(u)) + r * gPrime
                     for (xOut, yOut, zOut, u, r) in ( eval(l) for l in sys.stdin.readlines() ) )
 

@@ -1,4 +1,4 @@
-// simple hash-and-try impl for BLS12-381
+// hash-and-check for BLS12-381 G1
 //
 // (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 

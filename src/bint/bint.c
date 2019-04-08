@@ -77,19 +77,19 @@ void bint_add(int64_t *out, const int64_t *ina, const int64_t *inb) {
     }
 }
 
-void bint_sub(int64_t *out, const int64_t *ina, const int64_t *inb, int bup) {
+void bint_sub(int64_t *out, const int64_t *ina, const int64_t *inb, const int bup) {
     for (int i = 0; i < NWORDS; ++i) {
         out[i] = ina[i] + (p[i] << bup) - inb[i];
     }
 }
 
-void bint_neg(int64_t *out, const int64_t *in, int bup) {
+void bint_neg(int64_t *out, const int64_t *in, const int bup) {
     for (int i = 0; i < NWORDS; ++i) {
         out[i] = (p[i] << bup) - in[i];
     }
 }
 
-void bint_lsh(int64_t *out, const int64_t *in, int sh) {
+void bint_lsh(int64_t *out, const int64_t *in, const int sh) {
     for (int i = 0; i < NWORDS; ++i) {
         out[i] = in[i] << sh;
     }
@@ -109,9 +109,9 @@ void bint_mul(int64_t *out, const int64_t *ina, const int64_t *inb) {
     _bint_monty_help(out, tmp);
 }
 
-void bint_sqr(int64_t *out, const int64_t *ina) {
+void bint_sqr(int64_t *out, const int64_t *in) {
     int64_t tmp[2 * NWORDS];
-    _bint_sqr(tmp, ina);  // T = xx
+    _bint_sqr(tmp, in);  // T = xx
     _bint_monty_help(out, tmp);
 }
 
@@ -228,7 +228,8 @@ void bint_export_mpz(mpz_t out, const int64_t *in) {
     mpz_import(out, NWORDS, -1, 8, 0, 64 - BITS_PER_WORD, tmp);
 }
 
-bool bint_divsqrt(int64_t *__restrict__ out, const int64_t *u, const int64_t *v, const bool force) {
+bool bint_divsqrt(int64_t *__restrict__ out, const int64_t *__restrict__ u, const int64_t *__restrict__ v,
+                  const bool force) {
     int64_t uvk1[NWORDS], uvk2[NWORDS];
     bint_mul(uvk1, u, v);        // uv
     bint_sqr(uvk2, v);           // v^2

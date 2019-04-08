@@ -2,7 +2,7 @@
 //
 // (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
-#ifndef __bls_hash__src__curve__consts2_h__
+#ifndef __bls_hash__src__curve2__consts2_h__
 
 #include <stdint.h>
 
@@ -13,5 +13,5 @@ extern const uint64_t IssqrtM1[6];
 extern const uint64_t Ieta1[6];
 extern const uint64_t Ieta2[6];
 
-#define __bls_hash__src__curve__consts2_h__
-#endif  // __bls_hash__src__curve__consts2_h__
+#define __bls_hash__src__curve2__consts2_h__
+#endif  // __bls_hash__src__curve2__consts2_h__

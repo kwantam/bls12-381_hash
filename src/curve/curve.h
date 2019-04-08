@@ -11,8 +11,6 @@
 // static data (un)initialization and access
 void curve_init(void);
 void curve_uninit(void);
-void curve2_init(void);
-void curve2_uninit(void);
 void precomp_init(void);
 
 // function for use with hash-and-check (SvdW also uses this)

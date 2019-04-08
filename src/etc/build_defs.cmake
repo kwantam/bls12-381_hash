@@ -1,8 +1,14 @@
-include_directories ("${PROJECT_SOURCE_DIR}/bint" "${PROJECT_SOURCE_DIR}/curve" "${PROJECT_SOURCE_DIR}/util")
+include_directories ("${PROJECT_SOURCE_DIR}/bint"
+                     "${PROJECT_SOURCE_DIR}/bint2"
+                     "${PROJECT_SOURCE_DIR}/curve"
+                     "${PROJECT_SOURCE_DIR}/curve2"
+                     "${PROJECT_SOURCE_DIR}/util")
 
-file (GLOB LIB_SOURCES "${PROJECT_SOURCE_DIR}/util/*.c"
-                       "${PROJECT_SOURCE_DIR}/bint/*.c"
-                       "${PROJECT_SOURCE_DIR}/curve/*.c")
+file (GLOB LIB_SOURCES "${PROJECT_SOURCE_DIR}/bint/*.c"
+                       "${PROJECT_SOURCE_DIR}/bint2/*.c"
+                       "${PROJECT_SOURCE_DIR}/curve/*.c"
+                       "${PROJECT_SOURCE_DIR}/curve2/*.c"
+                       "${PROJECT_SOURCE_DIR}/util/*.c")
 add_library (bls_hash STATIC ${LIB_SOURCES})
 find_library (LIBGMP gmp)
 find_library (LIBCRYPTO crypto)

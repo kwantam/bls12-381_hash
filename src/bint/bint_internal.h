@@ -3,6 +3,7 @@
 // (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
 #ifndef __bls_hash__src__bint__bint_internal_h__
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>

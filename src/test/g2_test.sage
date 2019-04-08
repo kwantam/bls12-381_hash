@@ -1,6 +1,8 @@
 #!/usr/bin/env sage
 # vim: syntax=python
 
+import sys
+
 p = 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
 F = GF(p)
 F2.<X> = GF(p^2, modulus=[1,0,1])
@@ -10,7 +12,7 @@ Ell2p_a = F2(240 * X)
 Ell2p_b = F2(1012 * (1 + X))
 
 Ell2p = EllipticCurve(F2, [Ell2p_a, Ell2p_b])
-iso3 = EllipticCurveIsogeny(Ell2p, [6 * (1 - X), 1], codomain=Ell2)
+iso2 = None
 u0_2 = F2(-1)
 
 cx1_2 = (sqrt(F2(-3 * u0_2 ** 2)) - F2(u0_2)) / F2(2)
@@ -33,6 +35,10 @@ eta = (F2(4260611855699123619835214542497613370832672570814085208937885429153832
   )
 
 xi_2 = F2(1 + X)
+
+def init_iso2():
+    global iso2
+    iso2 = EllipticCurveIsogeny(Ell2p, [6 * (1 - X), 1], codomain=Ell2)
 
 def f2(x):
     return F2(x ** 3 + 4 * (1 + X))
@@ -113,3 +119,18 @@ def swu2(t):
     assert yval is not None and xval is not None, "qwer"
 
     return Ell2p(xval, yval)
+
+def usage():
+    print("Usage: %s <type>\n<type> is one of 'hac', '1', '2', 'u1', 'u2'\n")
+    sys.exit(1)
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        usage()
+
+    if sys.argv[1] == "hac":
+        for (xs, xt, ys, yt) in ( eval(l) for l in sys.stdin.readlines() ):
+            Ell2(F2(xs + X * xt), F2(ys + X * yt))
+
+    else:
+        usage()
