@@ -142,9 +142,9 @@ void svdw2_map_fo(mpz_t2 x, mpz_t2 y, mpz_t2 z, const mpz_t2 t) {
     }
 
     // x2 : (t^2 * sqrt(-3) - cx2_2 * (t^2 + 3 + 4I)) / (t^2 + 3 + 4I)
-    mul_modp2_scalar(x, z, cx2_2);      // cx2_2 * (t^2 + 3 + 4I)
-    mpz2_sub(x, mpz2_tmp[1], x);        // t^2 * sqrt(-3) - cx2_2 * (t^2 + 3 + 4I)
-    condadd_p2(x);                      // reduce mod p
+    mul_modp2_scalar(x, z, cx2_2);  // cx2_2 * (t^2 + 3 + 4I)
+    mpz2_sub(x, mpz2_tmp[1], x);    // t^2 * sqrt(-3) - cx2_2 * (t^2 + 3 + 4I)
+    condadd_p2(x);                  // reduce mod p
     if (check_f2_xOverZ(x, y, z, neg_t)) {
         return;
     }
