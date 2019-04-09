@@ -46,11 +46,16 @@ int main(int argc, char **argv) {
         next_modp(prng_ctx, t1->t);
         next_modp(prng_ctx, t2->s);
         next_modp(prng_ctx, t2->t);
-        svdw2_map2(x1, y1, t1, x2, y2, t2);
-        mpz_set_ui(z1->s, 1);
-        mpz_set_ui(z1->t, 0);
-        mpz_set_ui(z2->s, 1);
-        mpz_set_ui(z2->t, 0);
+        if (opts.field_only) {
+            svdw2_map_fo(x1, y1, z1, t1);
+            svdw2_map_fo(x2, y2, z2, t2);
+        } else {
+            svdw2_map2(x1, y1, t1, x2, y2, t2);
+            mpz_set_ui(z1->s, 1);
+            mpz_set_ui(z1->t, 0);
+            mpz_set_ui(z2->s, 1);
+            mpz_set_ui(z2->t, 0);
+        }
 
         // show results
         //   test            (t1, x1, y1, x2, y2)

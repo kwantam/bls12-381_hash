@@ -32,18 +32,21 @@ int main(int argc, char **argv) {
     // rng
     next_prng(prng_ctx, &hash_ctx, 0);
 
-    // random point
+    // apply sqrt/divsqrt to random point
     printf("print all([\n");
     for (unsigned i = 0; i < 1024; ++i) {
         next_modp(prng_ctx, x->s);
         next_modp(prng_ctx, x->t);
+        next_modp(prng_ctx, y->s);
+        next_modp(prng_ctx, y->t);
 
-        const bool square = sqrt_modp2(z, x);
+        const bool square = divsqrt_modp2(z, x, y);
 
         if (square) {
-            gmp_printf("F2(0x%Zx + X * 0x%Zx) == F2(0x%Zx + X * 0x%Zx) ** 2,\n", x->s, x->t, z->s, z->t);
+            gmp_printf("F2(0x%Zx + X * 0x%Zx) / F2(0x%Zx + X * 0x%Zx) == F2(0x%Zx + X * 0x%Zx) ** 2,\n", x->s, x->t,
+                       y->s, y->t, z->s, z->t);
         } else {
-            gmp_printf("not F2(0x%Zx + X * 0x%Zx).is_square(),\n", x->s, x->t);
+            gmp_printf("not (F2(0x%Zx + X * 0x%Zx) / F2(0x%Zx + X * 0x%Zx)).is_square(),\n", x->s, x->t, y->s, y->t);
         }
     }
     printf("])\n");

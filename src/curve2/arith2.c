@@ -30,6 +30,17 @@ bool sqrt_modp2(mpz_t2 out, const mpz_t2 in) {
     return found;
 }
 
+bool divsqrt_modp2(mpz_t2 out, const mpz_t2 u, const mpz_t2 v) {
+    bint2_ty tmp_out, tmp_u, tmp_v;
+
+    bint2_import_mpz2(tmp_u, u);
+    bint2_import_mpz2(tmp_v, v);
+    const bool found = bint2_divsqrt(tmp_out, tmp_u, tmp_v);
+    bint2_export_mpz2(out, tmp_out);
+
+    return found;
+}
+
 int mpz2_legendre(const mpz_t2 in) {
     mpz2_norm(mpz2mul[1], in);
     return mpz_legendre(mpz2mul[1]->s, fld_p);

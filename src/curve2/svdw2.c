@@ -41,8 +41,7 @@ static inline void svdw2_map_help(mpz_t2 x, mpz_t2 y, const bool neg_t, const un
 
 static inline void svdw2_precomp1(const mpz_t2 t, const unsigned tmp_os) {
     sqr_modp2(mpz2_tmp[tmp_os], t);                                           // t^2
-    mpz_add_ui(mpz2_tmp[tmp_os + 1]->s, mpz2_tmp[tmp_os]->s, 3);              // t^2 + 3
-    mpz_add_ui(mpz2_tmp[tmp_os + 1]->t, mpz2_tmp[tmp_os]->t, 4);              // t^2 + 3 + 4I  (f_2(-1) == 3 + 4I)
+    mpz2_add_ui2(mpz2_tmp[tmp_os + 1], mpz2_tmp[tmp_os], 3, 4);               // t^2 + 3 + 4I  (f_2(-1) == 3 + 4I)
     mul_modp2(mpz2_tmp[tmp_os + 2], mpz2_tmp[tmp_os + 1], mpz2_tmp[tmp_os]);  // t^2 (t^2 + 3 + 4I)
 }
 
@@ -90,4 +89,68 @@ void svdw2_map2(mpz_t2 x1, mpz_t2 y1, const mpz_t2 t1, mpz_t2 x2, mpz_t2 y2, con
     svdw2_map_help(x1, y1, neg_t1, 0);
     const bool neg_t2 = mpz_cmp(pm1o2, t2->s) < 0;  // is t2 negative?
     svdw2_map_help(x2, y2, neg_t2, 3);
+}
+
+// SvdW with only field ops
+static inline bool check_f2_xOverZ(mpz_t2 x, mpz_t2 y, mpz_t2 z, const bool negate) {
+    sqr_modp2(mpz2_tmp[2], x);               // x^2
+    mul_modp2(mpz2_tmp[2], mpz2_tmp[2], x);  // x^3
+    sqr_modp2(mpz2_tmp[3], z);               // z^2
+    mul_modp2(mpz2_tmp[3], mpz2_tmp[3], z);  // z^3
+
+    mpz_set_ui(mpz2_tmp[4]->s, 4);                     // 4
+    mpz_set_ui(mpz2_tmp[4]->t, 4);                     // 4I
+    mul_modp2(mpz2_tmp[4], mpz2_tmp[4], mpz2_tmp[3]);  // 4*(1 + I) z^3
+    mpz2_add(mpz2_tmp[2], mpz2_tmp[2], mpz2_tmp[4]);   // x^3 + 4(1+I) z^3
+
+    if (divsqrt_modp2(y, mpz2_tmp[2], mpz2_tmp[3])) {
+        // found a sqrt, put it jacobian coords
+        mul_modp2(x, x, z);            // X = x z
+        mul_modp2(y, y, mpz2_tmp[3]);  // Y' = y z^3
+        if (negate) {
+            mpz2_neg(y, y);
+        }
+        return true;
+    }
+    return false;
+}
+
+// svdw using field ops only --- not constant-time
+void svdw2_map_fo(mpz_t2 x, mpz_t2 y, mpz_t2 z, const mpz_t2 t) {
+    const bool neg_t = mpz_cmp(pm1o2, t->s) < 0;  // t is negative
+
+    sqr_modp2(mpz2_tmp[0], t);                           // t^2
+    mpz2_add_ui2(z, mpz2_tmp[0], 3, 4);                  // t^2 + 3 + 4I           = V
+    mul_modp2_scalar(mpz2_tmp[1], mpz2_tmp[0], sqrtM3);  // t^2 * sqrt(-3)
+
+    // x1 : (cx1_2 * (t^2 + 3 + 4I) - t^2 * sqrt(-3)) / (t^2 + 3 + 4I)
+    // exceptional case is when z == 0 (if t==0 then we get the correct result automatically)
+    if (mpz2_zero_p(z)) {
+        mpz_set(x->s, cx1_2);  // x = cx1_2
+        mpz_set_ui(x->t, 0);
+        mpz_set_ui(z->s, 1);  // z = 1
+        mpz_set_ui(z->t, 0);
+    } else {
+        mul_modp2_scalar(x, z, cx1_2);  // cx1_2 * (t^2 + 3 + 4I)
+        mpz2_sub(x, x, mpz2_tmp[1]);    // cx1_2 * (t^2 + 3 + 4I) - t^2 * sqrt(-3)
+        condadd_p2(x);                  // reduce mod p
+    }
+    if (check_f2_xOverZ(x, y, z, neg_t)) {
+        return;
+    }
+
+    // x2 : (t^2 * sqrt(-3) - cx2_2 * (t^2 + 3 + 4I)) / (t^2 + 3 + 4I)
+    mul_modp2_scalar(x, z, cx2_2);      // cx2_2 * (t^2 + 3 + 4I)
+    mpz2_sub(x, mpz2_tmp[1], x);        // t^2 * sqrt(-3) - cx2_2 * (t^2 + 3 + 4I)
+    condadd_p2(x);                      // reduce mod p
+    if (check_f2_xOverZ(x, y, z, neg_t)) {
+        return;
+    }
+
+    // x3: ((t^2 + 3 + 4I)^2 + 3 t^2) / (-3 t^2)
+    sqr_modp2(x, z);                         // (t^2 + 3 + 4I)^2
+    mul_modp2_scalar_ui(z, mpz2_tmp[0], 3);  // 3 t^2
+    mpz2_add(x, x, z);                       // (t^2 + 3 + 4I)^2 + 3 t^2
+    mpz2_neg(z, z);                          // -3 t^2
+    check_f2_xOverZ(x, y, z, neg_t);
 }

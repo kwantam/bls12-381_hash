@@ -110,14 +110,13 @@ void svdw_map2(mpz_t x1, mpz_t y1, const mpz_t t1, mpz_t x2, mpz_t y2, const mpz
 static inline bool check_fxOverZ(mpz_t x, mpz_t y, mpz_t z, const bool negate, const bool force) {
     sqr_modp(mpz_tmp[2], x);                      // x^2
     mul_modp(mpz_tmp[2], mpz_tmp[2], x);          // x^3
-    sqr_modp(mpz_tmp[5], z);                      // z^2
-    mul_modp(mpz_tmp[3], mpz_tmp[5], z);          // z^3
+    sqr_modp(mpz_tmp[3], z);                      // z^2
+    mul_modp(mpz_tmp[3], mpz_tmp[3], z);          // z^3
     mpz_mul_2exp(mpz_tmp[4], mpz_tmp[3], 2);      // 4 z^3
     mpz_add(mpz_tmp[2], mpz_tmp[2], mpz_tmp[4]);  // x^3 + 4 z^3
     if (divsqrt(y, mpz_tmp[4], mpz_tmp[2], mpz_tmp[3], force)) {
         mul_modp(x, x, z);           // X = x z
-        mul_modp(y, y, mpz_tmp[5]);  // Y = y z^2
-        mul_modp(y, y, z);           // Y = y z^3
+        mul_modp(y, y, mpz_tmp[3]);  // Y = y z^3
         mpz_mod(z, z, fld_p);        // reduce z
         if (negate) {
             mpz_sub(y, fld_p, y);  // fix sign of y

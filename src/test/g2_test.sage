@@ -139,8 +139,8 @@ if __name__ == "__main__":
             Ell2(F2(xs + X * xt), F2(ys + X * yt))
 
     elif sys.argv[1] == "1":
-        assert all( Ell2(F2(xs + X * xt), F2(ys + X * yt)) == svdw2(F2(ts + X * tt))
-                    for (ts, tt, xs, xt, ys, yt) in ( eval(l) for l in sys.stdin.readlines() ) )
+        assert all( JEll2(xs, xt, ys, yt, zs, zt) == svdw2(F2(ts + X * tt))
+                    for (ts, tt, xs, xt, ys, yt, zs, zt) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "2":
         assert all( JEll2(x1s, x1t, y1s, y1t, z1s, z1t) == svdw2(F2(t1s + X * t1t)) + svdw2(F2(t2s + X * t2t))

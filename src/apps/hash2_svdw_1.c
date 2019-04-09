@@ -15,9 +15,10 @@ int main(int argc, char **argv) {
     curve2_init();
 
     // get libgmp ready
-    mpz_t2 x, y, t;
+    mpz_t2 x, y, z, t;
     mpz2_init(x);
     mpz2_init(y);
+    mpz2_init(z);
     mpz2_init(t);
 
     // load libcrypto error strings and set up SHA and PRNG
@@ -45,12 +46,18 @@ int main(int argc, char **argv) {
             next_modp(prng_ctx, t->s);
             next_modp(prng_ctx, t->t);
         }
-        svdw2_map(x, y, t);
+        if (opts.field_only) {
+            svdw2_map_fo(x, y, z, t);
+        } else {
+            svdw2_map(x, y, t);
+            mpz_set_ui(z->s, 1);
+            mpz_set_ui(z->t, 0);
+        }
 
         // show results
-        //   test            (t, x, y)
+        //   test            (t, x, y, z)
         //   quiet && !test: <<nothing>>
-        //   otherwise       (x, y)
+        //   otherwise       (x, y, z)
         if (do_print) {
             gmp_printf("(");
         }
@@ -59,7 +66,7 @@ int main(int argc, char **argv) {
             gmp_printf("0x%Zx, 0x%Zx, ", t->s, t->t);
         }
         if (do_print) {
-            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", x->s, x->t, y->s, y->t);
+            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", x->s, x->t, y->s, y->t, z->s, z->t);
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &end);
@@ -68,9 +75,10 @@ int main(int argc, char **argv) {
 
     // clean up
     EVP_CIPHER_CTX_free(prng_ctx);
-    mpz2_clear(x);
-    mpz2_clear(y);
     mpz2_clear(t);
+    mpz2_clear(z);
+    mpz2_clear(y);
+    mpz2_clear(x);
     curve2_uninit();
 
     return 0;
