@@ -8,20 +8,20 @@
 /* *** addchain for 1000602388805416848354447456433976039139220704984751971333014534031007912622709466110671907282253916009473568139946 *** */
 /* Bos-Coster (win=4) : 458 links, 16 variables */
 #define divsqrt_chain(TMPVAR1, TMPVAR0) do { \
-        int64_t TMPVAR2[NWORDS]; \
-        int64_t TMPVAR3[NWORDS]; \
-        int64_t TMPVAR4[NWORDS]; \
-        int64_t TMPVAR5[NWORDS]; \
-        int64_t TMPVAR6[NWORDS]; \
-        int64_t TMPVAR7[NWORDS]; \
-        int64_t TMPVAR8[NWORDS]; \
-        int64_t TMPVAR9[NWORDS]; \
-        int64_t TMPVAR10[NWORDS]; \
-        int64_t TMPVAR11[NWORDS]; \
-        int64_t TMPVAR12[NWORDS]; \
-        int64_t TMPVAR13[NWORDS]; \
-        int64_t TMPVAR14[NWORDS]; \
-        int64_t TMPVAR15[NWORDS]; \
+        bint_ty TMPVAR2; \
+        bint_ty TMPVAR3; \
+        bint_ty TMPVAR4; \
+        bint_ty TMPVAR5; \
+        bint_ty TMPVAR6; \
+        bint_ty TMPVAR7; \
+        bint_ty TMPVAR8; \
+        bint_ty TMPVAR9; \
+        bint_ty TMPVAR10; \
+        bint_ty TMPVAR11; \
+        bint_ty TMPVAR12; \
+        bint_ty TMPVAR13; \
+        bint_ty TMPVAR14; \
+        bint_ty TMPVAR15; \
         bint_sqr(TMPVAR1, TMPVAR0);                                                    /*    0 : 2 */ \
         bint_mul(TMPVAR9, TMPVAR1, TMPVAR0);                                           /*    1 : 3 */ \
         bint_sqr(TMPVAR5, TMPVAR1);                                                    /*    2 : 4 */ \

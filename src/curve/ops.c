@@ -197,10 +197,6 @@ void add2_clear_h(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, 
 // precompute the fixed part of the table (based on G' and 2^128 * G') for addrG
 jac_point bint_precomp[4][4][4];
 void precomp_init(void) {
-    memset(bint_precomp[0][0][0].X, 0, BINT_NWORDS * sizeof(int64_t));
-    bint_set1(bint_precomp[0][0][0].Y);
-    memset(bint_precomp[0][0][0].Z, 0, BINT_NWORDS * sizeof(int64_t));
-
     memcpy(bint_precomp[0][0][1].X, g_prime_x, sizeof(g_prime_x));
     memcpy(bint_precomp[0][0][1].Y, g_prime_y, sizeof(g_prime_y));
     bint_set1(bint_precomp[0][0][1].Z);

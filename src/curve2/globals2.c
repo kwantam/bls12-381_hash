@@ -12,7 +12,6 @@
 
 mpz_t2 mpz2_tmp[NUM_MPZ2_TMP];  // temps for basic arithmetic ops in fp2
 mpz_t2 mpz2mul[2];              // private temps for mul and sqr
-mpz_t2 ssqrtM1[2];              // values for computing sqrts
 mpz_t swu2_eta01;               // eta0 and eta1 for SWU map (same value, just multiplied by sqrt(-1)
 mpz_t2 swu2_eta23[2];           // eta2 and eta3 for SWU map
 
@@ -32,14 +31,8 @@ void curve2_init(void) {
 
     for (unsigned i = 0; i < 2; ++i) {
         mpz2_init(mpz2mul[i]);
-        mpz2_init(ssqrtM1[i]);
         mpz2_init(swu2_eta23[i]);
     }
-    // sqrt(+/- sqrt(-1))
-    mpz_import(ssqrtM1[0]->s, 6, -1, 8, 0, 0, IssqrtM1);  // sqrt(sqrt(-1))
-    mpz_set(ssqrtM1[0]->t, ssqrtM1[0]->s);                //
-    mpz_set(ssqrtM1[1]->s, ssqrtM1[0]->s);                // sqrt(-sqrt(-1))
-    mpz_sub(ssqrtM1[1]->t, fld_p, ssqrtM1[0]->s);         //
 
     // eta[i], the constants sqrt(xi / sqrt(sqrt(-1))) for the SWU map
     mpz_init(swu2_eta01);                                 // eta[0] and eta[1] (eta[1] = sqrt(-1) * eta[0])
@@ -65,7 +58,6 @@ void curve2_uninit(void) {
 
     for (unsigned i = 0; i < 2; ++i) {
         mpz2_clear(mpz2mul[i]);
-        mpz2_clear(ssqrtM1[i]);
         mpz2_clear(swu2_eta23[i]);
     }
     mpz_clear(swu2_eta01);

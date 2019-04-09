@@ -20,12 +20,12 @@ extern mpz_t xmap_num[ELLP_XMAP_NUM_LEN], xmap_den[ELLP_XMAP_DEN_LEN];
 extern mpz_t ymap_num[ELLP_YMAP_NUM_LEN], ymap_den[ELLP_YMAP_DEN_LEN];
 
 // bints for curve ops
-extern int64_t bint_tmp[NUM_TMP_BINT][BINT_NWORDS];
-extern int64_t bint_ellp_b[BINT_NWORDS], bint_ellp_a[BINT_NWORDS], bint_one[BINT_NWORDS];
-extern int64_t bint_xnum[ELLP_XMAP_NUM_LEN][BINT_NWORDS], bint_xden[ELLP_XMAP_DEN_LEN][BINT_NWORDS];
-extern int64_t bint_ynum[ELLP_YMAP_NUM_LEN][BINT_NWORDS], bint_yden[ELLP_YMAP_DEN_LEN][BINT_NWORDS];
-extern int64_t bint_cx1[BINT_NWORDS], bint_cx2[BINT_NWORDS], bint_sqrtM27[BINT_NWORDS];
-extern int64_t bint_23[BINT_NWORDS], bint_M27[BINT_NWORDS], bint_81[BINT_NWORDS];
+extern bint_ty bint_tmp[NUM_TMP_BINT];
+extern bint_ty bint_ellp_b, bint_ellp_a, bint_one;
+extern bint_ty bint_xnum[ELLP_XMAP_NUM_LEN], bint_xden[ELLP_XMAP_DEN_LEN];
+extern bint_ty bint_ynum[ELLP_YMAP_NUM_LEN], bint_yden[ELLP_YMAP_DEN_LEN];
+extern bint_ty bint_cx1, bint_cx2, bint_sqrtM27;
+extern bint_ty bint_23, bint_M27, bint_81;
 
 #define __bls_hash__src__curve__globals_h__
 #endif  // __bls_hash__src__curve__globals_h__

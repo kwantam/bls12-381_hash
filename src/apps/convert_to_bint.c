@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     mpz_init_set_str(in, argv[1], 10);
 
     // output
-    int64_t out[BINT_NWORDS];
+    bint_ty out;
     bint_import_mpz(out, in);
 
     // display

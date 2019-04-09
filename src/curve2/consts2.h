@@ -6,9 +6,6 @@
 
 #include <stdint.h>
 
-// a constant used to compute sqrt(sqrt(-1)) and sqrt(-sqrt(-1))
-extern const uint64_t IssqrtM1[6];
-
 // constants to compute values of eta for SWU map
 extern const uint64_t Ieta1[6];
 extern const uint64_t Ieta2[6];

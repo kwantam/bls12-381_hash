@@ -21,7 +21,7 @@ void invert_modp2(mpz_t2 out, const mpz_t2 in) {
 }
 
 bool sqrt_modp2(mpz_t2 out, const mpz_t2 in) {
-    int64_t tmp1[BINT2_NWORDS], tmp2[BINT2_NWORDS];
+    bint2_ty tmp1, tmp2;
 
     bint2_import_mpz2(tmp1, in);
     const bool found = bint2_sqrt(tmp2, tmp1);

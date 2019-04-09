@@ -10,14 +10,14 @@
 #include <stdint.h>
 
 // forward declarations for bint import/export functions to avoid including bint.h here
-void bint_import_mpz(int64_t *out, const mpz_t in);
-void bint_export_mpz(mpz_t out, const int64_t *in);
+void bint_import_mpz(bint_ty out, const mpz_t in);
+void bint_export_mpz(mpz_t out, const bint_ty in);
 
 // Jacobian coordinates: x = X/Z^2, y = Y/Z^3
 typedef struct jac_point_s {
-    int64_t X[BINT_NWORDS];
-    int64_t Y[BINT_NWORDS];
-    int64_t Z[BINT_NWORDS];
+    bint_ty X;
+    bint_ty Y;
+    bint_ty Z;
 } jac_point;
 
 // temporary points for intermediate computations (mostly used in clear_h_chain())

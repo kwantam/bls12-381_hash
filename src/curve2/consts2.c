@@ -4,12 +4,6 @@
 
 #include "consts2.h"
 
-// a constant used to compute sqrt(sqrt(-1)) and sqrt(-sqrt(-1))
-const uint64_t IssqrtM1[6] = {
-    0xc81084fbede3cc09LL, 0xee67992f72ec05f4LL, 0x77f76e17009241c5LL,
-    0x48395dabc2d3435eLL, 0x6831e36d6bd17ffeLL, 0x6af0e0437ff400bLL,
-};
-
 // constants to compute values of eta for SWU map
 const uint64_t Ieta1[6] = {
     0x6c88d0aa3e03ba01LL, 0xc4ee7b8d4b9e063aLL, 0xc8186bb3d4eccef7LL,

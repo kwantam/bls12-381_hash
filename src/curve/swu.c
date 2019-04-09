@@ -243,14 +243,14 @@ static inline void swu_help_ct(const unsigned jp_num, const mpz_t u) {
     bint_redc(jp_tmp[jp_num].Z, bint_tmp[1]);              // Z
 }
 
-static inline void bint_horner(int64_t *out, const int64_t *x, const int startval) {
+static inline void bint_horner(bint_ty out, const bint_ty x, const int startval) {
     for (int i = startval; i >= 0; --i) {
         bint_mul(out, out, x);            // tot *= x               v = 2   w = 1
         bint_add(out, out, bint_tmp[i]);  // tot += next_val        v = 4   w = 2
     }
 }
 
-static inline void compute_map_bint(int64_t inv[][BINT_NWORDS], int64_t zv[][BINT_NWORDS], const unsigned len) {
+static inline void compute_map_bint(bint_ty inv[], bint_ty zv[], const unsigned len) {
     for (unsigned i = 0; i < len; ++i) {
         bint_mul(bint_tmp[i], inv[i], zv[i]);
     }

@@ -13,12 +13,12 @@ mpz_t ellp_a, ellp_b, pm2, pm1o2;
 mpz_t xmap_num[ELLP_XMAP_NUM_LEN], xmap_den[ELLP_XMAP_DEN_LEN];
 mpz_t ymap_num[ELLP_YMAP_NUM_LEN], ymap_den[ELLP_YMAP_DEN_LEN];
 
-int64_t bint_tmp[NUM_TMP_BINT][BINT_NWORDS];
-int64_t bint_ellp_b[BINT_NWORDS], bint_ellp_a[BINT_NWORDS], bint_one[BINT_NWORDS];
-int64_t bint_xnum[ELLP_XMAP_NUM_LEN][BINT_NWORDS], bint_xden[ELLP_XMAP_DEN_LEN][BINT_NWORDS];
-int64_t bint_ynum[ELLP_YMAP_NUM_LEN][BINT_NWORDS], bint_yden[ELLP_YMAP_DEN_LEN][BINT_NWORDS];
-int64_t bint_cx1[BINT_NWORDS], bint_cx2[BINT_NWORDS], bint_sqrtM27[BINT_NWORDS];
-int64_t bint_23[BINT_NWORDS], bint_M27[BINT_NWORDS], bint_81[BINT_NWORDS];
+bint_ty bint_tmp[NUM_TMP_BINT];
+bint_ty bint_ellp_b, bint_ellp_a, bint_one;
+bint_ty bint_xnum[ELLP_XMAP_NUM_LEN], bint_xden[ELLP_XMAP_DEN_LEN];
+bint_ty bint_ynum[ELLP_YMAP_NUM_LEN], bint_yden[ELLP_YMAP_DEN_LEN];
+bint_ty bint_cx1, bint_cx2, bint_sqrtM27;
+bint_ty bint_23, bint_M27, bint_81;
 
 // init an mpz_t and set it from a constant defined in consts.h
 static inline void mpz_init_import(mpz_t out, const uint64_t *in) {
