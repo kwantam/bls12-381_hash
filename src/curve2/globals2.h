@@ -12,11 +12,13 @@
 extern mpz_t2 mpz2_tmp[NUM_MPZ2_TMP];
 extern mpz_t2 mpz2mul[2];  // private temps for multiplication and squaring
 
-#define NUM_BINT2_TMP 11
+#define NUM_BINT2_TMP 15
 extern bint2_ty bint2_tmp[NUM_BINT2_TMP];
 
 // values for SvdW map
 extern mpz_t cx1_2, cx2_2, sqrtM3, inv3;
+extern bint2_ty bint2_3p4i, bint2_cx1_2, bint2_one;
+extern bint_ty bint_cx2_2, bint_sqrtM3;
 
 // values for SWU map
 extern mpz_t2 swu2_eta[4];

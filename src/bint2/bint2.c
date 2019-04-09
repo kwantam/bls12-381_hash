@@ -22,9 +22,6 @@ void bint2_seti(bint2_ty out) {
     memset(BINT_LO(out), 0, sizeof(bint_ty));
 }
 
-// negative?
-bool bint2_is_neg(const bint2_ty in) { return bint_is_neg(BINT_LO(in)); }
-
 // add
 void bint2_add(bint2_ty out, const bint2_ty ina, const bint2_ty inb) {
     bint_add(BINT_LO(out), BINT_LO(ina), BINT_LO(inb));

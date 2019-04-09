@@ -30,4 +30,7 @@ add_test(NAME t_hash2_svdw_2 COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "$
 add_test(NAME t_hash2_svdw_1_fo COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash2_svdw_1" "${PROJECT_SOURCE_DIR}/test/g2_test.sage" 1 f 128)
 add_test(NAME t_hash2_svdw_2_fo COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash2_svdw_2" "${PROJECT_SOURCE_DIR}/test/g2_test.sage" 2 f 64)
 
+add_test(NAME t_hash2_svdw_1_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash2_svdw_1" "${PROJECT_SOURCE_DIR}/test/g2_test.sage" 1 c 128)
+add_test(NAME t_hash2_svdw_2_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash2_svdw_2" "${PROJECT_SOURCE_DIR}/test/g2_test.sage" 2 c 64)
+
 add_custom_target (bench COMMAND "${PROJECT_SOURCE_DIR}/test/run_bench.sh" "${CMAKE_BINARY_DIR}")

@@ -4,21 +4,27 @@
 
 #include "globals2.h"
 
+#include "bint.h"
+#include "bint2.h"
 #include "consts2.h"
 #include "curve.h"
 #include "globals.h"
 
 #include <gmp.h>
+#include <string.h>
 
-mpz_t2 mpz2_tmp[NUM_MPZ2_TMP];      // temps for basic arithmetic ops in fp2
-mpz_t2 mpz2mul[2];                  // private temps for mul and sqr
-                                    //
-mpz_t cx1_2, cx2_2, sqrtM3, inv3;   // values for SvdW map (all have no "imaginary" part)
-                                    //
-mpz_t swu2_eta01;                   // eta0 and eta1 for SWU map (same value, just multiplied by sqrt(-1)
-mpz_t2 swu2_eta23[2];               // eta2 and eta3 for SWU map
-                                    //
-bint2_ty bint2_tmp[NUM_BINT2_TMP];  // bint2_tmps are mostly for curve ops (ops2.{c,h})
+mpz_t2 mpz2_tmp[NUM_MPZ2_TMP];                // temps for basic arithmetic ops in fp2
+mpz_t2 mpz2mul[2];                            // private temps for mul and sqr
+                                              //
+mpz_t cx1_2, cx2_2, sqrtM3, inv3;             // values for SvdW map (all have no "imaginary" part)
+                                              //
+mpz_t swu2_eta01;                             // eta0 and eta1 for SWU map (same value, just multiplied by sqrt(-1)
+mpz_t2 swu2_eta23[2];                         // eta2 and eta3 for SWU map
+                                              //
+bint2_ty bint2_tmp[NUM_BINT2_TMP];            // bint2_tmps are mostly for curve ops (ops2.{c,h})
+                                              //
+bint2_ty bint2_3p4i, bint2_cx1_2, bint2_one;  // these are for svdw const-time
+bint_ty bint_cx2_2, bint_sqrtM3;
 
 // initialize globals for curve2
 static bool init_done = false;  // shared between init and uninit
@@ -53,6 +59,17 @@ void curve2_init(void) {
     mpz_sub_ui(cx2_2, cx1_2, 1);  // cx2 is cx1 - 1
     mpz_init_import(sqrtM3, IsqrtM3);
     mpz_init_import(inv3, Iinv3);
+
+    // SvdW consts for bint
+    memset(bint2_one, 0, sizeof(bint2_ty));
+    bint_set1(bint2_one);
+    memset(bint2_cx1_2, 0, sizeof(bint2_ty));
+    bint_import_mpz(bint2_cx1_2, cx1_2);
+    bint_import_mpz(bint_cx2_2, cx2_2);
+    bint_import_mpz(bint_sqrtM3, sqrtM3);
+    mpz_set_ui(mpz2_tmp[0]->s, 3);
+    mpz_set_ui(mpz2_tmp[0]->t, 4);
+    bint2_import_mpz2(bint2_3p4i, mpz2_tmp[0]);
 }
 
 // uninit globals for curve2

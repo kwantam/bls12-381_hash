@@ -35,7 +35,8 @@ void point2_double(jac_point2 *out, const jac_point2 *in) {
                                                              //
     bint2_lsh(bint2_tmp[2], bint2_tmp[2], 3);                // 8 * C                       v = 32  w = 24  32/24
     bint2_sub(bint2_tmp[6], bint2_tmp[3], out->X, 1);        // D - X3                      v = 26  w = 24  26/24
-    bint2_mul(bint2_tmp[6], bint2_tmp[6], bint2_tmp[4]);     // E * (D - X3)                v = 4   w = 3   312/216
+    bint2_redc(bint2_tmp[6], bint2_tmp[6]);                  // reduce (24 * 9 too big)     v = 2   w = 1   26/24
+    bint2_mul(bint2_tmp[6], bint2_tmp[6], bint2_tmp[4]);     // E * (D - X3)                v = 4   w = 3   12/9
     bint2_sub(bint2_tmp[6], bint2_tmp[6], bint2_tmp[2], 5);  // E * (D - X3) - 8 * C        v = 36  w = 35  36/35
     bint2_redc(out->Y, bint2_tmp[6]);                        // Y = E * (D - X3) - 8 * C    v = 2   w = 1   36/35
 }
@@ -61,25 +62,27 @@ void point2_add(jac_point2 *out, const jac_point2 *in1, const jac_point2 *in2) {
     bint2_sub(bint2_tmp[6], bint2_tmp[3], bint2_tmp[2], 2);  // H = U2 - U1                 v = 8   w = 7   8/7
                                                              //
     bint2_lsh(bint2_tmp[7], bint2_tmp[6], 1);                // 2 * H                       v = 16  w = 14  16/14
-    bint2_sqr(bint2_tmp[7], bint2_tmp[7]);                   // I = (2 * H)^2               v = 4   w = 3   256/196
+    bint2_redc(bint2_tmp[7], bint2_tmp[7]);                  // reduce (14 * 14 too big)    v = 2   w = 1   16/14
+    bint2_sqr(bint2_tmp[7], bint2_tmp[7]);                   // I = (2 * H)^2               v = 4   w = 3   4/3
                                                              //
     bint2_mul(bint2_tmp[8], bint2_tmp[7], bint2_tmp[6]);     // J = H * I                   v = 4   w = 3   32/21
                                                              //
     bint2_sub(bint2_tmp[9], bint2_tmp[5], bint2_tmp[4], 2);  // S2 - S1                     v = 8   w = 7   8/7
     bint2_lsh(bint2_tmp[9], bint2_tmp[9], 1);                // r = 2 * (S2 - S1)           v = 16  w = 14  16/14
+    bint2_redc(bint2_tmp[9], bint2_tmp[9]);                  // reduce (14 * 14 too big)    v = 2   w = 1   16/14
                                                              //
     bint2_mul(bint2_tmp[10], bint2_tmp[2], bint2_tmp[7]);    // V = U1 * I                  v = 4   w = 3   16/9
                                                              //
     bint2_lsh(out->X, bint2_tmp[10], 1);                     // 2 * V                       v = 8   w = 6   8/6
     bint2_add(out->X, out->X, bint2_tmp[8]);                 // J + 2 * V                   v = 12  w = 9   12/9
-    bint2_sqr(bint2_tmp[7], bint2_tmp[9]);                   // r^2                         v = 4   w = 3   256/196
+    bint2_sqr(bint2_tmp[7], bint2_tmp[9]);                   // r^2                         v = 4   w = 3   4/3
     bint2_sub(out->X, bint2_tmp[7], out->X, 4);              // r^2 - J - 2 * V             v = 20  w = 19  20/19
     bint2_redc(out->X, out->X);                              // X3 = r^2 - J - 2 * V        v = 2   w = 1   20/19
                                                              //
     bint2_lsh(bint2_tmp[4], bint2_tmp[4], 1);                // 2 * S1                      v = 8   w = 6   8/6
     bint2_mul(bint2_tmp[4], bint2_tmp[4], bint2_tmp[8]);     // 2 * S1 * J                  v = 4   w = 3   32/18
     bint2_sub(out->Y, bint2_tmp[10], out->X, 1);             // V - X3                      v = 6   w = 5   6/5
-    bint2_mul(out->Y, out->Y, bint2_tmp[9]);                 // r * (V - X3)                v = 4   w = 3   96/70
+    bint2_mul(out->Y, out->Y, bint2_tmp[9]);                 // r * (V - X3)                v = 4   w = 3   6/5
     bint2_sub(out->Y, out->Y, bint2_tmp[4], 2);              // r * (V - X3) - 2 * S1 * J   v = 8   w = 7   8/7
                                                              //
     bint2_add(out->Z, in1->Z, in2->Z);                       // Z1 + Z2                     v = 8   w = 6   8/6

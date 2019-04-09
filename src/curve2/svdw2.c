@@ -3,6 +3,8 @@
 // (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
 #include "arith2.h"
+#include "bint.h"
+#include "bint2.h"
 #include "curve2.h"
 #include "globals.h"
 #include "globals2.h"
@@ -153,4 +155,79 @@ void svdw2_map_fo(mpz_t2 x, mpz_t2 y, mpz_t2 z, const mpz_t2 t) {
     mpz2_add(x, x, z);                       // (t^2 + 3 + 4I)^2 + 3 t^2
     mpz2_neg(z, z);                          // -3 t^2
     check_f2_xOverZ(x, y, z, neg_t);
+}
+
+// f2(x/z) helper for const-time svdw map
+static inline bool check_f2_xOverZ_ct(const unsigned x, const unsigned y, const unsigned z) {
+    bint2_sqr(bint2_tmp[12], bint2_tmp[x]);                  // x^2                                 v4,w3,i16/9
+    bint2_mul(bint2_tmp[12], bint2_tmp[12], bint2_tmp[x]);   // x^3                                 v4,w3,i16/9
+    bint2_sqr(bint2_tmp[13], bint2_tmp[z]);                  // z^2                                 v4,w3,i16/9
+    bint2_mul(bint2_tmp[13], bint2_tmp[13], bint2_tmp[z]);   // z^3                                 v4,w3,i16/9
+    bint2_mul_i(bint2_tmp[14], bint2_tmp[13], 2);            // i z^3                               v4,w4,i4/4
+    bint2_add(bint2_tmp[14], bint2_tmp[13], bint2_tmp[14]);  // (1 + i)z^3                          v8,w7,i8/7
+    bint2_lsh(bint2_tmp[14], bint2_tmp[14], 2);              // 4(1+i)z^3                           v32,w28,i32/28
+    bint2_add(bint2_tmp[12], bint2_tmp[12], bint2_tmp[14]);  // x^3 + 4(1+i)z^3                     v36,w31,i36/31
+    bint2_redc(bint2_tmp[12], bint2_tmp[12]);                // reduce (36^2 is too big)
+    return bint2_divsqrt(bint2_tmp[y], bint2_tmp[12], bint2_tmp[13]);
+}
+
+void svdw2_map_ct(mpz_t2 x, mpz_t2 y, mpz_t2 z, const mpz_t2 t) {
+    bint2_import_mpz2(bint2_tmp[0], t);
+    const bool neg_t = bint_is_neg(bint2_tmp[0]);
+
+    bint2_sqr(bint2_tmp[0], bint2_tmp[0]);                  // t^2                                  v4,w3,i16/9
+    bint2_add(bint2_tmp[2], bint2_tmp[0], bint2_3p4i);      // t^2 + 3 + 4I                         v6,w4,i6/4
+    bint2_mul_sc(bint2_tmp[1], bint2_tmp[0], bint_sqrtM3);  // t^2 * sqrt(-3)                       v2,w1,i8/3
+
+    // check whether t^2 + 3 + 4I == 0
+    bint2_redc(bint2_tmp[2], bint2_tmp[2]);  // need partial reduction first                       v2,w1,i6/4
+    const bool z0 = bint2_eq0(bint2_tmp[2]);
+
+    // x1 : (cx1_2 * (t^2 + 3 + 4I) - t^2 * sqrt(-3)) / (t^2 + 3 + 4I)
+    // exceptional case is when z == 0 (if t==0 then we get the correct result automatically)
+    bint2_mul_sc(bint2_tmp[3], bint2_tmp[2], bint2_cx1_2);   // cx1_2 * (t^3 + 3 + 4I)                  v2,w1,i4/1
+    bint2_sub(bint2_tmp[3], bint2_tmp[3], bint2_tmp[1], 1);  // cx1_2 (t^3 + 3 + 4I) - t^2 sqrt(-3)     v4,w3,i4/3
+    bint2_condassign(bint2_tmp[3], z0, bint2_cx1_2, bint2_tmp[3]);  // x = (z == 0) ? cx1_2 : x         v4,w3
+    bint2_condassign(bint2_tmp[2], z0, bint2_one, bint2_tmp[2]);    // z = (z == 0) ? one : z           v2,w1
+    const bool x1g = check_f2_xOverZ_ct(3, 4, 2);                   // bint2_tmp[4] is y1               v4,w3
+
+    // x2 : (t^2 * sqrt(-3) - cx2_2 (t^2 + 3 + 4I)) / (t^2 + 3 + 4I)
+    bint2_mul_sc(bint2_tmp[5], bint2_tmp[2], bint_cx2_2);    // cx2_2 * (t^3 + 3 + 4I)                  v2,w1,i4/1
+    bint2_sub(bint2_tmp[5], bint2_tmp[1], bint2_tmp[5], 1);  // (t^2 sqrt(-3) - cx2_2 (t^3 + 3 + 4I)    v4,w3,i4/3
+    const bool x2g = check_f2_xOverZ_ct(5, 6, 2);            // bint2_tmp[6] is y2                      v4,w3
+
+    // select output from either x1 or x2
+    bint2_condassign(bint2_tmp[10], x1g, bint2_tmp[3], bint2_tmp[5]);  // Xout = x1g ? x1 : x2          v4,w3
+    bint2_condassign(bint2_tmp[11], x1g, bint2_tmp[4], bint2_tmp[6]);  // Yout = x1g ? y1 : y2          v4,w3
+    const bool found = x1g | x2g;
+
+    // x3 : ((t^2 + 3 + 4I)^2 + 3t^2) / (-3t^2)
+    bint2_sqr(bint2_tmp[7], bint2_tmp[2]);                // (t^2 + 3 + 4I)^2           v4,w3,i4/3
+    bint2_lsh(bint2_tmp[8], bint2_tmp[0], 1);             // 2 t^2                      v8,w6,i8/6
+    bint2_add(bint2_tmp[8], bint2_tmp[8], bint2_tmp[0]);  // 3 t^2                      v12,w9,i12/9
+    bint2_add(bint2_tmp[7], bint2_tmp[8], bint2_tmp[7]);  // (t^2 + 3 + 4I)^2 + 3t^2    v16,w12,i16/12
+    bint2_redc(bint2_tmp[7], bint2_tmp[7]);               // reduce mod p               v2,w1,i16/12
+    bint2_neg(bint2_tmp[8], bint2_tmp[8], 4);             // -3t^2                      v16,w16,i16/16
+    bint2_redc(bint2_tmp[8], bint2_tmp[8]);               // reduce mod p               v2,w1,i16/16
+    check_f2_xOverZ_ct(7, 9, 8);                          // bint2_tmp[9] is y3         v4,w3
+
+    // if we didn't find it yet, we did now
+    bint2_condassign(bint2_tmp[10], found, bint2_tmp[10], bint2_tmp[7]);  // X'out  v4,w3
+    bint2_condassign(bint2_tmp[11], found, bint2_tmp[11], bint2_tmp[9]);  // Y'out  v4,w3
+    bint2_condassign(bint2_tmp[12], found, bint2_tmp[2], bint2_tmp[8]);   // Z'out  v4,w3
+
+    // negate Y if necessary
+    bint2_neg(bint2_tmp[5], bint2_tmp[11], 2);                            // -Y                     v4,w4
+    bint2_condassign(bint2_tmp[11], neg_t, bint2_tmp[5], bint2_tmp[11]);  // Y = neg_t ? -Y : Y     v4,w4
+
+    // compute Jacobian coordinates
+    bint2_mul(bint2_tmp[10], bint2_tmp[10], bint2_tmp[12]);  // X = X' Z'                           v4,w3,i16/9
+    bint2_sqr(bint2_tmp[5], bint2_tmp[12]);                  // Z'^2                                v4,w3,i16/9
+    bint2_mul(bint2_tmp[11], bint2_tmp[11], bint2_tmp[5]);   // y z^2                               v4,w3,i16/12
+    bint2_mul(bint2_tmp[11], bint2_tmp[11], bint2_tmp[12]);  // y z^3                               v4,w3,i16/9
+
+    // export to mpz_t2
+    bint2_export_mpz2(x, bint2_tmp[10]);
+    bint2_export_mpz2(y, bint2_tmp[11]);
+    bint2_export_mpz2(z, bint2_tmp[12]);
 }

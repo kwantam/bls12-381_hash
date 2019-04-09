@@ -13,7 +13,6 @@
 bool bint2_eq0(bint2_ty io);
 void bint2_set1(bint2_ty out);
 void bint2_seti(bint2_ty out);
-bool bint2_is_neg(const bint2_ty in);
 
 void bint2_add(bint2_ty out, const bint2_ty ina, const bint2_ty inb);
 void bint2_sub(bint2_ty out, const bint2_ty ina, const bint2_ty inb, const int bup);

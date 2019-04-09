@@ -46,7 +46,9 @@ int main(int argc, char **argv) {
             next_modp(prng_ctx, t->s);
             next_modp(prng_ctx, t->t);
         }
-        if (opts.field_only) {
+        if (opts.constant_time) {
+            svdw2_map_ct(x, y, z, t);
+        } else if (opts.field_only) {
             svdw2_map_fo(x, y, z, t);
         } else {
             svdw2_map(x, y, t);
