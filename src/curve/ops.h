@@ -39,7 +39,7 @@ void addrG_clear_h_help(const uint8_t *r);
 // add two points in Jacobian coordinates
 void point_add(jac_point *out, const jac_point *in1, const jac_point *in2);
 
-// helper: convert from a jac_point to a pair of mpz_t
+// helper: convert from a jac_point to a triple of mpz_t
 static inline void from_jac_point(mpz_t X, mpz_t Y, mpz_t Z, const jac_point *jp) {
     // convert from bint to gmp
     bint_export_mpz(X, jp->X);
@@ -47,7 +47,7 @@ static inline void from_jac_point(mpz_t X, mpz_t Y, mpz_t Z, const jac_point *jp
     bint_export_mpz(Z, jp->Z);
 }
 
-// helper: convert from a pair of mpz_t to a jac_point
+// helper: convert from a triple of mpz_t to a jac_point
 static inline void to_jac_point(jac_point *jp, const mpz_t X, const mpz_t Y, const mpz_t Z) {
     bint_import_mpz(jp->X, X);
     bint_import_mpz(jp->Y, Y);

@@ -4,14 +4,11 @@
 
 #ifndef __bls_hash__src__bint2__bint2_h__
 
-#include "bint_consts.h"
+#include "bint2_consts.h"
 #include "fp2.h"
 
 #include <stdbool.h>
 #include <stdint.h>
-
-#define BINT2_NWORDS (2 * BINT_NWORDS)
-typedef int64_t bint2_ty[BINT2_NWORDS];
 
 bool bint2_eq0(bint2_ty io);
 void bint2_set1(bint2_ty out);

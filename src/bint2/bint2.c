@@ -2,20 +2,7 @@
 //
 // (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
-#include "bint2.h"
-
-#define BINT_INTERNAL
-#include "bint_consts.h"
-#undef BINT_INTERNAL
-
-#include "bint.h"
-#include "bint2_chains.h"
-#include "bint2_consts.h"
-
-#include <string.h>
-
-#define BINT_LO(X) (X)
-#define BINT_HI(X) ((X) + BINT_NWORDS)
+#include "bint2_internal.h"
 
 // equals zero?
 bool bint2_eq0(bint2_ty io) {
@@ -99,8 +86,8 @@ void bint2_sqr(bint2_ty out, const bint2_ty in) {
     bint_mul(BINT_HI(out), BINT_LO(in), BINT_HI(in));
 
     // final additions
-    bint_lsh(BINT_HI(out), BINT_HI(out), 1);  // 2 in.s in.t
-    bint_sub(BINT_LO(out), tmp1, tmp2, 1);    // in.s^2 - in.t^2
+    bint_lsh(BINT_HI(out), BINT_HI(out), 1);  // 2 in.s in.t                            v = 4   w = 2
+    bint_sub(BINT_LO(out), tmp1, tmp2, 1);    // in.s^2 - in.t^2                        v = 4   w = 3
 }
 
 // reduce

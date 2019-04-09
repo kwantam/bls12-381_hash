@@ -36,6 +36,12 @@ eta = (F2(4260611855699123619835214542497613370832672570814085208937885429153832
 
 xi_2 = F2(1 + X)
 
+def JEll2(x1s, x1t, y1s, y1t, z1s, z1t):
+    x = F2(x1s + X * x1t)
+    y = F2(y1s + X * y1t)
+    z = F2(z1s + X * z1t)
+    return Ell2(x / z^2, y / z^3)
+
 def init_iso2():
     global iso2
     iso2 = EllipticCurveIsogeny(Ell2p, [6 * (1 - X), 1], codomain=Ell2)
@@ -137,10 +143,8 @@ if __name__ == "__main__":
                     for (ts, tt, xs, xt, ys, yt) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "2":
-        assert all( Ell2(F2(x1s + X * x1t), F2(y1s + X * y1t)) == svdw2(F2(t1s + X * t1t)) and
-                    Ell2(F2(x2s + X * x2t), F2(y2s + X * y2t)) == svdw2(F2(t2s + X * t2t))
-                    for (t1s, t1t, t2s, t2t, x1s, x1t, y1s, y1t, x2s, x2t, y2s, y2t) in (
-                        eval(l) for l in sys.stdin.readlines() ) )
+        assert all( JEll2(x1s, x1t, y1s, y1t, z1s, z1t) == svdw2(F2(t1s + X * t1t)) + svdw2(F2(t2s + X * t2t))
+                    for (t1s, t1t, t2s, t2t, x1s, x1t, y1s, y1t, z1s, z1t) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     else:
         usage()

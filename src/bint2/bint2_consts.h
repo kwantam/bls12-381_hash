@@ -2,7 +2,21 @@
 //
 // (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
-#ifndef __bls_hash__src__bint2__bint2_consts_h__
+#ifndef __bls_hash__src__bint2__bint2_consts_h__external__
+
+#include "bint_consts.h"
+
+#include <stdint.h>
+
+#define BINT2_NWORDS (2 * BINT_NWORDS)
+typedef int64_t bint2_ty[BINT2_NWORDS];
+
+#define __bls_hash__src__bint2__bint2_consts_h__external__
+#endif  // __bls_hash__src__bint2__bint2_consts_h__external__
+
+#ifdef BINT_INTERNAL
+
+#ifndef __bls_hash__src__bint2__bint2_consts_h__internal__
 
 const int64_t sqrtConsts[3 * BINT_NWORDS] = {
     // lo1
@@ -31,5 +45,6 @@ const int64_t sqrtConsts[3 * BINT_NWORDS] = {
     0xd16de5b746aLL,
 };
 
-#define __bls_hash__src__bint2__bint2_consts_h__
-#endif  // __bls_hash__src__bint2__bint2_consts_h__
+#define __bls_hash__src__bint2__bint2_consts_h__internal__
+#endif  // __bls_hash__src__bint2__bint2_consts_h__internal__
+#endif  // BINT_INTERNAL
