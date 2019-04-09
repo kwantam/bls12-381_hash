@@ -10,10 +10,13 @@
 
 #include <gmp.h>
 
-mpz_t2 mpz2_tmp[NUM_MPZ2_TMP];  // temps for basic arithmetic ops in fp2
-mpz_t2 mpz2mul[2];              // private temps for mul and sqr
-mpz_t swu2_eta01;               // eta0 and eta1 for SWU map (same value, just multiplied by sqrt(-1)
-mpz_t2 swu2_eta23[2];           // eta2 and eta3 for SWU map
+mpz_t2 mpz2_tmp[NUM_MPZ2_TMP];     // temps for basic arithmetic ops in fp2
+mpz_t2 mpz2mul[2];                 // private temps for mul and sqr
+                                   //
+mpz_t cx1_2, cx2_2, sqrtM3, inv3;  // values for SvdW map (all have no "imaginary" part)
+                                   //
+mpz_t swu2_eta01;                  // eta0 and eta1 for SWU map (same value, just multiplied by sqrt(-1)
+mpz_t2 swu2_eta23[2];              // eta2 and eta3 for SWU map
 
 // initialize globals for curve2
 static bool init_done = false;  // shared between init and uninit
@@ -41,6 +44,13 @@ void curve2_init(void) {
     mpz_set(swu2_eta23[0]->t, swu2_eta23[0]->s);
     mpz_set(swu2_eta23[1]->s, swu2_eta23[0]->s);
     mpz_sub(swu2_eta23[1]->t, fld_p, swu2_eta23[0]->s);
+
+    // SvdW constants
+    mpz_init_import(cx1_2, Icx12);
+    mpz_init(cx2_2);
+    mpz_sub_ui(cx2_2, cx1_2, 1);  // cx2 is cx1 - 1
+    mpz_init_import(sqrtM3, IsqrtM3);
+    mpz_init_import(inv3, Iinv3);
 }
 
 // uninit globals for curve2
@@ -61,4 +71,8 @@ void curve2_uninit(void) {
         mpz2_clear(swu2_eta23[i]);
     }
     mpz_clear(swu2_eta01);
+    mpz_clear(cx1_2);
+    mpz_clear(cx2_2);
+    mpz_clear(sqrtM3);
+    mpz_clear(inv3);
 }

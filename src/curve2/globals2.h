@@ -11,6 +11,9 @@
 extern mpz_t2 mpz2_tmp[NUM_MPZ2_TMP];
 extern mpz_t2 mpz2mul[2];  // private temps for multiplication and squaring
 
+// values for SvdW map
+extern mpz_t cx1_2, cx2_2, sqrtM3, inv3;
+
 // values for SWU map
 extern mpz_t2 swu2_eta[4];
 

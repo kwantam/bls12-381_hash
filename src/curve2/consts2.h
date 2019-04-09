@@ -6,6 +6,9 @@
 
 #include <stdint.h>
 
+// constants for SvdW map
+extern const uint64_t Icx12[6], IsqrtM3[6], Iinv3[6];
+
 // constants to compute values of eta for SWU map
 extern const uint64_t Ieta1[6];
 extern const uint64_t Ieta2[6];

@@ -9,15 +9,15 @@
 
 // inverse in Fp2
 void invert_modp2(mpz_t2 out, const mpz_t2 in) {
-    sqr_modp(mpz2_tmp[0]->s, in->s);                          // in->s ^ 2
-    sqr_modp(mpz2_tmp[0]->t, in->t);                          // in->t ^ 2
-    mpz_add(mpz2_tmp[0]->s, mpz2_tmp[0]->s, mpz2_tmp[0]->t);  // in->s ^ 2 + in->t ^ 2
+    sqr_modp(mpz2_tmp[10]->s, in->s);                            // in->s ^ 2
+    sqr_modp(mpz2_tmp[10]->t, in->t);                            // in->t ^ 2
+    mpz_add(mpz2_tmp[10]->s, mpz2_tmp[10]->s, mpz2_tmp[10]->t);  // in->s ^ 2 + in->t ^ 2
 
-    mpz_invert(mpz2_tmp[0]->t, mpz2_tmp[0]->s, fld_p);  // 1 / (in->s ^ 2 + in->t ^ 2)
+    mpz_invert(mpz2_tmp[10]->t, mpz2_tmp[10]->s, fld_p);  // 1 / (in->s ^ 2 + in->t ^ 2)
 
-    mul_modp(out->s, in->s, mpz2_tmp[0]->t);  // in->s / (in->s ^ 2 + in->t ^ 2)
-    mul_modp(out->t, in->t, mpz2_tmp[0]->t);  // in->t / (in->s ^ 2 + in->t ^ 2)
-    mpz_sub(out->t, fld_p, out->t);           // -in->t / (in->s ^ 2 + in->t ^ 2)
+    mul_modp(out->s, in->s, mpz2_tmp[10]->t);  // in->s / (in->s ^ 2 + in->t ^ 2)
+    mul_modp(out->t, in->t, mpz2_tmp[10]->t);  // in->t / (in->s ^ 2 + in->t ^ 2)
+    mpz_sub(out->t, fld_p, out->t);            // -in->t / (in->s ^ 2 + in->t ^ 2)
 }
 
 bool sqrt_modp2(mpz_t2 out, const mpz_t2 in) {

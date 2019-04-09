@@ -2,4 +2,11 @@
 
 set -e
 set -o pipefail
-exec dd if=/dev/urandom bs=1M count=1 status=none | "$1" -n 1024 "-t$4" | "$2" "$3"
+
+if [ ! -z "$5" ]; then
+    NRUNS=$5
+else
+    NRUNS=1024
+fi
+
+exec dd if=/dev/urandom bs=1M count=1 status=none | "$1" -n ${NRUNS} "-t$4" | "$2" "$3"

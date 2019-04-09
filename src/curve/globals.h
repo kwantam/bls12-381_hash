@@ -27,5 +27,11 @@ extern bint_ty bint_ynum[ELLP_YMAP_NUM_LEN], bint_yden[ELLP_YMAP_DEN_LEN];
 extern bint_ty bint_cx1, bint_cx2, bint_sqrtM27;
 extern bint_ty bint_23, bint_M27, bint_81;
 
+// init an mpz_t and set it from a constant defined in consts.h
+static inline void mpz_init_import(mpz_t out, const uint64_t *in) {
+    mpz_init(out);
+    mpz_import(out, 6, -1, 8, 0, 0, in);
+}
+
 #define __bls_hash__src__curve__globals_h__
 #endif  // __bls_hash__src__curve__globals_h__
