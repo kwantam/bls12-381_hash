@@ -10,13 +10,9 @@
 
 mpz_t cx1, cx2, sqrtM27, invM27, mpz_tmp[NUM_TMP_MPZ], fld_p, pp1o4, pm3o4;
 mpz_t ellp_a, ellp_b, pm2, pm1o2;
-mpz_t xmap_num[ELLP_XMAP_NUM_LEN], xmap_den[ELLP_XMAP_DEN_LEN];
-mpz_t ymap_num[ELLP_YMAP_NUM_LEN], ymap_den[ELLP_YMAP_DEN_LEN];
 
 bint_ty bint_tmp[NUM_TMP_BINT];
 bint_ty bint_ellp_b, bint_ellp_a, bint_one;
-bint_ty bint_xnum[ELLP_XMAP_NUM_LEN], bint_xden[ELLP_XMAP_DEN_LEN];
-bint_ty bint_ynum[ELLP_YMAP_NUM_LEN], bint_yden[ELLP_YMAP_DEN_LEN];
 bint_ty bint_cx1, bint_cx2, bint_sqrtM27;
 bint_ty bint_23, bint_M27, bint_81;
 
@@ -52,25 +48,9 @@ void curve_init(void) {
     bint_import_mpz(bint_sqrtM27, sqrtM27);
     mpz_init_import(invM27, IinvM27);
 
-    // 11-isogeny constants
+    // 11-isogenous curve constants
     mpz_init_import(ellp_a, ELLP_a);
     mpz_init_import(ellp_b, ELLP_b);
-    for (unsigned i = 0; i < ELLP_XMAP_NUM_LEN; ++i) {
-        mpz_init_import(xmap_num[i], ELLP_XMAP_NUM[i]);
-        bint_import_mpz(bint_xnum[i], xmap_num[i]);
-    }
-    for (unsigned i = 0; i < ELLP_XMAP_DEN_LEN; ++i) {
-        mpz_init_import(xmap_den[i], ELLP_XMAP_DEN[i]);
-        bint_import_mpz(bint_xden[i], xmap_den[i]);
-    }
-    for (unsigned i = 0; i < ELLP_YMAP_NUM_LEN; ++i) {
-        mpz_init_import(ymap_num[i], ELLP_YMAP_NUM[i]);
-        bint_import_mpz(bint_ynum[i], ymap_num[i]);
-    }
-    for (unsigned i = 0; i < ELLP_YMAP_DEN_LEN; ++i) {
-        mpz_init_import(ymap_den[i], ELLP_YMAP_DEN[i]);
-        bint_import_mpz(bint_yden[i], ymap_den[i]);
-    }
 
     // temp variables
     for (unsigned i = 0; i < NUM_TMP_MPZ; ++i) {
@@ -112,18 +92,6 @@ void curve_uninit(void) {
     // 11-isogeny constants
     mpz_clear(ellp_a);
     mpz_clear(ellp_b);
-    for (unsigned i = 0; i < ELLP_XMAP_NUM_LEN; ++i) {
-        mpz_clear(xmap_num[i]);
-    }
-    for (unsigned i = 0; i < ELLP_XMAP_DEN_LEN; ++i) {
-        mpz_clear(xmap_den[i]);
-    }
-    for (unsigned i = 0; i < ELLP_YMAP_NUM_LEN; ++i) {
-        mpz_clear(ymap_num[i]);
-    }
-    for (unsigned i = 0; i < ELLP_YMAP_DEN_LEN; ++i) {
-        mpz_clear(ymap_den[i]);
-    }
 
     // temp variables
     for (unsigned i = 0; i < NUM_TMP_MPZ; ++i) {

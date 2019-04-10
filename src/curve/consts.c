@@ -27,21 +27,21 @@ const uint8_t BLS12_381_h[] = {
 //      You can show its value using something like
 //          bint_export_mpz(x, g_prime_x);
 //          gmp_printf("%Zx\n", x);
-const uint64_t g_prime_x[] = {
+const bint_ty g_prime_x = {
     0x002a30064e34c56dLL, 0x003aa6a55dfeb22dLL, 0x00450d6874c1a102LL, 0x0083d18a9f4ac8c2LL,
     0x000c3bb918f2486eLL, 0x00806dbe57c6fc11LL, 0x0000091321f4828aLL,
 };
-const uint64_t g_prime_y[] = {
+const bint_ty g_prime_y = {
     0x00d4765ae8b96829LL, 0x0063f371895612abLL, 0x00f2c99cf9caa880LL, 0x00e72319c3567913LL,
     0x002ddfc71c8ebc2fLL, 0x005a909fdcdc5999LL, 0x00000a4f73e2948bLL,
 };
 
 // 2^128 * the above point
-const uint64_t g_prime_ll128_x[] = {
+const bint_ty g_prime_ll128_x = {
     0x00f235688080385bLL, 0x00750328d31b23faLL, 0x00c634b7cb283adfLL, 0x001c83ec63aca33fLL,
     0x0040980e917a26baLL, 0x00802a031c0c2221LL, 0x00000c16a40fc4ddLL,
 };
-const uint64_t g_prime_ll128_y[] = {
+const bint_ty g_prime_ll128_y = {
     0x0094fe9d733feeb8LL, 0x0021d5871856647fLL, 0x004c004271fdf9f8LL, 0x00f42764d0bb02d3LL,
     0x00d8b6561fa5dce6LL, 0x0016a09ea3dff281LL, 0x000019cd78e1cf92LL,
 };

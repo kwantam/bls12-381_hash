@@ -16,14 +16,10 @@
 // mpzs for curve ops
 extern mpz_t cx1, cx2, sqrtM27, invM27, mpz_tmp[NUM_TMP_MPZ], fld_p, pp1o4, pm3o4;
 extern mpz_t ellp_a, ellp_b, pm2, pm1o2;
-extern mpz_t xmap_num[ELLP_XMAP_NUM_LEN], xmap_den[ELLP_XMAP_DEN_LEN];
-extern mpz_t ymap_num[ELLP_YMAP_NUM_LEN], ymap_den[ELLP_YMAP_DEN_LEN];
 
 // bints for curve ops
 extern bint_ty bint_tmp[NUM_TMP_BINT];
 extern bint_ty bint_ellp_b, bint_ellp_a, bint_one;
-extern bint_ty bint_xnum[ELLP_XMAP_NUM_LEN], bint_xden[ELLP_XMAP_DEN_LEN];
-extern bint_ty bint_ynum[ELLP_YMAP_NUM_LEN], bint_yden[ELLP_YMAP_DEN_LEN];
 extern bint_ty bint_cx1, bint_cx2, bint_sqrtM27;
 extern bint_ty bint_23, bint_M27, bint_81;
 
