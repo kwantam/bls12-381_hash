@@ -36,15 +36,43 @@ eta = (F2(4260611855699123619835214542497613370832672570814085208937885429153832
 
 xi_2 = F2(1 + X)
 
+def init_iso2():
+    global iso2
+    if iso2 is None:
+        iso2 = EllipticCurveIsogeny(Ell2p, [6 * (1 - X), 1], codomain=Ell2)
+
+def show_iso2_params():
+    # r, for converting iso parameters to Montgomery form
+    r = 0x577a659fcfa012ca7c515d98f1297bb09b09b42da0f73e037669f83a2090c7212e00cde6d2002b119d800000347fcb8L
+    init_iso2()
+    for (coord, cmap) in zip(("x", "y"), iso2.rational_maps()):
+        for (name, val) in zip(("num", "den"), (cmap.numerator(), cmap.denominator())):
+            map_len = len(val.dict())
+            map_name = "ELLP2_%sMAP_%s_LEN" % (coord.upper(), name.upper())
+            print "#define %s %d" % (map_name, map_len)
+            print "const bint2_ty iso2_%s%s[%s] = {" % (coord, name, map_name)
+            for (idx, vec) in enumerate( e._vector_() for (_, e) in sorted(val.dict().items()) ):
+                print "    { ",
+                second_line = False
+                for tt in ( int(vv) for vv in vec ):
+                    tt = (tt * r) % p
+                    for _ in range(0, 7):
+                        h = (tt & ((1 << 56) - 1)).hex()
+                        h = ("0" * (14 - len(h))) + h
+                        print "0x%sLL, " % h,
+                        tt = tt >> 56
+                    if not second_line:
+                        print "\n      ",
+                        second_line = True
+                    else:
+                        print "},"
+            print "};\n"
+
 def JEll2(x1s, x1t, y1s, y1t, z1s, z1t, curve=Ell2):
     x = F2(x1s + X * x1t)
     y = F2(y1s + X * y1t)
     z = F2(z1s + X * z1t)
     return curve(x / z^2, y / z^3)
-
-def init_iso2():
-    global iso2
-    iso2 = EllipticCurveIsogeny(Ell2p, [6 * (1 - X), 1], codomain=Ell2)
 
 def f2(x):
     return F2(x ** 3 + 4 * (1 + X))

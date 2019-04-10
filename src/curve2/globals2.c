@@ -14,18 +14,20 @@
 #include <gmp.h>
 #include <string.h>
 
-mpz_t2 mpz2_tmp[NUM_MPZ2_TMP];                // temps for basic arithmetic ops in fp2
-mpz_t2 mpz2mul[2];                            // private temps for mul and sqr
-                                              //
-mpz_t cx1_2, cx2_2, sqrtM3, inv3;             // values for SvdW map (all have no "imaginary" part)
-                                              //
-mpz_t2 swu2_eta[4];                           // eta values for SWU map
-mpz_t2 swu2_xi, ell2p_a, ell2p_b;             // curve and SWU constants
-                                              //
-bint2_ty bint2_tmp[NUM_BINT2_TMP];            // bint2_tmps are mostly for curve ops (ops2.{c,h})
-                                              //
-bint2_ty bint2_3p4i, bint2_cx1_2, bint2_one;  // these are for svdw const-time
-bint_ty bint_cx2_2, bint_sqrtM3;
+mpz_t2 mpz2_tmp[NUM_MPZ2_TMP];                            // temps for basic arithmetic ops in fp2
+mpz_t2 mpz2mul[2];                                        // private temps for mul and sqr
+                                                          //
+mpz_t cx1_2, cx2_2, sqrtM3, inv3;                         // values for SvdW map (all have no "imaginary" part)
+                                                          //
+mpz_t2 swu2_eta[4];                                       // eta values for SWU map
+mpz_t2 swu2_xi, ell2p_a, ell2p_b;                         // curve and SWU constants
+                                                          //
+bint2_ty bint2_tmp[NUM_BINT2_TMP];                        // bint2_tmps are mostly for curve and SWU ops
+                                                          //
+bint2_ty bint2_3p4i, bint2_cx1_2, bint2_one;              // these are for svdw const-time
+bint_ty bint_cx2_2, bint_sqrtM3;                          //
+                                                          //
+bint2_ty b_swu2_xi, b_ell2p_a, b_ell2p_b, b_swu2_eta[4];  // these are for SWU constant-time
 
 // initialize globals for curve2
 static bool init_done = false;  // shared between init and uninit
@@ -62,6 +64,14 @@ void curve2_init(void) {
     mpz_set(swu2_eta[2]->t, swu2_eta[2]->s);            // eta[2] second coord
     mpz_set(swu2_eta[3]->s, swu2_eta[2]->s);            // eta[3] first coord
     mpz_sub(swu2_eta[3]->t, fld_p, swu2_eta[2]->s);     // eta[3] second coord
+
+    // SWU consts for bint
+    bint2_import_mpz2(b_swu2_xi, swu2_xi);
+    bint2_import_mpz2(b_ell2p_a, ell2p_a);
+    bint2_import_mpz2(b_ell2p_b, ell2p_b);
+    for (unsigned i = 0; i < 4; ++i) {
+        bint2_import_mpz2(b_swu2_eta[i], swu2_eta[i]);
+    }
 
     // SvdW constants
     mpz_init_import(cx1_2, Icx12);

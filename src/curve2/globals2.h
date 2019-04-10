@@ -23,6 +23,7 @@ extern bint_ty bint_cx2_2, bint_sqrtM3;
 // values for SWU map
 extern mpz_t2 swu2_eta[4];
 extern mpz_t2 swu2_xi, ell2p_a, ell2p_b;
+extern bint2_ty b_swu2_xi, b_ell2p_a, b_ell2p_b, b_swu2_eta[4];
 
 #define __bls_hash__src__curve2__globals2_h__
 #endif  // __bls_hash__src__curve2__globals2_h__
