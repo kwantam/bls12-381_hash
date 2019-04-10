@@ -1,5 +1,4 @@
 add_bh_exec (convert_to_bint)
-add_bh_exec (test_sqrt)
 
 add_bh_exec (hash_and_check)
 

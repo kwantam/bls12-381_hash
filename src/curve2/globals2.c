@@ -14,20 +14,21 @@
 #include <gmp.h>
 #include <string.h>
 
-mpz_t2 mpz2_tmp[NUM_MPZ2_TMP];                            // temps for basic arithmetic ops in fp2
-mpz_t2 mpz2mul[2];                                        // private temps for mul and sqr
-                                                          //
-mpz_t cx1_2, cx2_2, sqrtM3, inv3;                         // values for SvdW map (all have no "imaginary" part)
-                                                          //
-mpz_t2 swu2_eta[4];                                       // eta values for SWU map
-mpz_t2 swu2_xi, ell2p_a, ell2p_b;                         // curve and SWU constants
-                                                          //
-bint2_ty bint2_tmp[NUM_BINT2_TMP];                        // bint2_tmps are mostly for curve and SWU ops
-                                                          //
-bint2_ty bint2_3p4i, bint2_cx1_2, bint2_one;              // these are for svdw const-time
-bint_ty bint_cx2_2, bint_sqrtM3;                          //
-                                                          //
-bint2_ty b_swu2_xi, b_ell2p_a, b_ell2p_b, b_swu2_eta[4];  // these are for SWU constant-time
+mpz_t2 mpz2_tmp[NUM_MPZ2_TMP];                   // temps for basic arithmetic ops in fp2
+mpz_t2 mpz2mul[2];                               // private temps for mul and sqr
+                                                 //
+mpz_t cx1_2, cx2_2, sqrtM3, inv3;                // values for SvdW map (all have no "imaginary" part)
+                                                 //
+mpz_t ell2p_a;                                   // eta values for SWU map
+mpz_t2 swu2_xi, ell2p_b, swu2_eta[4];            // curve and SWU constants
+                                                 //
+bint2_ty bint2_tmp[NUM_BINT2_TMP];               // bint2_tmps are mostly for curve and SWU ops
+                                                 //
+bint2_ty bint2_3p4i, bint2_cx1_2, bint2_one;     // these are for svdw const-time
+bint_ty bint_cx2_2, bint_sqrtM3;                 //
+                                                 //
+bint_ty b_ell2p_a, b_swu2_eta01;                 // these are for SWU constant time
+bint2_ty b_swu2_xi, b_ell2p_b, b_swu2_eta23[2];  //
 
 // initialize globals for curve2
 static bool init_done = false;  // shared between init and uninit
@@ -52,8 +53,7 @@ void curve2_init(void) {
     // curve and SWU map constants
     mpz2_init(swu2_xi);  // init sets to zero
     mpz2_add_ui2(swu2_xi, swu2_xi, 1, 1);
-    mpz2_init(ell2p_a);
-    mpz2_add_ui2(ell2p_a, ell2p_a, 0, 240);
+    mpz_init_set_ui(ell2p_a, 240);
     mpz2_init(ell2p_b);
     mpz2_add_ui2(ell2p_b, ell2p_b, 1012, 1012);
 
@@ -67,10 +67,11 @@ void curve2_init(void) {
 
     // SWU consts for bint
     bint2_import_mpz2(b_swu2_xi, swu2_xi);
-    bint2_import_mpz2(b_ell2p_a, ell2p_a);
+    bint_import_mpz(b_ell2p_a, ell2p_a);
     bint2_import_mpz2(b_ell2p_b, ell2p_b);
-    for (unsigned i = 0; i < 4; ++i) {
-        bint2_import_mpz2(b_swu2_eta[i], swu2_eta[i]);
+    bint_import_mpz(b_swu2_eta01, swu2_eta[0]->s);
+    for (unsigned i = 0; i < 2; ++i) {
+        bint2_import_mpz2(b_swu2_eta23[i], swu2_eta[2 + i]);
     }
 
     // SvdW constants
@@ -113,7 +114,7 @@ void curve2_uninit(void) {
 
     // curve and SWU map constants
     mpz2_clear(swu2_xi);
-    mpz2_clear(ell2p_a);
+    mpz_clear(ell2p_a);
     mpz2_clear(ell2p_b);
 
     // SvdW constants

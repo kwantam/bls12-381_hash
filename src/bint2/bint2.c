@@ -93,6 +93,12 @@ void bint2_redc(bint2_ty out, const bint2_ty in) {
     bint_redc(BINT_HI(out), BINT_HI(in));
 }
 
+// add a scalar
+void bint2_add_sc(bint2_ty out, const bint2_ty ina, const bint_ty inb) {
+    bint_add(BINT_LO(out), BINT_LO(ina), inb);
+    memcpy(BINT_HI(out), BINT_HI(ina), sizeof(bint_ty));
+}
+
 // multiply by sqrt(-1)
 void bint2_mul_i(bint2_ty out, const bint2_ty in, const int bup) {
     bint_ty tmp1;

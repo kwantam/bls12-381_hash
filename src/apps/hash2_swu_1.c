@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
             next_modp(prng_ctx, u->s);
             next_modp(prng_ctx, u->t);
         }
-        swu2_map(x, y, z, u);
+        swu2_map(x, y, z, u, opts.constant_time);
 
         // show results
         //   test:              (x, y, z, u)

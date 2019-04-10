@@ -25,6 +25,7 @@ void bint2_mul(bint2_ty out, const bint2_ty ina, const bint2_ty inb);
 void bint2_sqr(bint2_ty out, const bint2_ty in);
 void bint2_redc(bint2_ty out, const bint2_ty in);
 
+void bint2_add_sc(bint2_ty out, const bint2_ty ina, const bint_ty inb);
 void bint2_mul_i(bint2_ty out, const bint2_ty in, const int bup);
 void bint2_mul_sc(bint2_ty out, const bint2_ty ina, const bint_ty inb);
 void bint2_mul_sc_i(bint2_ty out, const bint2_ty ina, const bint_ty inb);
