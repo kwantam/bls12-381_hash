@@ -10,10 +10,12 @@
 
 int main(int argc, char **argv) {
     struct cmdline_opts opts = get_cmdline_opts(argc, argv);
+    const bool first_print = opts.test || (!opts.quiet && !opts.clear_h);
+    const bool do_clear = opts.test || opts.clear_h;
+    const bool second_print = opts.test || (!opts.quiet && opts.clear_h);
 
     // initialize static data for curve computations
     curve_init();
-    precomp_init();
 
     // get libgmp ready
     mpz_t x1, y1, z1, t;
@@ -31,10 +33,6 @@ int main(int argc, char **argv) {
 
     // hash the contents of stdin
     hash_stdin(&hash_ctx);
-
-    const bool first_print = opts.test || (!opts.quiet && !opts.clear_h);
-    const bool do_clear = opts.test || opts.clear_h;
-    const bool second_print = opts.test || (!opts.quiet && opts.clear_h);
 
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC, &start);

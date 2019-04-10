@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 
     // apply sqrt/divsqrt to random point
     printf("print all([\n");
-    for (unsigned i = 0; i < 1024; ++i) {
+    for (unsigned i = 0; i < 16384; ++i) {
         next_modp(prng_ctx, x->s);
         next_modp(prng_ctx, x->t);
         next_modp(prng_ctx, y->s);

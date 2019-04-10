@@ -36,11 +36,11 @@ eta = (F2(4260611855699123619835214542497613370832672570814085208937885429153832
 
 xi_2 = F2(1 + X)
 
-def JEll2(x1s, x1t, y1s, y1t, z1s, z1t):
+def JEll2(x1s, x1t, y1s, y1t, z1s, z1t, curve=Ell2):
     x = F2(x1s + X * x1t)
     y = F2(y1s + X * y1t)
     z = F2(z1s + X * z1t)
-    return Ell2(x / z^2, y / z^3)
+    return curve(x / z^2, y / z^3)
 
 def init_iso2():
     global iso2
@@ -98,9 +98,10 @@ def svdw2(t):
 def swu2(t):
     NDcom = xi_2 ** 2 * t ** 4 + xi_2 * t ** 2
     if NDcom == 0:
-        x0 = (xi_2 * Ell2p_b) / Ell2p_a
+        x0 = Ell2p_b / (xi_2 * Ell2p_a)
     else:
         x0 = -Ell2p_b * (NDcom + 1) / (Ell2p_a * NDcom)
+    negate = -1 if neg2(t) else 1
 
     fx0 = f2p(x0)
     x1 = xi_2 * t ** 2 * x0
@@ -109,13 +110,11 @@ def swu2(t):
     xval = None
     yval = None
     sqrtCand = fx0 ** ((p ** 2 + 7) // 16)
-    for (facs, targ, xv, tv) in ((roots1, fx0, x0, 1), (eta, fx1, x1, t ** 3)):
+    for (facs, targ, xv, tv, tneg) in ((roots1, fx0, x0, 1, negate), (eta, fx1, x1, t ** 3, 1)):
         for fac in facs:
             t2 = fac * sqrtCand * tv
-            if xval == x1:
-                print targ / (t2 ** 2)
             if t2 ** 2 == targ:
-                yval = t2
+                yval = t2 * tneg
                 xval = xv
                 break
 
@@ -145,6 +144,10 @@ if __name__ == "__main__":
     elif sys.argv[1] == "2":
         assert all( JEll2(x1s, x1t, y1s, y1t, z1s, z1t) == svdw2(F2(t1s + X * t1t)) + svdw2(F2(t2s + X * t2t))
                     for (t1s, t1t, t2s, t2t, x1s, x1t, y1s, y1t, z1s, z1t) in ( eval(l) for l in sys.stdin.readlines() ) )
+
+    elif sys.argv[1] == "u1":
+        assert all( JEll2(xs, xt, ys, yt, zs, zt, Ell2p) == swu2(F2(ts + X * tt))
+                    for (xs, xt, ys, yt, zs, zt, ts, tt) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     else:
         usage()

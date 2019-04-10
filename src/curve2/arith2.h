@@ -110,7 +110,7 @@ static inline bool mpz2_zero_p(const mpz_t2 in) {
     return mpz_divisible_p(in->s, fld_p) && mpz_divisible_p(in->t, fld_p);
 }
 
-// swap mpz2 (i.e., swap s and t)
+// swap mpz2s
 static inline void mpz2_swap(mpz_t2 in1, mpz_t2 in2) {
     mpz_swap(in1->s, in2->s);
     mpz_swap(in1->t, in2->t);

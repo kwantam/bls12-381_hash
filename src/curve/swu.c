@@ -63,11 +63,11 @@ static inline void swu_help(const unsigned jp_num, const mpz_t u) {
 
     // compute numerator and denominator of X0(u)^3 + aX0(u) + b
     // for X0(u) = num/den, this is (num^3 + a * num * den^2 + b den^3) / den^3
-    sqr_modp(mpz_tmp[7], mpz_tmp[1]);              // den^2
-    mul_modp(mpz_tmp[4], mpz_tmp[2], mpz_tmp[7]);  // num * den^2
+    sqr_modp(mpz_tmp[3], mpz_tmp[1]);              // den^2
+    mul_modp(mpz_tmp[4], mpz_tmp[2], mpz_tmp[3]);  // num * den^2
     mul_modp(mpz_tmp[4], mpz_tmp[4], ellp_a);      // a * num * den^2
                                                    //
-    mul_modp(mpz_tmp[3], mpz_tmp[7], mpz_tmp[1]);  // den^3
+    mul_modp(mpz_tmp[3], mpz_tmp[3], mpz_tmp[1]);  // den^3
     mul_modp(mpz_tmp[5], mpz_tmp[3], ellp_b);      // b * den^3
     mpz_add(mpz_tmp[4], mpz_tmp[4], mpz_tmp[5]);   // a * num * den^2 + b * den^3
                                                    //
@@ -90,13 +90,10 @@ static inline void swu_help(const unsigned jp_num, const mpz_t u) {
 
     // now compute X, Y, and Z
     mul_modp(mpz_tmp[2], mpz_tmp[2], mpz_tmp[1]);  // Xnum * Xden = X  =>  x = Xnum/Xden = X / Xden^2
-    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[7]);  // y * Xden^2 = Y/Z
-    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[1]);  // y * Xden^3 = Y
+    mul_modp(mpz_tmp[5], mpz_tmp[5], mpz_tmp[3]);  // y * Xden^3 = Y
 
     // export to jacobian point
-    bint_import_mpz(jp_tmp[jp_num].X, mpz_tmp[2]);  // X
-    bint_import_mpz(jp_tmp[jp_num].Y, mpz_tmp[5]);  // Y
-    bint_import_mpz(jp_tmp[jp_num].Z, mpz_tmp[1]);  // Z
+    to_jac_point(jp_tmp + jp_num, mpz_tmp[2], mpz_tmp[5], mpz_tmp[1]);
 }
 
 // evaluate polynomial via Horner's method

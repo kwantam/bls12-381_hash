@@ -4,6 +4,7 @@
 
 #include "globals2.h"
 
+#include "arith2.h"
 #include "bint.h"
 #include "bint2.h"
 #include "consts2.h"
@@ -18,8 +19,8 @@ mpz_t2 mpz2mul[2];                            // private temps for mul and sqr
                                               //
 mpz_t cx1_2, cx2_2, sqrtM3, inv3;             // values for SvdW map (all have no "imaginary" part)
                                               //
-mpz_t swu2_eta01;                             // eta0 and eta1 for SWU map (same value, just multiplied by sqrt(-1)
-mpz_t2 swu2_eta23[2];                         // eta2 and eta3 for SWU map
+mpz_t2 swu2_eta[4];                           // eta values for SWU map
+mpz_t2 swu2_xi, ell2p_a, ell2p_b;             // curve and SWU constants
                                               //
 bint2_ty bint2_tmp[NUM_BINT2_TMP];            // bint2_tmps are mostly for curve ops (ops2.{c,h})
                                               //
@@ -42,16 +43,25 @@ void curve2_init(void) {
 
     for (unsigned i = 0; i < 2; ++i) {
         mpz2_init(mpz2mul[i]);
-        mpz2_init(swu2_eta23[i]);
+        mpz2_init(swu2_eta[2 * i]);
+        mpz2_init(swu2_eta[2 * i + 1]);
     }
 
+    // curve and SWU map constants
+    mpz2_init(swu2_xi);  // init sets to zero
+    mpz2_add_ui2(swu2_xi, swu2_xi, 1, 1);
+    mpz2_init(ell2p_a);
+    mpz2_add_ui2(ell2p_a, ell2p_a, 0, 240);
+    mpz2_init(ell2p_b);
+    mpz2_add_ui2(ell2p_b, ell2p_b, 1012, 1012);
+
     // eta[i], the constants sqrt(xi / sqrt(sqrt(-1))) for the SWU map
-    mpz_init(swu2_eta01);                                 // eta[0] and eta[1] (eta[1] = sqrt(-1) * eta[0])
-    mpz_import(swu2_eta01, 6, -1, 8, 0, 0, Ieta1);        // value for eta01
-    mpz_import(swu2_eta23[0]->s, 6, -1, 8, 0, 0, Ieta2);  // value for eta23
-    mpz_set(swu2_eta23[0]->t, swu2_eta23[0]->s);
-    mpz_set(swu2_eta23[1]->s, swu2_eta23[0]->s);
-    mpz_sub(swu2_eta23[1]->t, fld_p, swu2_eta23[0]->s);
+    mpz_import(swu2_eta[0]->s, 6, -1, 8, 0, 0, Ieta1);  // eta[0]
+    mpz_set(swu2_eta[1]->t, swu2_eta[0]->s);            // eta[1] = sqrt(-1) * eta[0]
+    mpz_import(swu2_eta[2]->s, 6, -1, 8, 0, 0, Ieta2);  // eta[2] first coord
+    mpz_set(swu2_eta[2]->t, swu2_eta[2]->s);            // eta[2] second coord
+    mpz_set(swu2_eta[3]->s, swu2_eta[2]->s);            // eta[3] first coord
+    mpz_sub(swu2_eta[3]->t, fld_p, swu2_eta[2]->s);     // eta[3] second coord
 
     // SvdW constants
     mpz_init_import(cx1_2, Icx12);
@@ -87,9 +97,16 @@ void curve2_uninit(void) {
 
     for (unsigned i = 0; i < 2; ++i) {
         mpz2_clear(mpz2mul[i]);
-        mpz2_clear(swu2_eta23[i]);
+        mpz2_clear(swu2_eta[2 * i]);
+        mpz2_clear(swu2_eta[2 * i + 1]);
     }
-    mpz_clear(swu2_eta01);
+
+    // curve and SWU map constants
+    mpz2_clear(swu2_xi);
+    mpz2_clear(ell2p_a);
+    mpz2_clear(ell2p_b);
+
+    // SvdW constants
     mpz_clear(cx1_2);
     mpz_clear(cx2_2);
     mpz_clear(sqrtM3);

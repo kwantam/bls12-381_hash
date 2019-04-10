@@ -13,7 +13,6 @@ int main(int argc, char **argv) {
 
     // initialize static data for curve computations
     curve_init();
-    precomp_init();
 
     // get libgmp ready
     mpz_t x1, y1, z1, u1, u2;

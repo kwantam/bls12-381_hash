@@ -2,7 +2,7 @@
 //
 // (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
-#include "curve.h"
+#include "curve2.h"
 #include "util.h"
 
 #include <stdio.h>
@@ -10,16 +10,17 @@
 
 int main(int argc, char **argv) {
     struct cmdline_opts opts = get_cmdline_opts(argc, argv);
+    const bool do_print = opts.test || !opts.quiet;
 
     // initialize static data for curve computations
-    curve_init();
+    curve2_init();
 
     // get libgmp ready
-    mpz_t x1, y1, z1, u;
-    mpz_init(x1);
-    mpz_init(y1);
-    mpz_init(z1);
-    mpz_init(u);
+    mpz_t2 x, y, z, u;
+    mpz2_init(x);
+    mpz2_init(y);
+    mpz2_init(z);
+    mpz2_init(u);
 
     // load libcrypto error strings and set up SHA and PRNG
     ERR_load_crypto_strings();
@@ -37,23 +38,27 @@ int main(int argc, char **argv) {
     for (unsigned i = 0; i < opts.nreps; ++i) {
         next_prng(prng_ctx, &hash_ctx, i);
         if (opts.test && i == 0) {
-            // in test mode, make sure exceptional input gives correct result (0, 1 tested in swu_2)
-            mpz_set_pm1(u);
+            // in test mode, make sure exceptional input 0 gives correct result
+            mpz_set_ui(u->s, 0);
+            mpz_set_ui(u->t, 0);
         } else {
-            next_modp(prng_ctx, u);
+            next_modp(prng_ctx, u->s);
+            next_modp(prng_ctx, u->t);
         }
-        swu_map(x1, y1, z1, u, opts.constant_time);
+        swu2_map(x, y, z, u);
 
         // show results
-        //   test:              (xO, yO, zO, u1, u2)
+        //   test:              (x, y, z, u)
         //   quiet && !test:    <<nothing>>
-        //   !quiet && !test:   (xO, yO, zO)
+        //   !quiet && !test:   (x, y, z)
+        if (do_print) {
+            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, ", x->s, x->t, y->s, y->t, z->s, z->t);
+        }
 
-        // maybe output the points
         if (opts.test) {
-            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, z1, u);
-        } else if (!opts.quiet) {
-            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, z1);
+            gmp_printf("0x%Zx, 0x%Zx, )\n", u->s, u->t);
+        } else if (do_print) {
+            gmp_printf(")\n");
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &end);
@@ -62,11 +67,11 @@ int main(int argc, char **argv) {
 
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
-    mpz_clear(u);
-    mpz_clear(z1);
-    mpz_clear(y1);
-    mpz_clear(x1);
-    curve_uninit();
+    mpz2_clear(u);
+    mpz2_clear(z);
+    mpz2_clear(y);
+    mpz2_clear(x);
+    curve2_uninit();
 
     return 0;
 }

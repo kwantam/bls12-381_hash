@@ -177,7 +177,8 @@ bool bint2_sqrt(int64_t *__restrict__ out, int64_t *__restrict__ in) {
 }
 
 // helper --- check if tmp^2 * v == u, if so copy tmp to out and return true, else return false
-static inline bool _bint2_divsqrt_help(bint2_ty out, const bint2_ty tmp, const bint2_ty u, const bint2_ty v) {
+static inline bool _bint2_divsqrt_help(bint2_ty out, const bint2_ty tmp, const bint2_ty u, const bint2_ty v,
+                                       const bool skip_assign) {
     bint2_ty work;
 
     bint2_sqr(work, tmp);         // tmp^2
@@ -186,40 +187,46 @@ static inline bool _bint2_divsqrt_help(bint2_ty out, const bint2_ty tmp, const b
 
     bint2_redc(work, work);  // partial reduction before equality check
     const bool eq = bint2_eq0(work);
-    bint2_condassign(out, eq, tmp, out);
+    if (!skip_assign) {
+        bint2_condassign(out, eq, tmp, out);
+    }
     return eq;
 }
 
 // divsqrt
 // compute uv^7(uv^15)^((p-9)/16) and then check four possibilities
+// if nothing is found, out is uv^7(uv^15)^((p-9)/16)
 bool bint2_divsqrt(int64_t *__restrict__ out, int64_t *__restrict__ u, int64_t *__restrict__ v) {
-    bint2_ty tmp, tmp2;
+    bint2_ty tmp;
+    {
+        bint2_ty tmp2;
 
-    bint2_sqr(tmp, v);           // v^2
-    bint2_mul(tmp2, tmp, v);     // v^3
-    bint2_sqr(tmp, tmp);         // v^4
-    bint2_mul(tmp2, tmp, tmp2);  // v^7
-    bint2_sqr(tmp, tmp);         // v^8
-    bint2_mul(tmp2, tmp2, u);    // uv^7
-    bint2_mul(tmp, tmp, tmp2);   // uv^15
+        bint2_sqr(tmp, v);           // v^2
+        bint2_mul(tmp2, tmp, v);     // v^3
+        bint2_sqr(tmp, tmp);         // v^4
+        bint2_mul(tmp2, tmp, tmp2);  // v^7
+        bint2_sqr(tmp, tmp);         // v^8
+        bint2_mul(tmp2, tmp2, u);    // uv^7
+        bint2_mul(tmp, tmp, tmp2);   // uv^15
 
-    divsqrt_chain(out, tmp);    // (uv^15)^((p-9)/16)
-    bint2_mul(tmp, out, tmp2);  // uv^7 (uv^15) ^ ((p-9)/16)
+        divsqrt_chain(out, tmp);    // (uv^15)^((p-9)/16)
+        bint2_mul(out, out, tmp2);  // uv^7 (uv^15) ^ ((p-9)/16)
+    }
 
     // test sqrtCand
-    bool found = _bint2_divsqrt_help(out, tmp, u, v);
+    bool found = _bint2_divsqrt_help(out, out, u, v, true);
 
     // test sqrt(-1) * sqrtCand
-    bint2_mul_i(tmp2, tmp, 2);
-    found = _bint2_divsqrt_help(out, tmp2, u, v) | found;
+    bint2_mul_i(tmp, out, 2);
+    found = _bint2_divsqrt_help(out, tmp, u, v, false) | found;
 
     // test sqrt(sqrt(-1)) * sqrtCand
-    bint2_mul(tmp2, tmp, sqrtConsts);
-    found = _bint2_divsqrt_help(out, tmp2, u, v) | found;
+    bint2_mul(tmp, out, sqrtConsts);
+    found = _bint2_divsqrt_help(out, tmp, u, v, false) | found;
 
     // test sqrt(-sqrt(-1)) * sqrtCand
-    bint2_mul(tmp2, tmp, sqrtConsts + BINT_NWORDS);
-    found = _bint2_divsqrt_help(out, tmp2, u, v) | found;
+    bint2_mul(tmp, out, sqrtConsts + BINT_NWORDS);
+    found = _bint2_divsqrt_help(out, tmp, u, v, false) | found;
 
     return found;
 }
