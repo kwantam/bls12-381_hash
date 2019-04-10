@@ -22,13 +22,36 @@ kpoly = [ 2955185177626169647543871026716143749798776473583611826109464091094397
 EllP = EllipticCurve(F, [EllP_a, EllP_b])
 iso = None
 
-def iso_init():
-    global iso
-    iso = EllipticCurveIsogeny(EllP, kpoly, codomain=Ell, degree=11)
-    iso.switch_sign()  # this is the isogeny, but with the opposite sign for y
-
 cx1 = F((F(3) + sqrt(F(-27))) / F(2))
 cx2 = F((F(3) - sqrt(F(-27))) / F(2))
+
+def init_iso():
+    global iso
+    if iso is None:
+        iso = EllipticCurveIsogeny(EllP, kpoly, codomain=Ell, degree=11)
+        iso.switch_sign()  # this is the isogeny, but with the opposite sign for y
+
+def show_iso_params():
+    # r, for converting iso parameters to Montgomery form
+    r = 0x577a659fcfa012ca7c515d98f1297bb09b09b42da0f73e037669f83a2090c7212e00cde6d2002b119d800000347fcb8L
+    init_iso()
+    for (coord, cmap) in zip(("x", "y"), iso.rational_maps()):
+        for (name, val) in zip(("num", "den"), (cmap.numerator(), cmap.denominator())):
+            map_len = len(val.dict())
+            map_name = "ELLP_%sMAP_%s_LEN" % (coord.upper(), name.upper())
+            print "#define %s %d" % (map_name, map_len)
+            print "const bint_ty iso_%s%s[%s] = {" % (coord, name, map_name)
+            for (idx, tt) in enumerate( int(e) for (_, e) in sorted(val.dict().items()) ):
+                tt = (tt * r) % p
+                print "    { ",
+                for _ in range(0, 7):
+                    h = (tt & ((1 << 56) - 1)).hex()
+                    h = ("0" * (14 - len(h))) + h
+                    print "0x%sLL, " % h,
+                    tt = tt >> 56
+                print "},"
+            print "};\n"
+
 
 def JEll(x, y, z):
     if z == 0:
@@ -104,17 +127,17 @@ if __name__ == "__main__":
                     for (t, r, xOut, yOut, zOut) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "u1":
-        iso_init()
+        init_iso()
         assert all( JEll(xOut, yOut, zOut) == h * iso(swu(u))
                     for (xOut, yOut, zOut, u) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "u2":
-        iso_init()
+        init_iso()
         assert all( JEll(xOut, yOut, zOut) == h * iso(swu(u1) + swu(u2))
                     for (xOut, yOut, zOut, u1, u2) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "urG":
-        iso_init()
+        init_iso()
         assert all( JEll(xOut, yOut, zOut) == h * iso(swu(u)) + r * gPrime
                     for (xOut, yOut, zOut, u, r) in ( eval(l) for l in sys.stdin.readlines() ) )
 
