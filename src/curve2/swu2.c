@@ -6,9 +6,12 @@
 #include "bint2.h"
 #include "curve2.h"
 #include "fp2.h"
-#include "globals.h"
 #include "globals2.h"
+#include "iso2.h"
 #include "ops2.h"
+
+// forward decl to avoid including globals.h
+extern mpz_t pm1o2;
 
 // S-vdW-Ulas simplified map
 // see ../curve/swu.c and ../../paper/ for more info
@@ -80,7 +83,76 @@ static inline void swu2_help(const unsigned jp_num, const mpz_t2 u) {
     to_jac_point2(jp2_tmp + jp_num, mpz2_tmp[2], mpz2_tmp[5], mpz2_tmp[1]);
 }
 
+// evaluate polynomial using Horner's rule
+static inline void bint2_horner(bint2_ty out, const bint2_ty x, const int startval) {
+    for (int i = startval; i >= 0; --i) {
+        bint2_mul(out, out, x);             // tot *= x         v4,w3
+        bint2_add(out, out, bint2_tmp[i]);  // tot += next_val  v8,w6
+    }
+}
+
+// precompute for isogeny map
+static inline void compute_map_zvals(const bint2_ty inv[], bint2_ty zv[], const unsigned len) {
+    for (unsigned i = 0; i < len; ++i) {
+        bint2_mul(bint2_tmp[i], inv[i], zv[i]);
+    }
+}
+
+// 3-isogeny map (i/o in jp2_tmp[1])
+static inline void eval_iso3(void) {
+    // precompute even powers of Z up to z^6
+    bint2_sqr(bint2_tmp[14], jp2_tmp[1].Z);                  // Z^2     v4,w3,i16/9
+    bint2_sqr(bint2_tmp[13], bint2_tmp[14]);                 // Z^4     v4,w3,i16/9
+    bint2_mul(bint2_tmp[12], bint2_tmp[14], bint2_tmp[13]);  // Z^6     v4,w3,i16/9
+
+    // Ymap denominator
+    compute_map_zvals(iso2_yden, bint2_tmp + 12, ELLP2_YMAP_DEN_LEN);           // k_(3-i) Z^(2i)
+    bint2_add(bint2_tmp[11], jp2_tmp[1].X, bint2_tmp[ELLP2_YMAP_DEN_LEN - 1]);  // X + k_2 Z^2
+    bint2_horner(bint2_tmp[11], jp2_tmp[1].X, ELLP2_YMAP_DEN_LEN - 2);          // Horner
+    bint2_mul(bint2_tmp[11], bint2_tmp[11], bint2_tmp[14]);                     // Yden * Z^2
+    bint2_mul(bint2_tmp[11], bint2_tmp[11], jp2_tmp[1].Z);                      // Yden * Z^3
+
+    // Ymap numerator
+    compute_map_zvals(iso2_ynum, bint2_tmp + 12, ELLP2_YMAP_NUM_LEN - 1);        // k_(3-i) Z^(2i)
+    bint2_mul(bint2_tmp[10], jp2_tmp[1].X, iso2_ynum[ELLP2_YMAP_NUM_LEN - 1]);   // k_3 * X
+    bint2_add(bint2_tmp[10], bint2_tmp[10], bint2_tmp[ELLP2_YMAP_NUM_LEN - 2]);  // k_3 * X + k_2 Z^2
+    bint2_horner(bint2_tmp[10], jp2_tmp[1].X, ELLP2_YMAP_NUM_LEN - 3);           // Horner for rest
+    bint2_mul(bint2_tmp[10], bint2_tmp[10], jp2_tmp[1].Y);
+    // ymap num/den are in bint2_tmp[10]/bint2_tmp[11]
+
+    // Xmap denominator
+    compute_map_zvals(iso2_xden, bint2_tmp + 13, ELLP2_XMAP_DEN_LEN);          // k_(2-i) Z^(2i)
+    bint2_add(bint2_tmp[9], jp2_tmp[1].X, bint2_tmp[ELLP2_XMAP_DEN_LEN - 1]);  // X + k_1 Z^2
+    bint2_horner(bint2_tmp[9], jp2_tmp[1].X, ELLP2_XMAP_DEN_LEN - 2);          // Horner for rest
+    // mul by Z^2 because numerator has degree one greater than denominator
+    bint2_mul(bint2_tmp[9], bint2_tmp[9], bint2_tmp[14]);
+
+    // Xmap numerator
+    compute_map_zvals(iso2_xnum, bint2_tmp + 12, ELLP2_XMAP_NUM_LEN);          // k_(3-i) Z^(2i)
+    bint2_mul(bint2_tmp[8], jp2_tmp[1].X, iso2_xnum[ELLP2_XMAP_NUM_LEN - 1]);  // k_3 * X
+    bint2_add(bint2_tmp[8], bint2_tmp[8], bint2_tmp[ELLP2_XMAP_NUM_LEN - 2]);  // k_3 * X + k_2 Z^2
+    bint2_horner(bint2_tmp[8], jp2_tmp[1].X, ELLP2_XMAP_NUM_LEN - 3);          // Horner for rest
+    // xmap num/den are in bint2_tmp[8]/bint2_tmp[9]
+
+    // Jacobian coords
+    bint2_mul(jp2_tmp[1].Z, bint2_tmp[9], bint2_tmp[11]);  // Z = Xden Yden
+    bint2_mul(jp2_tmp[1].X, bint2_tmp[8], bint2_tmp[11]);  // Xnum Yden
+    bint2_mul(jp2_tmp[1].X, jp2_tmp[1].X, jp2_tmp[1].Z);   // X = Xnum Xden Yden^2 => X / Z^2 = Xnum / Xden
+    bint2_sqr(bint2_tmp[7], jp2_tmp[1].Z);                 // Z^2
+    bint2_mul(jp2_tmp[1].Y, bint2_tmp[10], bint2_tmp[9]);  // Ynum Xden
+    bint2_mul(jp2_tmp[1].Y, jp2_tmp[1].Y, bint2_tmp[7]);   // Y = Ynum Xden^3 Yden^2 => Y / Z^3 = Ynum / Yden
+}
+
 void swu2_map(mpz_t2 x, mpz_t2 y, mpz_t2 z, const mpz_t2 u) {
-    swu2_help(0, u);
-    from_jac_point2(x, y, z, jp2_tmp);
+    swu2_help(1, u);
+    eval_iso3();
+    from_jac_point2(x, y, z, jp2_tmp + 1);
+}
+
+void swu2_map2(mpz_t2 x, mpz_t2 y, mpz_t2 z, const mpz_t2 u1, const mpz_t2 u2) {
+    swu2_help(0, u1);
+    swu2_help(1, u2);
+    point2_add(jp2_tmp + 1, jp2_tmp, jp2_tmp + 1);
+    eval_iso3();
+    from_jac_point2(x, y, z, jp2_tmp + 1);
 }

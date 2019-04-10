@@ -174,8 +174,14 @@ if __name__ == "__main__":
                     for (t1s, t1t, t2s, t2t, x1s, x1t, y1s, y1t, z1s, z1t) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "u1":
-        assert all( JEll2(xs, xt, ys, yt, zs, zt, Ell2p) == swu2(F2(ts + X * tt))
+        init_iso2()
+        assert all( JEll2(xs, xt, ys, yt, zs, zt) == iso2(swu2(F2(ts + X * tt)))
                     for (xs, xt, ys, yt, zs, zt, ts, tt) in ( eval(l) for l in sys.stdin.readlines() ) )
+
+    elif sys.argv[1] == "u2":
+        init_iso2()
+        assert all( JEll2(xs, xt, ys, yt, zs, zt) == iso2(swu2(F2(t1s + X * t1t)) + swu2(F2(t2s + X * t2t)))
+                    for (xs, xt, ys, yt, zs, zt, t1s, t1t, t2s, t2t) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     else:
         usage()

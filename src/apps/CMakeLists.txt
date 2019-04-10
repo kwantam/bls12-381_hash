@@ -17,3 +17,4 @@ add_bh_exec (hash2_svdw_1)
 add_bh_exec (hash2_svdw_2)
 
 add_bh_exec (hash2_swu_1)
+add_bh_exec (hash2_swu_2)

@@ -23,6 +23,7 @@ void svdw2_map_ct(mpz_t2 x, mpz_t2 y, mpz_t2 z, const mpz_t2 t);
 
 // swu maps
 void swu2_map(mpz_t2 x, mpz_t2 y, mpz_t2 z, const mpz_t2 u);
+void swu2_map2(mpz_t2 x, mpz_t2 y, mpz_t2 z, const mpz_t2 u1, const mpz_t2 u2);
 
 // point manipulation
 void add2_2(mpz_t2 X1, mpz_t2 Y1, mpz_t2 Z1, const mpz_t2 X2, const mpz_t2 Y2, const mpz_t2 Z2);
