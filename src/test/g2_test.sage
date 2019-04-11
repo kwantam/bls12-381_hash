@@ -212,8 +212,8 @@ if __name__ == "__main__":
         usage()
 
     if sys.argv[1] == "hac":
-        for (xs, xt, ys, yt) in ( eval(l) for l in sys.stdin.readlines() ):
-            Ell2(F2(xs + X * xt), F2(ys + X * yt))
+        for (xs, xt, ys, yt, zs, zt) in ( eval(l) for l in sys.stdin.readlines() ):
+            JEll2(xs, xt, ys, yt, zs, zt)
 
     elif sys.argv[1] == "1":
         assert all( JEll2(xs, xt, ys, yt, zs, zt) == clear_h2(svdw2(F2(ts + X * tt)))

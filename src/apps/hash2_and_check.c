@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
         //   quiet && !test: <<nothing>>
         //   otherwise       (xOut, yOut)
         if (!opts.quiet) {
-            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", x->s, x->t, y->s, y->t);
+            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx )\n", x->s, x->t, y->s, y->t, z->s, z->t);
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &end);
