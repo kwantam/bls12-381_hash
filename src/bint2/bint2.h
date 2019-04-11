@@ -29,13 +29,13 @@ void bint2_mul_sc(bint2_ty out, const bint2_ty ina, const bint_ty inb);
 void bint2_mul_sc_i(bint2_ty out, const bint2_ty ina, const bint_ty inb);
 
 void bint2_negt(bint2_ty io, const unsigned bup);
-void bint2_spmt(bint2_ty_R out, const bint2_ty_R in, const unsigned bup);
+void bint2_spmt(bint2_ty_R out, bint2_ty_Rc in, const unsigned bup);
 
 void bint2_import_mpz2(bint2_ty out, const mpz_t2 in);
 void bint2_export_mpz2(mpz_t2 out, const bint2_ty in);
 
-bool bint2_sqrt(bint2_ty_R out, const bint2_ty_R in);
-bool bint2_divsqrt(bint2_ty_R out, const bint2_ty_R u, const bint2_ty_R v);
+bool bint2_sqrt(bint2_ty_R out, bint2_ty_Rc in);
+bool bint2_divsqrt(bint2_ty_R out, bint2_ty_Rc u, bint2_ty_Rc v);
 
 #define __bls_hash__src__bint2__bint2_h__
 #endif  // __bls_hash__src__bint2__bint2_h__

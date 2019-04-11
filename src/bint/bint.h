@@ -25,7 +25,7 @@ void bint_mul(bint_ty out, const bint_ty ina, const bint_ty inb);
 void bint_sqr(bint_ty out, const bint_ty in);
 void bint_redc(bint_ty out, const bint_ty in);
 
-bool bint_divsqrt(bint_ty_R out, const bint_ty_R u, const bint_ty_R v, const bool force);
+bool bint_divsqrt(bint_ty_R out, bint_ty_Rc u, bint_ty_Rc v, const bool force);
 
 void bint_import_mpz(bint_ty out, const mpz_t in);
 void bint_export_mpz(mpz_t out, const bint_ty in);

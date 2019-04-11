@@ -114,7 +114,7 @@ void bint2_negt(bint2_ty io, const unsigned bup) { bint_neg(BINT_HI(io), BINT_HI
 
 // (in1.s + in1.t) + (in1.s - in1.t)
 // arguments are not allowed to overlap
-void bint2_spmt(bint2_ty_R out, const bint2_ty_R in, const unsigned bup) {
+void bint2_spmt(bint2_ty_R out, bint2_ty_Rc in, const unsigned bup) {
     bint_add(BINT_LO(out), BINT_LO(in), BINT_HI(in));
     bint_sub(BINT_HI(out), BINT_LO(in), BINT_HI(in), bup);
 }
@@ -147,7 +147,7 @@ static inline bool _bint2_sqrt_help(bint2_ty out, const bint2_ty tmp, const bint
 
 // square root
 // compute in^((p+7)/16) and then check the four possibilities
-bool bint2_sqrt(bint2_ty_R out, const bint2_ty_R in) {
+bool bint2_sqrt(bint2_ty_R out, bint2_ty_Rc in) {
     bint2_ty tmp, tmp2;
 
     // exponentiate
@@ -192,7 +192,7 @@ static inline bool _bint2_divsqrt_help(bint2_ty out, const bint2_ty tmp, const b
 // divsqrt
 // compute uv^7(uv^15)^((p-9)/16) and then check four possibilities
 // if nothing is found, out is uv^7(uv^15)^((p-9)/16)
-bool bint2_divsqrt(bint2_ty_R out, const bint2_ty_R u, const bint2_ty_R v) {
+bool bint2_divsqrt(bint2_ty_R out, bint2_ty_Rc u, bint2_ty_Rc v) {
     bint2_ty tmp;
     {
         bint2_ty tmp2;

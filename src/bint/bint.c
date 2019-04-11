@@ -232,7 +232,7 @@ void bint_export_mpz(mpz_t out, const bint_ty in) {
     mpz_import(out, BINT_NWORDS, -1, 8, 0, 64 - BINT_BITS_PER_WORD, tmp);
 }
 
-bool bint_divsqrt(bint_ty_R out, const bint_ty_R u, const bint_ty_R v, const bool force) {
+bool bint_divsqrt(bint_ty_R out, bint_ty_Rc u, bint_ty_Rc v, const bool force) {
     bint_ty uvk1, uvk2;
 
     bint_mul(uvk1, u, v);        // uv
