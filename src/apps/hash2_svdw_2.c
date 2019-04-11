@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
             gmp_printf("(");
         }
 
-        add2_2(x1, y1, z1, x2, y2, z2);
+        add2_clear_h2(x1, y1, z1, x2, y2, z2);
 
         if (opts.test) {
             gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, ", t1->s, t1->t, t2->s, t2->t);

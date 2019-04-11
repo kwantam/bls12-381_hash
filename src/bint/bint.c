@@ -79,19 +79,19 @@ void bint_add(bint_ty out, const bint_ty ina, const bint_ty inb) {
     }
 }
 
-void bint_sub(bint_ty out, const bint_ty ina, const bint_ty inb, const int bup) {
+void bint_sub(bint_ty out, const bint_ty ina, const bint_ty inb, const unsigned bup) {
     for (int i = 0; i < BINT_NWORDS; ++i) {
         out[i] = ina[i] + (p[i] << bup) - inb[i];
     }
 }
 
-void bint_neg(bint_ty out, const bint_ty in, const int bup) {
+void bint_neg(bint_ty out, const bint_ty in, const unsigned bup) {
     for (int i = 0; i < BINT_NWORDS; ++i) {
         out[i] = (p[i] << bup) - in[i];
     }
 }
 
-void bint_lsh(bint_ty out, const bint_ty in, const int sh) {
+void bint_lsh(bint_ty out, const bint_ty in, const unsigned sh) {
     for (int i = 0; i < BINT_NWORDS; ++i) {
         out[i] = in[i] << sh;
     }
@@ -232,8 +232,7 @@ void bint_export_mpz(mpz_t out, const bint_ty in) {
     mpz_import(out, BINT_NWORDS, -1, 8, 0, 64 - BINT_BITS_PER_WORD, tmp);
 }
 
-// these are declared as int64_t so that we can use restricted pointers
-bool bint_divsqrt(int64_t *restrict out, const int64_t *restrict u, const int64_t *restrict v, const bool force) {
+bool bint_divsqrt(bint_ty_R out, const bint_ty_R u, const bint_ty_R v, const bool force) {
     bint_ty uvk1, uvk2;
 
     bint_mul(uvk1, u, v);        // uv

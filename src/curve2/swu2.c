@@ -225,6 +225,7 @@ void swu2_map(mpz_t2 x, mpz_t2 y, mpz_t2 z, const mpz_t2 u, const bool constant_
         swu2_help(1, u);
     }
     eval_iso3();
+    clear_h2_help();
     from_jac_point2(x, y, z, jp2_tmp + 1);
 }
 
@@ -238,5 +239,6 @@ void swu2_map2(mpz_t2 x, mpz_t2 y, mpz_t2 z, const mpz_t2 u1, const mpz_t2 u2, c
     }
     point2_add(jp2_tmp + 1, jp2_tmp, jp2_tmp + 1);
     eval_iso3();
+    clear_h2_help();
     from_jac_point2(x, y, z, jp2_tmp + 1);
 }

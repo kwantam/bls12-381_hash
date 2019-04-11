@@ -10,18 +10,6 @@ bool bint2_eq0(bint2_ty io) {
     return bint_eq0(BINT_LO(io)) & bint_eq0(BINT_HI(io));
 }
 
-// set to 1
-void bint2_set1(bint2_ty out) {
-    bint_set1(BINT_LO(out));
-    memset(BINT_HI(out), 0, sizeof(bint_ty));
-}
-
-// set to i
-void bint2_seti(bint2_ty out) {
-    bint_set1(BINT_HI(out));
-    memset(BINT_LO(out), 0, sizeof(bint_ty));
-}
-
 // add
 void bint2_add(bint2_ty out, const bint2_ty ina, const bint2_ty inb) {
     bint_add(BINT_LO(out), BINT_LO(ina), BINT_LO(inb));
@@ -29,19 +17,19 @@ void bint2_add(bint2_ty out, const bint2_ty ina, const bint2_ty inb) {
 }
 
 // sub
-void bint2_sub(bint2_ty out, const bint2_ty ina, const bint2_ty inb, const int bup) {
+void bint2_sub(bint2_ty out, const bint2_ty ina, const bint2_ty inb, const unsigned bup) {
     bint_sub(BINT_LO(out), BINT_LO(ina), BINT_LO(inb), bup);
     bint_sub(BINT_HI(out), BINT_HI(ina), BINT_HI(inb), bup);
 }
 
 // negate
-void bint2_neg(bint2_ty out, const bint2_ty in, const int bup) {
+void bint2_neg(bint2_ty out, const bint2_ty in, const unsigned bup) {
     bint_neg(BINT_LO(out), BINT_LO(in), bup);
     bint_neg(BINT_HI(out), BINT_HI(in), bup);
 }
 
 // left shift
-void bint2_lsh(bint2_ty out, const bint2_ty in, const int sh) {
+void bint2_lsh(bint2_ty out, const bint2_ty in, const unsigned sh) {
     bint_lsh(BINT_LO(out), BINT_LO(in), sh);
     bint_lsh(BINT_HI(out), BINT_HI(in), sh);
 }
@@ -100,7 +88,7 @@ void bint2_add_sc(bint2_ty out, const bint2_ty ina, const bint_ty inb) {
 }
 
 // multiply by sqrt(-1)
-void bint2_mul_i(bint2_ty out, const bint2_ty in, const int bup) {
+void bint2_mul_i(bint2_ty out, const bint2_ty in, const unsigned bup) {
     bint_ty tmp1;
     bint_neg(tmp1, BINT_HI(in), bup);
     memcpy(BINT_HI(out), BINT_LO(in), sizeof(bint_ty));
@@ -121,12 +109,14 @@ void bint2_mul_sc_i(bint2_ty out, const bint2_ty ina, const bint_ty inb) {
     bint_neg(BINT_LO(out), tmp1, 1);
 }
 
-// norm: s^2 + t^2
-void bint2_norm(bint2_ty out, const bint2_ty in) {
-    bint_ty tmp1;
-    bint_sqr(tmp1, BINT_LO(in));
-    bint_sqr(out, BINT_HI(in));
-    bint_add(out, out, tmp1);
+// negate the 2nd coordinate (Frobenius)
+void bint2_negt(bint2_ty io, const unsigned bup) { bint_neg(BINT_HI(io), BINT_HI(io), bup); }
+
+// (in1.s + in1.t) + (in1.s - in1.t)
+// arguments are not allowed to overlap
+void bint2_spmt(bint2_ty_R out, const bint2_ty_R in, const unsigned bup) {
+    bint_add(BINT_LO(out), BINT_LO(in), BINT_HI(in));
+    bint_sub(BINT_HI(out), BINT_LO(in), BINT_HI(in), bup);
 }
 
 // import from GMP
@@ -157,7 +147,7 @@ static inline bool _bint2_sqrt_help(bint2_ty out, const bint2_ty tmp, const bint
 
 // square root
 // compute in^((p+7)/16) and then check the four possibilities
-bool bint2_sqrt(int64_t *__restrict__ out, int64_t *__restrict__ in) {
+bool bint2_sqrt(bint2_ty_R out, const bint2_ty_R in) {
     bint2_ty tmp, tmp2;
 
     // exponentiate
@@ -202,7 +192,7 @@ static inline bool _bint2_divsqrt_help(bint2_ty out, const bint2_ty tmp, const b
 // divsqrt
 // compute uv^7(uv^15)^((p-9)/16) and then check four possibilities
 // if nothing is found, out is uv^7(uv^15)^((p-9)/16)
-bool bint2_divsqrt(int64_t *__restrict__ out, int64_t *__restrict__ u, int64_t *__restrict__ v) {
+bool bint2_divsqrt(bint2_ty_R out, const bint2_ty_R u, const bint2_ty_R v) {
     bint2_ty tmp;
     {
         bint2_ty tmp2;

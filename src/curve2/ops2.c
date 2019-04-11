@@ -6,11 +6,12 @@
 
 #include "bint2.h"
 #include "globals2.h"
+#include "psi2.h"
 
 // double a point in Jacobian coordinates
 // out == in is OK
 // from EFD: https://www.hyperelliptic.org/EFD/g1p/auto-shortw-jacobian-0.html#doubling-dbl-2009-l
-void point2_double(jac_point2 *out, const jac_point2 *in) {
+static inline void point2_double(jac_point2 *out, const jac_point2 *in) {
     bint2_sqr(bint2_tmp[0], in->X);                          // A = X^2                     v = 4   w = 3   16/9
     bint2_sqr(bint2_tmp[1], in->Y);                          // B = Y^2                     v = 4   w = 3   16/9
     bint2_sqr(bint2_tmp[2], bint2_tmp[1]);                   // C = B^2                     v = 4   w = 3   16/9
@@ -95,10 +96,102 @@ void point2_add(jac_point2 *out, const jac_point2 *in1, const jac_point2 *in2) {
 // temp points
 jac_point2 jp2_tmp[NUM_TMP_JP2];
 
-// add two points together, leaving result in jp2_tmp[1]
-void add2_2(mpz_t2 X1, mpz_t2 Y1, mpz_t2 Z1, const mpz_t2 X2, const mpz_t2 Y2, const mpz_t2 Z2) {
+// untwist / Frobenius map for X
+static inline void psi2_qi_x(bint2_ty out, const bint2_ty in) {
+    bint2_mul(out, in, psi2_iwsc);        // X * iwsc (inverse-w-{squared,cubed})       v4,w3
+    bint2_mul_sc(out, out, psi2_k_qi_x);  // k_qi_x * X                                 v2,w1,i8/3
+    bint2_negt(out, 1);                   // negate t-coord                             v2,w2
+}
+
+// untwist / frobenius map for Y
+static inline void psi2_qi_y(bint2_ty out, const bint2_ty in) {
+    bint2_mul(bint2_tmp[14], in, psi2_iwsc);  // Y * iwsc                               v4,w3
+    bint2_spmt(out, bint2_tmp[14], 2);        // spmt                                   v8,w7,i8/7
+    bint2_mul_sc(out, out, psi2_k_qi_y);      // k_qi_y * Y                             v2,w1,i16/7
+}
+
+// Psi : untwist - Frobenius - twist
+static inline void psi2(jac_point2 *out, const jac_point2 *in) {
+    bint2_sqr(bint2_tmp[0], in->Z);                // Z^2                                       v4,w3
+    bint2_mul(bint2_tmp[1], bint2_tmp[0], in->Z);  // Z^3                                       v4,w3
+
+    // x-coordinate
+    psi2_qi_x(bint2_tmp[2], in->X);                         // qi_x(iwsc * x)                   v2,w2
+    bint2_mul_sc_i(bint2_tmp[2], bint2_tmp[2], psi2_k_cx);  // twist correction factor          v2,w2
+    psi2_qi_x(bint2_tmp[3], bint2_tmp[0]);                  // qi_x(iwsc * z^2)                 v2,w2
+
+    // y-coordinate
+    psi2_qi_y(bint2_tmp[4], in->Y);                    // qi_y(iwsc * y)                        v2,w1
+    bint2_mul(bint2_tmp[4], bint2_tmp[4], psi2_k_cy);  // twist correction factor               v4,w3
+    psi2_qi_y(bint2_tmp[5], bint2_tmp[1]);             // qi_y(iwsc * z^3)                      v2,w1
+
+    // back to Jacobian
+    bint2_mul(out->Z, bint2_tmp[3], bint2_tmp[5]);  // qi_x(iwsc * z^2) * qi_y(iwsc * z^3)      v4,w3
+    bint2_mul(out->X, bint2_tmp[2], bint2_tmp[5]);  // xnum * yden                              v4,w3
+    bint2_mul(out->X, out->X, out->Z);              // xnum * yden * Z => X / Z^2 = xnum/xden   v4,w3
+    bint2_mul(out->Y, bint2_tmp[4], bint2_tmp[3]);  // ynum * xden                              v4,w3
+    bint2_sqr(bint2_tmp[0], out->Z);                // Z^2                                      v4,w3
+    bint2_mul(out->Y, out->Y, bint2_tmp[0]);        // ynum xden Z^2 => Y / Z^3 = ynum / yden   v4,w3
+}
+
+// addition chain: Bos-Coster (win=2) : 69 links, 2 variables
+// input is jp2_tmp[in], output is jp2_tmp[out]
+static inline void clear_h2_chain(jac_point2 *restrict out, const jac_point2 *restrict in) {
+    point2_double(out, in);
+    point2_add(out, out, in);
+    for (int nops = 0; nops < 2; nops++) {
+        point2_double(out, out);
+    }
+    point2_add(out, out, in);
+    for (int nops = 0; nops < 3; nops++) {
+        point2_double(out, out);
+    }
+    point2_add(out, out, in);
+    for (int nops = 0; nops < 9; nops++) {
+        point2_double(out, out);
+    }
+    point2_add(out, out, in);
+    for (int nops = 0; nops < 32; nops++) {
+        point2_double(out, out);
+    }
+    point2_add(out, out, in);
+    for (int nops = 0; nops < 16; nops++) {
+        point2_double(out, out);
+    }
+}
+
+// clear cofactor on G2 via Psi
+// this approach is the one given by
+//   Budroni and Pintore, "Efficient hash maps to G2 on BLS curves,"
+//   EPrint #2017/419 https://eprint.iacr.org/2017/419
+// input and output are both in jp2_tmp[1]
+void clear_h2_help(void) {
+    point2_double(jp2_tmp + 4, jp2_tmp + 1);            // t4 = 2 P
+    clear_h2_chain(jp2_tmp, jp2_tmp + 1);               // t0 = -x P
+    point2_add(jp2_tmp, jp2_tmp, jp2_tmp + 1);          // t0 = (-x + 1) P
+    bint2_neg(jp2_tmp[1].Y, jp2_tmp[1].Y, 2);           // t1 = -P
+    psi2(jp2_tmp + 2, jp2_tmp + 1);                     // t2 = - psi(P)
+    point2_add(jp2_tmp, jp2_tmp, jp2_tmp + 2);          // t0 = (-x + 1) P - psi(P)
+    clear_h2_chain(jp2_tmp + 3, jp2_tmp);               // t3 = (x^2 - x) P + x psi(P)
+    point2_add(jp2_tmp, jp2_tmp + 3, jp2_tmp + 2);      // t0 = (x^2 - x) P + (x - 1) psi(P)
+    point2_add(jp2_tmp + 1, jp2_tmp, jp2_tmp + 1);      // t1 = (x^2 - x - 1) P + (x - 1) psi(P)
+    psi2(jp2_tmp + 2, jp2_tmp + 4);                     // t2 = psi(2P)
+    psi2(jp2_tmp + 2, jp2_tmp + 2);                     // t2 = psi(psi(2P))
+    point2_add(jp2_tmp + 1, jp2_tmp + 1, jp2_tmp + 2);  // t1 = (x^2 - x - 1) P + (x - 1) psi(P) + psi(psi(2P))
+}
+
+// add two points together, clear cofactor, return result
+void add2_clear_h2(mpz_t2 X1, mpz_t2 Y1, mpz_t2 Z1, const mpz_t2 X2, const mpz_t2 Y2, const mpz_t2 Z2) {
     to_jac_point2(jp2_tmp, X1, Y1, Z1);
     to_jac_point2(jp2_tmp + 1, X2, Y2, Z2);
     point2_add(jp2_tmp + 1, jp2_tmp + 1, jp2_tmp);
+    clear_h2_help();
     from_jac_point2(X1, Y1, Z1, jp2_tmp + 1);
+}
+
+// just clear cofactor
+void clear_h2(mpz_t2 x, mpz_t2 y, mpz_t2 z) {
+    to_jac_point2(jp2_tmp + 1, x, y, z);
+    clear_h2_help();
+    from_jac_point2(x, y, z, jp2_tmp + 1);
 }

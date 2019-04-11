@@ -15,9 +15,10 @@ int main(int argc, char **argv) {
     curve2_init();
 
     // get libgmp ready
-    mpz_t2 x, y;
+    mpz_t2 x, y, z;
     mpz2_init(x);
     mpz2_init(y);
+    mpz2_init(z);
 
     // load libcrypto error strings and set up SHA and PRNG
     ERR_load_crypto_strings();
@@ -46,6 +47,9 @@ int main(int argc, char **argv) {
             fprintf(stderr, "no point found!\n");
             exit(1);
         }
+        mpz_set_ui(z->s, 1);
+        mpz_set_ui(z->t, 0);
+        clear_h2(x, y, z);
 
         // show results
         //   quiet && !test: <<nothing>>
@@ -60,8 +64,9 @@ int main(int argc, char **argv) {
 
     // clean up
     EVP_CIPHER_CTX_free(prng_ctx);
-    mpz2_clear(x);
+    mpz2_clear(z);
     mpz2_clear(y);
+    mpz2_clear(x);
     curve2_uninit();
 
     return 0;

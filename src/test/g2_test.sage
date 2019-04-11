@@ -36,6 +36,56 @@ eta = (F2(4260611855699123619835214542497613370832672570814085208937885429153832
 
 xi_2 = F2(1 + X)
 
+# constants for Psi, the untwist-Frobenius-twist map
+iwsc_0 = 0xd0088f51cbff34d258dd3db21a5d66bb23ba5c279c2895fb39869507b587b120f55ffff58a9ffffdcff7fffffffd556
+iwsc = F2(iwsc_0 * (1 + X) - X)
+k_qi_x = 0x1a0111ea397fe699ec02408663d4de85aa0d857d89759ad4897d29650fb85f9b409427eb4f49fffd8bfd00000000aaad
+k_qi_y = 0x6af0e0437ff400b6831e36d6bd17ffe48395dabc2d3435e77f76e17009241c5ee67992f72ec05f4c81084fbede3cc09
+k_cx = F2(X * 0x1a0111ea397fe699ec02408663d4de85aa0d857d89759ad4897d29650fb85f9b409427eb4f49fffd8bfd00000000aaad)
+k_cy = 0x135203e60180a68ee2e9c448d77a2cd91c3dedd930b1cf60ef396489f61eb45e304466cf3e67fa0af1ee7b04121bdea2
+k_cy = F2(k_cy * (1 - X))
+onei = F2(1 + X)
+
+ell2_x = - 0xd201000000010000
+
+def qi_x(x):
+    vec = x._vector_()
+    return F2(k_qi_x * (vec[0] - X * vec[1]))
+
+def qi_y(y):
+    vec = y._vector_()
+    return k_qi_y * F2(vec[0] + vec[1] + X * (vec[0] - vec[1]))
+
+def psi(P):
+    x = onei * qi_x(iwsc * P[0])
+    y = onei * qi_y(iwsc * P[1])
+    return Ell2(x, y)
+
+# psi for Jacobian coordinates
+def psi_z(P):
+    z = F2.random_element()
+    z2 = z^2
+    z3 = z^3
+    x = P[0] * z2
+    y = P[1] * z3
+    px = k_cx * qi_x(iwsc * x)
+    pz2 = qi_x(iwsc * z2)
+    py = k_cy * qi_y(iwsc * y)
+    pz3 = qi_y(iwsc * z3)
+    assert px / pz2 == onei * qi_x(iwsc * P[0])
+    assert py / pz3 == onei * qi_y(iwsc * P[1])
+    Z = pz2 * pz3
+    X = px * pz3 * Z
+    Y = py * pz2 * Z^2
+    return Ell2(X / Z^2, Y / Z^3)
+
+def clear_h2(P):
+    pP = psi(P)
+    pp2P = psi(psi(2 * P))
+    first = (ell2_x ** 2 - ell2_x - 1) * P
+    second = (ell2_x - 1) * pP
+    return first + second + pp2P
+
 def init_iso2():
     global iso2
     if iso2 is None:
@@ -43,7 +93,7 @@ def init_iso2():
 
 def show_iso2_params():
     # r, for converting iso parameters to Montgomery form
-    r = 0x577a659fcfa012ca7c515d98f1297bb09b09b42da0f73e037669f83a2090c7212e00cde6d2002b119d800000347fcb8L
+    r = 0x577a659fcfa012ca7c515d98f1297bb09b09b42da0f73e037669f83a2090c7212e00cde6d2002b119d800000347fcb8
     init_iso2()
     for (coord, cmap) in zip(("x", "y"), iso2.rational_maps()):
         for (name, val) in zip(("num", "den"), (cmap.numerator(), cmap.denominator())):
@@ -166,21 +216,21 @@ if __name__ == "__main__":
             Ell2(F2(xs + X * xt), F2(ys + X * yt))
 
     elif sys.argv[1] == "1":
-        assert all( JEll2(xs, xt, ys, yt, zs, zt) == svdw2(F2(ts + X * tt))
+        assert all( JEll2(xs, xt, ys, yt, zs, zt) == clear_h2(svdw2(F2(ts + X * tt)))
                     for (ts, tt, xs, xt, ys, yt, zs, zt) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "2":
-        assert all( JEll2(x1s, x1t, y1s, y1t, z1s, z1t) == svdw2(F2(t1s + X * t1t)) + svdw2(F2(t2s + X * t2t))
+        assert all( JEll2(x1s, x1t, y1s, y1t, z1s, z1t) == clear_h2(svdw2(F2(t1s + X * t1t)) + svdw2(F2(t2s + X * t2t)))
                     for (t1s, t1t, t2s, t2t, x1s, x1t, y1s, y1t, z1s, z1t) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "u1":
         init_iso2()
-        assert all( JEll2(xs, xt, ys, yt, zs, zt) == iso2(swu2(F2(ts + X * tt)))
+        assert all( JEll2(xs, xt, ys, yt, zs, zt) == clear_h2(iso2(swu2(F2(ts + X * tt))))
                     for (xs, xt, ys, yt, zs, zt, ts, tt) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "u2":
         init_iso2()
-        assert all( JEll2(xs, xt, ys, yt, zs, zt) == iso2(swu2(F2(t1s + X * t1t)) + swu2(F2(t2s + X * t2t)))
+        assert all( JEll2(xs, xt, ys, yt, zs, zt) == clear_h2(iso2(swu2(F2(t1s + X * t1t)) + swu2(F2(t2s + X * t2t))))
                     for (xs, xt, ys, yt, zs, zt, t1s, t1t, t2s, t2t) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     else:

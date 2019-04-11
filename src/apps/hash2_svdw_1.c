@@ -54,6 +54,7 @@ int main(int argc, char **argv) {
             mpz_set_ui(z->s, 1);
             mpz_set_ui(z->t, 0);
         }
+        clear_h2(x, y, z);
 
         // show results
         //   test            (t, x, y, z)

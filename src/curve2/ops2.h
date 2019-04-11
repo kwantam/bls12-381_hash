@@ -22,12 +22,12 @@ typedef struct jac_point2_s {
 } jac_point2;
 
 // temp points for intermediate computations
-#define NUM_TMP_JP2 2
+#define NUM_TMP_JP2 5
 extern jac_point2 jp2_tmp[NUM_TMP_JP2];
 
 // curve ops
 void point2_add(jac_point2 *out, const jac_point2 *in1, const jac_point2 *in2);
-void point2_double(jac_point2 *out, const jac_point2 *in);
+void clear_h2_help(void);
 
 // helper: convert from a jac_point to a triple of mpz_t2
 static inline void from_jac_point2(mpz_t2 X, mpz_t2 Y, mpz_t2 Z, const jac_point2 *jp) {

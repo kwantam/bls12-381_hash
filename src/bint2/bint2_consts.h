@@ -10,6 +10,7 @@
 
 #define BINT2_NWORDS (2 * BINT_NWORDS)
 typedef int64_t bint2_ty[BINT2_NWORDS];
+typedef int64_t *restrict bint2_ty_R;
 
 #define __bls_hash__src__bint2__bint2_consts_h__external__
 #endif  // __bls_hash__src__bint2__bint2_consts_h__external__

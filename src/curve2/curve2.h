@@ -26,7 +26,8 @@ void swu2_map(mpz_t2 x, mpz_t2 y, mpz_t2 z, const mpz_t2 u, const bool constant_
 void swu2_map2(mpz_t2 x, mpz_t2 y, mpz_t2 z, const mpz_t2 u1, const mpz_t2 u2, const bool constant_time);
 
 // point manipulation
-void add2_2(mpz_t2 X1, mpz_t2 Y1, mpz_t2 Z1, const mpz_t2 X2, const mpz_t2 Y2, const mpz_t2 Z2);
+void add2_clear_h2(mpz_t2 X1, mpz_t2 Y1, mpz_t2 Z1, const mpz_t2 X2, const mpz_t2 Y2, const mpz_t2 Z2);
+void clear_h2(mpz_t2 x, mpz_t2 y, mpz_t2 z);
 
 #define __bls_hash__src__curve2__curve2_h__
 #endif  // __bls_hash__src__curve2__curve2_h__
