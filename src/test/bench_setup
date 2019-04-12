@@ -1,4 +1,5 @@
-NUM_RUNS=100000
+# NUM_RUNS should be a power of 10, else the proc script won't work!
+NUM_RUNS=1000000
 TESTS_hash_and_check=(q fq)
 TESTS_hash_svdw_1=(q fq cq)
 TESTS_hash_swu_1=(q cq)
