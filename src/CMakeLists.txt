@@ -15,3 +15,5 @@ include (etc/build_defs.cmake)
 add_subdirectory ("${PROJECT_SOURCE_DIR}/apps")
 
 include (etc/tests.cmake)
+
+# (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>

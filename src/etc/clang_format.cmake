@@ -19,3 +19,5 @@ if (DEFINED CLANG_FORMAT)
     file (GLOB_RECURSE ALL_HH_FILES apps/*.h bint/*.h bint2/*.h curve/*.h curve2/*.h util/*.h)
     add_custom_target (format ${CLANG_FORMAT} -i ${ALL_CC_FILES} ${ALL_HH_FILES} COMMENT "Formatted all source files.")
 endif (DEFINED CLANG_FORMAT)
+
+# (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>

@@ -17,3 +17,5 @@ macro (add_bh_exec exec_name)
     add_executable ("${exec_name}" "${exec_name}.c")
     target_link_libraries ("${exec_name}" bls_hash "${LIBGMP}" "${LIBCRYPTO}" ${ARGN})
 endmacro (add_bh_exec)
+
+# (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>

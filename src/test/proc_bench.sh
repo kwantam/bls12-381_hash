@@ -1,4 +1,6 @@
 #!/bin/bash
+#
+# (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
 [ -z "$1" ] && { echo "Usage: $0 <bench_file> [bench_file_2]"; exit 1; }
 

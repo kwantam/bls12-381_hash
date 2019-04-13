@@ -13,3 +13,5 @@ if (NOT (CMAKE_BUILD_TYPE_SHADOW STREQUAL CMAKE_BUILD_TYPE))
     endif ()
     set (CMAKE_BUILD_TYPE_SHADOW ${CMAKE_BUILD_TYPE} CACHE STRING "used to detect changes in build type" FORCE)
 endif ()
+
+# (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>

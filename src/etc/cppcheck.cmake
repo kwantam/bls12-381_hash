@@ -16,3 +16,5 @@ endif (NOT CPPCHECK)
 if (DEFINED CPPCHECK)
     add_custom_target (cppcheck ${CPPCHECK} --enable=all --project="${PROJECT_BINARY_DIR}/compile_commands.json")
 endif (DEFINED CPPCHECK)
+
+# (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>

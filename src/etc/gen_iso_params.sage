@@ -1,5 +1,7 @@
 #!/usr/bin/env sage
 # vim: syntax=python
+#
+# (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
 import sage.schemes.elliptic_curves.isogeny_small_degree as isd
 import sys

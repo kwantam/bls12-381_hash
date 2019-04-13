@@ -32,3 +32,5 @@ endif (${IS_CLANG_COMPILER})
 set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb3 -Og")
 set (CMAKE_C_FLAGS_DEBUGASAN "${CMAKE_C_FLAGS_DEBUG} -fsanitize=undefined -fsanitize=address")
 set (CMAKE_C_FLAGS_RELASAN "${CMAKE_C_FLAGS_RELEASE} -fsanitize=undefined -fsanitize=address")
+
+# (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>

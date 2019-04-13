@@ -31,3 +31,5 @@ if (DEFINED CLANG_TIDY)
     add_custom_target (tidy DEPENDS ${ALL_TIDY_TARGETS})
     add_custom_target (tidy_verbose DEPENDS ${ALL_TIDY_VERBOSE_TARGETS})
 endif (DEFINED CLANG_TIDY)
+
+# (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>

@@ -40,3 +40,5 @@ add_test(NAME t_hash2_swu_1_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" 
 add_test(NAME t_hash2_swu_2_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash2_swu_2" "${PROJECT_SOURCE_DIR}/test/g2_test.sage" u2 c 32)
 
 add_custom_target (bench COMMAND "${PROJECT_SOURCE_DIR}/test/run_bench.sh" "${CMAKE_BINARY_DIR}")
+
+# (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>

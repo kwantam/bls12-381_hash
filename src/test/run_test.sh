@@ -1,4 +1,6 @@
 #!/bin/bash
+#
+# (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
 set -e
 set -o pipefail
