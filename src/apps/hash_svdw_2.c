@@ -43,8 +43,8 @@ int main(int argc, char **argv) {
     // loop through different resulting PRNG keys
     for (unsigned i = 0; i < opts.nreps; ++i) {
         next_prng(prng_ctx, &hash_ctx, i);
-        next_modp(prng_ctx, t1);
-        next_modp(prng_ctx, t2);
+        next_modp(prng_ctx, t1, opts.constant_time);
+        next_modp(prng_ctx, t2, opts.constant_time);
         if (opts.constant_time) {
             svdw_map_ct(x1, y1, z1, t1);
             svdw_map_ct(x2, y2, z2, t2);

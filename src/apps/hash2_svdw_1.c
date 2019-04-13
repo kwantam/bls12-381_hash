@@ -42,9 +42,10 @@ int main(int argc, char **argv) {
             mpz_set_ui(t->s, 0);
             mpz_set_ui(t->t, 0);
         } else {
-            next_modp(prng_ctx, t->s);
-            next_modp(prng_ctx, t->t);
+            next_modp(prng_ctx, t->s, opts.constant_time);
+            next_modp(prng_ctx, t->t, opts.constant_time);
         }
+
         if (opts.constant_time) {
             svdw2_map_ct(x, y, z, t);
         } else if (opts.field_only) {

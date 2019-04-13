@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
     // loop through different resulting PRNG keys
     for (unsigned i = 0; i < opts.nreps; ++i) {
         next_prng(prng_ctx, &hash_ctx, i);
-        next_modp(prng_ctx, t);
+        next_modp(prng_ctx, t, false);
         if (opts.field_only) {
             svdw_map_fo(x1, y1, z1, t);
         } else {

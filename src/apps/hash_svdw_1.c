@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
             // in test mode, make sure exceptional input gives correct result
             mpz_set_ui(t, 0);
         } else {
-            next_modp(prng_ctx, t);
+            next_modp(prng_ctx, t, opts.constant_time);
         }
         if (opts.constant_time) {
             svdw_map_ct(x1, y1, z1, t);

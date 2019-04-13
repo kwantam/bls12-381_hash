@@ -41,10 +41,11 @@ int main(int argc, char **argv) {
     // loop through diffrent resulting PRNG keys
     for (unsigned i = 0; i < opts.nreps; ++i) {
         next_prng(prng_ctx, &hash_ctx, i);
-        next_modp(prng_ctx, t1->s);
-        next_modp(prng_ctx, t1->t);
-        next_modp(prng_ctx, t2->s);
-        next_modp(prng_ctx, t2->t);
+        next_modp(prng_ctx, t1->s, opts.constant_time);
+        next_modp(prng_ctx, t1->t, opts.constant_time);
+        next_modp(prng_ctx, t2->s, opts.constant_time);
+        next_modp(prng_ctx, t2->t, opts.constant_time);
+
         if (opts.constant_time) {
             svdw2_map_ct(x1, y1, z1, t1);
             svdw2_map_ct(x2, y2, z2, t2);

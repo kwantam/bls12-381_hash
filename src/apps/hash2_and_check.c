@@ -37,8 +37,8 @@ int main(int argc, char **argv) {
         unsigned j;
         for (j = 0; j < 256; ++j) {
             next_prng(prng_ctx, &hash_ctx, (i << 8) + j);
-            const bool negate = next_modp(prng_ctx, x->s);
-            next_modp(prng_ctx, x->t);
+            const bool negate = next_modp(prng_ctx, x->s, false);
+            next_modp(prng_ctx, x->t, false);
             if (check_fx2(y, x, negate, false, opts.field_only)) {
                 break;
             }

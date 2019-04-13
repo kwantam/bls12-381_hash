@@ -29,11 +29,13 @@ struct cmdline_opts {
 };
 struct cmdline_opts get_cmdline_opts(int argc, char **argv);
 
+// utility (used for testing exceptional cases of SvdW maps to G1)
+void mpz_set_pm1(mpz_t out);
+
 // hashing to Fq and Fp
 void hash_stdin(SHA256_CTX *ctx);
 void next_prng(EVP_CIPHER_CTX *cctx, const SHA256_CTX *hctx, uint32_t idx);
-bool next_modp(EVP_CIPHER_CTX *cctx, mpz_t ret);
-void mpz_set_pm1(mpz_t out);
+bool next_modp(EVP_CIPHER_CTX *cctx, mpz_t ret, const bool constant_time);
 uint8_t *next_modq(EVP_CIPHER_CTX *cctx, mpz_t *out);
 
 #define __bls_hash__src__util__util_h__

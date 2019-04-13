@@ -38,7 +38,7 @@ int main(int argc, char **argv) {
     // loop through different resulting PRNG keys
     for (unsigned i = 0; i < opts.nreps; ++i) {
         next_prng(prng_ctx, &hash_ctx, i);
-        next_modp(prng_ctx, u);
+        next_modp(prng_ctx, u, false);
         const uint8_t *r = next_modq(prng_ctx, opts.test ? &rr : NULL);
         swu_map_rG(x1, y1, z1, u, r);
 
