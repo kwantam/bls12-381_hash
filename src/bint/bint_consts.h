@@ -7,9 +7,9 @@
 #include <stdint.h>
 
 #define BINT_NWORDS 7
-typedef int64_t bint_ty[BINT_NWORDS];
-typedef int64_t *restrict bint_ty_R;
-typedef const int64_t *restrict bint_ty_Rc;
+typedef uint64_t bint_ty[BINT_NWORDS];
+typedef uint64_t *restrict bint_ty_R;
+typedef const uint64_t *restrict bint_ty_Rc;
 
 #define __bls_hash__src__bint__bint_consts_h__external__
 #endif  // __bls_hash__src__bint__bint_consts_h__external__

@@ -13,7 +13,7 @@
 #include <stdint.h>
 #include <string.h>
 
-typedef int64_t bint_dbl_ty[2 * BINT_NWORDS];
+typedef uint64_t bint_dbl_ty[2 * BINT_NWORDS];
 
 static inline int _bint_compare(const bint_ty ina, const bint_ty inb);
 static inline void _bint_condsub_p(bint_ty io);

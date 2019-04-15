@@ -203,7 +203,7 @@ static inline void eval_iso3(void) {
     bint2_mul(bint2_tmp[9], bint2_tmp[9], bint2_tmp[14]);
 
     // Xmap numerator
-    compute_map_zvals(iso2_xnum, bint2_tmp + 12, ELLP2_XMAP_NUM_LEN);          // k_(3-i) Z^(2i)
+    compute_map_zvals(iso2_xnum, bint2_tmp + 12, ELLP2_XMAP_NUM_LEN - 1);      // k_(3-i) Z^(2i)
     bint2_mul(bint2_tmp[8], jp2_tmp[1].X, iso2_xnum[ELLP2_XMAP_NUM_LEN - 1]);  // k_3 * X
     bint2_add(bint2_tmp[8], bint2_tmp[8], bint2_tmp[ELLP2_XMAP_NUM_LEN - 2]);  // k_3 * X + k_2 Z^2
     bint2_horner(bint2_tmp[8], jp2_tmp[1].X, ELLP2_XMAP_NUM_LEN - 3);          // Horner for rest
