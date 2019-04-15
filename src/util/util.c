@@ -72,9 +72,7 @@ static inline bool lt_be(const uint8_t *a, const uint8_t *b, size_t len) {
 }
 
 // output the required number of bytes into the output buffer, mask, and compare to the max value
-// clang-format off
-static uint8_t ZEROS[P_LEN] = {0,};
-// clang-format on
+static uint8_t ZEROS[P_LEN] = {0};
 static inline int next_com(EVP_CIPHER_CTX *cctx, uint8_t *out, int len, const uint8_t *max, uint8_t mask) {
     int outl = len;
     CHECK_CRYPTO(EVP_EncryptUpdate(cctx, out, &outl, ZEROS, len));
@@ -102,7 +100,7 @@ static inline bool next_modp_nct(EVP_CIPHER_CTX *cctx, mpz_t ret) {
 // 0.2^56 is ~2^-130, i.e., sufficiently low failure probability
 #define NUM_SAMP_P 56
 static inline bool next_modp_ct(EVP_CIPHER_CTX *cctx, mpz_t ret) {
-    uint64_t p_out[P_LEN / 8] = {0,};
+    uint64_t p_out[P_LEN / 8] = {0};
     int b = -1;
     for (unsigned i = 0; i < NUM_SAMP_P; ++i) {
         uint64_t p_tmp[P_LEN / 8];
