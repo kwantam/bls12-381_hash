@@ -3,7 +3,7 @@
 We describe and implement maps to [BLS12-381](https://z.cash/blog/new-snark-curve/) based
 on [SvdW06](#bib) and and the "simplified SWU" map of [BCIMRT10](#bib).
 
-The SvdW map is similar to the one described in [FT12](#bib), except that our map is defined
+The SvdW map is similar to the one described in [FT12](#bib), except that our construction is defined
 at every point in the base field. This may simplify constant-time implementations.
 
 The SWU map uses two new tricks to speed up evaluation. It also uses only field operations,
@@ -12,16 +12,15 @@ the SvdW map requires for efficiency. This simplifies implementation---especiall
 implementation---since both of those algorithms would require implementing arbitrary modular
 reductions rather than reductions modulo a fixed prime.
 
-Our evaluation (see the [paper](paper/)) shows that the *constant-time* SWU map is never more
+The [paper](https://bls-has.crypto.fyi) derives the maps and describes our optimizations.
+Our evaluation (see the paper) shows that the *constant-time* SWU map is never more
 than ~9% slower than the fastest (non--constant-time) implementations of the SW map. Moreover,
 comparing SW vs SWU when both are implemented in constant time using field ops only shows that
 the SWU map is faster by 1.3--2x.
 
-The [paper](paper/) subdirectory derives the maps and describes our optimizations.
+We [implement](src/) hashes to the G1 and G2 subgroups of the BLS12-381 curve.
 
-The [src](src/) subdirectory implements hashes to the G1 and G2 subgroups of the BLS12-381 curve.
-
-- "hash-and-try", as described in [BLS03](#bib)
+- "hash-and-check", as described in [BLS03](#bib)
 
 - one evaluation of the SvdW map followed by a point multiplication to clear the cofactor
 

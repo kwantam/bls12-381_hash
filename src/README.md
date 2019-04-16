@@ -10,9 +10,8 @@ You will need the following:
 - gcc >= 8 or clang >= 7
 - make
 - bash
-- a working version of `dd` (GNU coreutils or similar)
 - Optional: clang-format, clang-tidy, cppcheck
-- To run tests: sagemath
+- To run tests: sagemath and a working version of `dd` (GNU coreutils or similar)
 
 ## Quickstart
 
@@ -22,7 +21,7 @@ To set up your build directory:
     $ cd /path/to/bls_hash/src/build
     $ cmake ..
 
-All further comments should be run from the `build` directory.
+All further commands should be run from the `build` directory.
 
 To build:
 
