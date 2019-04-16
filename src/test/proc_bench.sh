@@ -55,6 +55,11 @@ echo "\$\\bm{G_1}\$ & Hash-and-check & --- &"
 show_q_fq_cq 1 0
 show_q_fq_cq 1 0
 show_q_fq_cq 0 1
+echo "%"
+
+# HACK
+# worst 10% timings from timings.out and timings_fo.out get manually inserted here
+echo "& (worst 10\\%) & --- & \\textred{XXX} & \\textred{XXX} & ---\\\\"
 echo "\\cmidrule{2-6}"
 
 echo "& Construction \\#1 & \\S\\ref{sec:blsmap} &"
@@ -97,6 +102,12 @@ echo "\$\\bm{G_2}\$ & Hash-and-check & --- &"
 show_q_fq_cq 1 0
 show_q_fq_cq 1 0
 show_q_fq_cq 0 1
+echo "%"
+
+# HACK
+# worst 10% timings from timings2.out and timings2_fo.out get manually inserted here
+echo "& (worst 10\%) & --- & \\textred{XXX} & \\textred{XXX} & ---\\\\"
+
 echo "\\cmidrule{2-6}"
 
 echo "& Construction \\#4 & \\S\\ref{sec:blsmap} &"
