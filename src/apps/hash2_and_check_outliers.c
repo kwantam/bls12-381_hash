@@ -60,13 +60,6 @@ int main(int argc, char **argv) {
             mpz_set_ui(z->s, 1);
             mpz_set_ui(z->t, 0);
             clear_h2(x, y, z);
-
-            // show results
-            //   quiet && !test: <<nothing>>
-            //   otherwise       (xOut, yOut)
-            if (!opts.quiet) {
-                gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx )\n", x->s, x->t, y->s, y->t, z->s, z->t);
-            }
         }
         clock_gettime(CLOCK_MONOTONIC, &end);
         long elapsed = 1000000000 * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;

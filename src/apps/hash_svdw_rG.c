@@ -10,9 +10,6 @@
 
 int main(int argc, char **argv) {
     struct cmdline_opts opts = get_cmdline_opts(argc, argv);
-    const bool first_print = opts.test || (!opts.quiet && !opts.clear_h);
-    const bool do_clear = opts.test || opts.clear_h;
-    const bool second_print = opts.test || (!opts.quiet && opts.clear_h);
 
     // initialize static data for curve computations
     curve_init();
@@ -49,35 +46,15 @@ int main(int argc, char **argv) {
             mpz_set_ui(z1, 1);
         }
         const uint8_t *r = next_modq(prng_ctx, opts.test ? &rr : NULL);
+        addrG_clear_h(x1, y1, z1, r);
 
-        // show results                     svdw_addrG
-        //   test:                          (t, r, xO, yO, zO)
-        //   quiet && !test:                <<nothing>>
-        //   !quiet && !test && clear_h:    (xO, yO, zO)
-        //   !quiet && !test && !clear_h:   (xI, yI, zI)
-        if (first_print || second_print) {
-            printf("(");
-        }
-
-        // maybe output points and r
+        // show results
+        //   test:      (t, r, xO, yO, zO)
+        //   !quiet:    (xO, yO, zO)
         if (opts.test) {
-            gmp_printf("0x%Zx, 0x%Zx, ", t, rr);
-        } else if (first_print) {
-            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, ", x1, y1, z1);
-        }
-
-        // maybe do the addition
-        if (do_clear) {
-            addrG_clear_h(x1, y1, z1, r);
-        }
-
-        // maybe output the result
-        if (second_print) {
-            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, ", x1, y1, z1);
-        }
-
-        if (first_print || second_print) {
-            printf(")\n");
+            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", t, rr, x1, y1, z1);
+        } else if (!opts.quiet) {
+            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, z1);
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &end);

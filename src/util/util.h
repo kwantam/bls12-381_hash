@@ -21,9 +21,9 @@
 // getting commandline options
 struct cmdline_opts {
     unsigned nreps;
-    bool clear_h;
     bool quiet;
     bool test;
+    bool test2;
     bool field_only;
     bool constant_time;
 };

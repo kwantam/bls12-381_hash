@@ -113,8 +113,8 @@ if __name__ == "__main__":
         usage()
 
     if sys.argv[1] == "hac":
-        assert all( JEll(xOut, yOut, zOut) == h * JEll(xIn, yIn, zIn)
-                    for (xIn, yIn, zIn, xOut, yOut, zOut) in ( eval(l) for l in sys.stdin.readlines() ) )
+        for (xOut, yOut, zOut) in ( eval(l) for l in sys.stdin.readlines() ):
+            JEll(xOut, yOut, zOut)
 
     elif sys.argv[1] == "1":
         assert all( JEll(xOut, yOut, zOut) == h * svdw(t)

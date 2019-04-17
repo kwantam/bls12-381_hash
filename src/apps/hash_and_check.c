@@ -10,9 +10,6 @@
 
 int main(int argc, char **argv) {
     struct cmdline_opts opts = get_cmdline_opts(argc, argv);
-    const bool first_print = opts.test || (!opts.quiet && !opts.clear_h);
-    const bool do_clear = opts.test || opts.clear_h;
-    const bool second_print = opts.test || (!opts.quiet && opts.clear_h);
 
     // initialize temp variables for curve computations
     curve_init();
@@ -50,34 +47,13 @@ int main(int argc, char **argv) {
             exit(1);
         }
         mpz_set_ui(z, 1);
+        clear_h(x, y, z);
 
         // show results
-        //   test:                          (xin, yin, zin, xout, yout, zout)
-        //   quiet && !test:                <<nothing>>
-        //   !quiet && !test && clear_h:    (xout, yout, zout)
-        //   !quiet && !test && !clear_h:   (xin, yin, zin)
-        //
-        if (first_print || second_print) {
-            printf("(");
-        }
-
-        // maybe output the input point
-        if (first_print) {
-            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, ", x, y, z);
-        }
-
-        // maybe clear the cofactor
-        if (do_clear) {
-            clear_h(x, y, z);
-        }
-
-        // maybe output the result
-        if (second_print) {
-            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, ", x, y, z);
-        }
-
-        if (first_print || second_print) {
-            printf(")\n");
+        //   quiet:     <<nothing>>
+        //   !quiet:    (xout, yout, zout)
+        if (!opts.quiet) {
+            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, )\n", x, y, z);
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &end);

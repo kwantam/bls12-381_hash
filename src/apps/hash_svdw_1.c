@@ -10,9 +10,6 @@
 
 int main(int argc, char **argv) {
     struct cmdline_opts opts = get_cmdline_opts(argc, argv);
-    const bool first_print = opts.test || (!opts.quiet && !opts.clear_h);
-    const bool do_clear = opts.test || opts.clear_h;
-    const bool second_print = opts.test || (!opts.quiet && opts.clear_h);
 
     // initialize static data for curve computations
     curve_init();
@@ -53,35 +50,15 @@ int main(int argc, char **argv) {
             svdw_map(x1, y1, t);
             mpz_set_ui(z1, 1);
         }
+        clear_h(x1, y1, z1);
 
-        // show results                     svdw_basic
-        //   test:                          (t, xO, yO, zO)
-        //   quiet && !test:                <<nothing>>
-        //   !quiet && !test && clear_h:    (xO, yO, zO)
-        //   !quiet && !test && !clear_h:   (xI, yI, zI)
-        if (first_print || second_print) {
-            printf("(");
-        }
-
-        // maybe output the input point
+        // show results
+        //   test:       (t, xO, yO, zO)
+        //   !quiet:     (xO, yO, zO)
         if (opts.test) {
-            gmp_printf("0x%Zx, ", t);
-        } else if (first_print) {
-            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, ", x1, y1, z1);
-        }
-
-        // maybe clear the cofactor
-        if (do_clear) {
-            clear_h(x1, y1, z1);
-        }
-
-        // maybe output the result
-        if (second_print) {
-            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, ", x1, y1, z1);
-        }
-
-        if (first_print || second_print) {
-            printf(")\n");
+            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", t, x1, y1, z1);
+        } else if (!opts.quiet) {
+            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, z1);
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &end);

@@ -145,17 +145,13 @@ uint8_t *next_modq(EVP_CIPHER_CTX *cctx, mpz_t *out) {
 
 // process commandline options into a struct cmdline_opts
 struct cmdline_opts get_cmdline_opts(int argc, char **argv) {
-    struct cmdline_opts ret = {0, true, false, false, false, false};
+    struct cmdline_opts ret = {0, false, false, false, false, false};
     int opt_ret;
     bool found_err = false;
-    while ((opt_ret = getopt(argc, argv, "n:Cqtfc")) >= 0) {
+    while ((opt_ret = getopt(argc, argv, "n:qtTfc")) >= 0) {
         switch (opt_ret) {
             case 'n':
                 ret.nreps = atoi(optarg);  // NOLINT(cert-err34-c)
-                break;
-
-            case 'C':
-                ret.clear_h = false;
                 break;
 
             case 'q':
@@ -164,6 +160,10 @@ struct cmdline_opts get_cmdline_opts(int argc, char **argv) {
 
             case 't':
                 ret.test = true;
+                break;
+
+            case 'T':
+                ret.test2 = true;
                 break;
 
             case 'f':

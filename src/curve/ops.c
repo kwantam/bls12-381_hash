@@ -173,23 +173,11 @@ void clear_h(mpz_t X, mpz_t Y, mpz_t Z) {
     from_jac_point(X, Y, Z, jp_tmp + 7);
 }
 
-// add two points together, leaving result in jp_tmp[1]
-static inline void add2_help(const mpz_t X1, const mpz_t Y1, const mpz_t Z1, const mpz_t X2, const mpz_t Y2,
-                             const mpz_t Z2) {
+// add 2 points together, then clear cofactor
+void add2_clear_h(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, const mpz_t Z2) {
     to_jac_point(jp_tmp, X1, Y1, Z1);
     to_jac_point(jp_tmp + 1, X2, Y2, Z2);
     point_add(jp_tmp + 1, jp_tmp + 1, jp_tmp);
-}
-
-// add 2 points together; don't clear cofactor
-void add2(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, const mpz_t Z2) {
-    add2_help(X1, Y1, Z1, X2, Y2, Z2);
-    from_jac_point(X1, Y1, Z1, jp_tmp + 1);
-}
-
-// add 2 points together, then clear cofactor
-void add2_clear_h(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, const mpz_t Z2) {
-    add2_help(X1, Y1, Z1, X2, Y2, Z2);
     clear_h_chain();
     from_jac_point(X1, Y1, Z1, jp_tmp + 7);
 }

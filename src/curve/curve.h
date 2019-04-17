@@ -33,8 +33,7 @@ void clear_h(mpz_t X, mpz_t Y, mpz_t Z);
 // clear cofactor, add random subgroup element via 3-point multi-multiplication
 void addrG_clear_h(mpz_t X, mpz_t Y, mpz_t Z, const uint8_t *r);
 
-// add two points together (and clear cofactor in the second case)
-void add2(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, const mpz_t Z2);
+// add two points together and clear cofactor
 void add2_clear_h(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, const mpz_t Z2);
 
 #define __bls_hash__src__curve__curve_h__
