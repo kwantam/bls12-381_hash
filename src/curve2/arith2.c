@@ -71,3 +71,22 @@ bool check_fx2(mpz_t2 y, const mpz_t2 x, const bool negate, const bool force, co
 
     return true;
 }
+
+// returns true just if (x,y,z) is a point on Ell2
+bool check_curve2(mpz_t2 x, mpz_t2 y, mpz_t2 z) {
+    sqr_modp2(mpz2_tmp[0], y);               // y^2
+    sqr_modp2(mpz2_tmp[1], x);               // x^2
+    mul_modp2(mpz2_tmp[1], mpz2_tmp[1], x);  // x^3
+
+    sqr_modp2(mpz2_tmp[2], z);               // z^2
+    mul_modp2(mpz2_tmp[2], mpz2_tmp[2], z);  // z^3
+    sqr_modp2(mpz2_tmp[2], mpz2_tmp[2]);     // z^6
+    mpz_set_ui(mpz2_tmp[3]->s, 4);           // 4 ...
+    mpz_set_ui(mpz2_tmp[3]->t, 4);           // + 4 sqrt(-1)
+
+    mul_modp2(mpz2_tmp[2], mpz2_tmp[2], mpz2_tmp[3]);  // (4 + 4 sqrt(-1)) z^6
+    mpz2_add(mpz2_tmp[2], mpz2_tmp[2], mpz2_tmp[1]);   // x^3 + (4 + 4 sqrt(-1)) z^6
+    mpz2_sub(mpz2_tmp[2], mpz2_tmp[2], mpz2_tmp[0]);   // x^3 + (4 + 4 sqrt(-1)) z^6 - y^2
+
+    return mpz2_zero_p(mpz2_tmp[2]);
+}

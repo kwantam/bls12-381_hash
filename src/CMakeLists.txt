@@ -9,6 +9,7 @@ include (etc/cflags.cmake)
 include (etc/clang_format.cmake)
 include (etc/clang_tidy.cmake)
 include (etc/cppcheck.cmake)
+include (etc/sage.cmake)
 
 include (etc/build_defs.cmake)
 

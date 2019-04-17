@@ -16,7 +16,7 @@ endif (NOT CLANG_TIDY)
 
 if (DEFINED CLANG_TIDY)
     file (GLOB_RECURSE ALL_CC_FILES apps/*.c bint/*.c bint2/*.c curve/*.c curve2/*.c util/*.c)
-    set (CLANG_TIDY_CHECKS "'*,-llvm-header-guard,-readability-avoid-const-params-in-decls,-hicpp-signed-bitwise,-cppcoreguidelines-avoid-magic-numbers,-readability-magic-numbers,-readability-isolate-declaration,-readability-redundant-declaration'")
+    set (CLANG_TIDY_CHECKS "'*,-llvm-header-guard,-readability-avoid-const-params-in-decls,-hicpp-signed-bitwise,-cppcoreguidelines-avoid-magic-numbers,-readability-magic-numbers,-readability-isolate-declaration,-readability-redundant-declaration,-android-cloexec-fopen'")
     foreach (tidy_target ${ALL_CC_FILES})
         get_filename_component (basename ${tidy_target} NAME)
         get_filename_component (dirname ${tidy_target} DIRECTORY)

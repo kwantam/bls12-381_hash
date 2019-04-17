@@ -36,5 +36,8 @@ void addrG_clear_h(mpz_t X, mpz_t Y, mpz_t Z, const uint8_t *r);
 // add two points together and clear cofactor
 void add2_clear_h(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, const mpz_t Z2);
 
+// check that a point is on Ell
+bool check_curve(mpz_t x, mpz_t y, mpz_t z);
+
 #define __bls_hash__src__curve__curve_h__
 #endif  // __bls_hash__src__curve__curve_h__

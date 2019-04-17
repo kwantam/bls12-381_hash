@@ -9,17 +9,16 @@
 #include <time.h>
 
 int main(int argc, char **argv) {
-    struct cmdline_opts opts = get_cmdline_opts(argc, argv);
+    int retval = 0;
+    const struct cmdline_opts opts = get_cmdline_opts(argc, argv);
+    const bool do_print = opts.test || !opts.quiet;
 
     // initialize static data for curve computations
     curve_init();
 
     // get libgmp ready
-    mpz_t x1, y1, z1, u;
-    mpz_init(x1);
-    mpz_init(y1);
-    mpz_init(z1);
-    mpz_init(u);
+    mpz_t x, y, z, u;
+    mpz_inits(x, y, z, u, NULL);
 
     // load libcrypto error strings and set up SHA and PRNG
     ERR_load_crypto_strings();
@@ -42,18 +41,23 @@ int main(int argc, char **argv) {
         } else {
             next_modp(prng_ctx, u, opts.constant_time);
         }
-        swu_map(x1, y1, z1, u, opts.constant_time);
+        swu_map(x, y, z, u, opts.constant_time);
 
         // show results
-        //   test:              (xO, yO, zO, u1, u2)
+        //   test:              (xO, yO, zO, u)
         //   quiet && !test:    <<nothing>>
         //   !quiet && !test:   (xO, yO, zO)
-
-        // maybe output the points
-        if (opts.test) {
-            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, z1, u);
-        } else if (!opts.quiet) {
-            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, z1);
+        const bool force = opts.test2 && !check_curve(x, y, z);
+        if (do_print || force) {
+            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, ", x, y, z);
+            if (opts.test) {
+                gmp_printf("0x%Zx, ", u);
+            }
+            if (force) {
+                ++retval;
+                printf("%u, ", i);
+            }
+            printf(")\n");
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &end);
@@ -62,11 +66,8 @@ int main(int argc, char **argv) {
 
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
-    mpz_clear(u);
-    mpz_clear(z1);
-    mpz_clear(y1);
-    mpz_clear(x1);
+    mpz_clears(x, y, z, u, NULL);
     curve_uninit();
 
-    return 0;
+    return retval;
 }

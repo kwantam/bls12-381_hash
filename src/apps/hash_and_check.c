@@ -9,16 +9,15 @@
 #include <time.h>
 
 int main(int argc, char **argv) {
-    struct cmdline_opts opts = get_cmdline_opts(argc, argv);
+    int retval = 0;
+    const struct cmdline_opts opts = get_cmdline_opts(argc, argv);
 
     // initialize temp variables for curve computations
     curve_init();
 
     // get libgmp ready
     mpz_t x, y, z;
-    mpz_init(x);
-    mpz_init(y);
-    mpz_init(z);
+    mpz_inits(x, y, z, NULL);
 
     // load libcrypto error strings and set up SHA and PRNG
     ERR_load_crypto_strings();
@@ -52,8 +51,14 @@ int main(int argc, char **argv) {
         // show results
         //   quiet:     <<nothing>>
         //   !quiet:    (xout, yout, zout)
-        if (!opts.quiet) {
-            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, )\n", x, y, z);
+        const bool force = opts.test2 && !check_curve(x, y, z);
+        if (!opts.quiet || force) {
+            printf("(");
+            if (force) {
+                ++retval;
+                printf("%u, ", (i << 8) + j);
+            }
+            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, )\n", x, y, z);
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &end);
@@ -62,10 +67,8 @@ int main(int argc, char **argv) {
 
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
-    mpz_clear(z);
-    mpz_clear(y);
-    mpz_clear(x);
+    mpz_clears(x, y, z, NULL);
     curve_uninit();
 
-    return 0;
+    return retval;
 }

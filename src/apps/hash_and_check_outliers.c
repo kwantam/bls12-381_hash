@@ -11,7 +11,7 @@
 #define NREPS 10
 
 int main(int argc, char **argv) {
-    struct cmdline_opts opts = get_cmdline_opts(argc, argv);
+    const struct cmdline_opts opts = get_cmdline_opts(argc, argv);
 
     // dump times to outfd to measure timing of outliers
     FILE *outfp;
@@ -25,9 +25,7 @@ int main(int argc, char **argv) {
 
     // get libgmp ready
     mpz_t x, y, z;
-    mpz_init(x);
-    mpz_init(y);
-    mpz_init(z);
+    mpz_inits(x, y, z, NULL);
 
     // load libcrypto error strings and set up SHA and PRNG
     ERR_load_crypto_strings();
@@ -66,9 +64,7 @@ int main(int argc, char **argv) {
 
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
-    mpz_clear(z);
-    mpz_clear(y);
-    mpz_clear(x);
+    mpz_clears(x, y, z, NULL);
     curve_uninit();
     fclose(outfp);
 

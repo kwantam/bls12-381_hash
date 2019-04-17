@@ -169,7 +169,7 @@ void clear_h2_help(void) {
     point2_double(jp2_tmp + 4, jp2_tmp + 1);            // t4 = 2 P
     clear_h2_chain(jp2_tmp, jp2_tmp + 1);               // t0 = -x P
     point2_add(jp2_tmp, jp2_tmp, jp2_tmp + 1);          // t0 = (-x + 1) P
-    bint2_neg(jp2_tmp[1].Y, jp2_tmp[1].Y, 2);           // t1 = -P
+    bint2_neg(jp2_tmp[1].Y, jp2_tmp[1].Y, 3);           // t1 = -P (NOTE: bup=3 because point2_add leaves Y unredc'd)
     psi2(jp2_tmp + 2, jp2_tmp + 1);                     // t2 = - psi(P)
     point2_add(jp2_tmp, jp2_tmp, jp2_tmp + 2);          // t0 = (-x + 1) P - psi(P)
     clear_h2_chain(jp2_tmp + 3, jp2_tmp);               // t3 = (x^2 - x) P + x psi(P)

@@ -57,3 +57,20 @@ bool divsqrt(mpz_t out, mpz_t tmp, const mpz_t u, const mpz_t v, bool force) {
     }
     return true;
 }
+
+// returns true just if (x,y,z) is a point on Ell
+bool check_curve(mpz_t x, mpz_t y, mpz_t z) {
+    sqr_modp(mpz_tmp[0], y);              // y^2
+    sqr_modp(mpz_tmp[1], x);              // x^2
+    mul_modp(mpz_tmp[1], mpz_tmp[1], x);  // x^3
+
+    sqr_modp(mpz_tmp[2], z);                // z^2
+    mul_modp(mpz_tmp[2], mpz_tmp[2], z);    // z^3
+    sqr_modp(mpz_tmp[2], mpz_tmp[2]);       // z^6
+    mpz_mul_ui(mpz_tmp[2], mpz_tmp[2], 4);  // 4 z^6
+
+    mpz_add(mpz_tmp[2], mpz_tmp[2], mpz_tmp[1]);  // x^3 + 4 z^6
+    mpz_sub(mpz_tmp[2], mpz_tmp[2], mpz_tmp[0]);  // x^3 + 4 z^6 - y^2
+
+    return mpz_divisible_p(mpz_tmp[2], fld_p);
+}

@@ -9,17 +9,16 @@
 #include <time.h>
 
 int main(int argc, char **argv) {
-    struct cmdline_opts opts = get_cmdline_opts(argc, argv);
+    int retval = 0;
+    const struct cmdline_opts opts = get_cmdline_opts(argc, argv);
+    const bool do_print = opts.test || !opts.quiet;
 
     // initialize static data for curve computations
     curve_init();
 
     // get libgmp ready
-    mpz_t x1, y1, z1, t;
-    mpz_init(x1);
-    mpz_init(y1);
-    mpz_init(z1);
-    mpz_init(t);
+    mpz_t x, y, z, t;
+    mpz_inits(x, y, z, t, NULL);
 
     // load libcrypto error strings and set up SHA and PRNG
     ERR_load_crypto_strings();
@@ -43,22 +42,29 @@ int main(int argc, char **argv) {
             next_modp(prng_ctx, t, opts.constant_time);
         }
         if (opts.constant_time) {
-            svdw_map_ct(x1, y1, z1, t);
+            svdw_map_ct(x, y, z, t);
         } else if (opts.field_only) {
-            svdw_map_fo(x1, y1, z1, t);
+            svdw_map_fo(x, y, z, t);
         } else {
-            svdw_map(x1, y1, t);
-            mpz_set_ui(z1, 1);
+            svdw_map(x, y, t);
+            mpz_set_ui(z, 1);
         }
-        clear_h(x1, y1, z1);
+        clear_h(x, y, z);
 
         // show results
         //   test:       (t, xO, yO, zO)
         //   !quiet:     (xO, yO, zO)
-        if (opts.test) {
-            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", t, x1, y1, z1);
-        } else if (!opts.quiet) {
-            gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, )\n", x1, y1, z1);
+        const bool force = opts.test2 && !check_curve(x, y, z);
+        if (do_print || force) {
+            printf("(");
+            if (force) {
+                ++retval;
+                printf("%u, ", i);
+            }
+            if (opts.test) {
+                gmp_printf("0x%Zx, ", t, x, y, z);
+            }
+            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, )\n", x, y, z);
         }
     }
     clock_gettime(CLOCK_MONOTONIC, &end);
@@ -67,11 +73,8 @@ int main(int argc, char **argv) {
 
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
-    mpz_clear(t);
-    mpz_clear(z1);
-    mpz_clear(y1);
-    mpz_clear(x1);
+    mpz_clears(x, y, z, t, NULL);
     curve_uninit();
 
-    return 0;
+    return retval;
 }

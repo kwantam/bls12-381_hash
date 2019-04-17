@@ -9,7 +9,8 @@
 #include <time.h>
 
 int main(int argc, char **argv) {
-    struct cmdline_opts opts = get_cmdline_opts(argc, argv);
+    int retval = 0;
+    const struct cmdline_opts opts = get_cmdline_opts(argc, argv);
     const bool do_print = opts.test || !opts.quiet;
 
     // initialize static data for curve computations
@@ -17,10 +18,7 @@ int main(int argc, char **argv) {
 
     // get libgmp ready
     mpz_t2 x, y, z, u;
-    mpz2_init(x);
-    mpz2_init(y);
-    mpz2_init(z);
-    mpz2_init(u);
+    mpz2_inits(x, y, z, u, NULL);
 
     // load libcrypto error strings and set up SHA and PRNG
     ERR_load_crypto_strings();
@@ -51,13 +49,16 @@ int main(int argc, char **argv) {
         //   test:              (x, y, z, u)
         //   quiet && !test:    <<nothing>>
         //   !quiet && !test:   (x, y, z)
-        if (do_print) {
+        const bool force = opts.test2 && !check_curve2(x, y, z);
+        if (do_print || force) {
             gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, ", x->s, x->t, y->s, y->t, z->s, z->t);
-        }
-
-        if (opts.test) {
-            gmp_printf("0x%Zx, 0x%Zx, )\n", u->s, u->t);
-        } else if (do_print) {
+            if (opts.test || force) {
+                gmp_printf("0x%Zx, 0x%Zx, ", u->s, u->t);
+            }
+            if (force) {
+                ++retval;
+                printf("%u, ", i);
+            }
             gmp_printf(")\n");
         }
     }
@@ -67,11 +68,8 @@ int main(int argc, char **argv) {
 
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
-    mpz2_clear(u);
-    mpz2_clear(z);
-    mpz2_clear(y);
-    mpz2_clear(x);
+    mpz2_clears(x, y, z, u, NULL);
     curve2_uninit();
 
-    return 0;
+    return retval;
 }

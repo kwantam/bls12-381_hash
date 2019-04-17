@@ -9,7 +9,8 @@
 #include <time.h>
 
 int main(int argc, char **argv) {
-    struct cmdline_opts opts = get_cmdline_opts(argc, argv);
+    int retval = 0;
+    const struct cmdline_opts opts = get_cmdline_opts(argc, argv);
     const bool do_print = opts.test || !opts.quiet;
 
     // initialize static data for curve computations
@@ -17,11 +18,7 @@ int main(int argc, char **argv) {
 
     // get libgmp ready
     mpz_t2 x, y, z, u1, u2;
-    mpz2_init(x);
-    mpz2_init(y);
-    mpz2_init(z);
-    mpz2_init(u1);
-    mpz2_init(u2);
+    mpz2_inits(x, y, z, u1, u2, NULL);
 
     // load libcrypto error strings and set up SHA and PRNG
     ERR_load_crypto_strings();
@@ -48,14 +45,16 @@ int main(int argc, char **argv) {
         //   test:              (x, y, z, u1, u2)
         //   quiet && !test:    <<nothing>>
         //   !quiet && !test:   (x, y, z)
-        if (do_print) {
+        const bool force = opts.test2 && !check_curve2(x, y, z);
+        if (do_print || force) {
             gmp_printf("(0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, ", x->s, x->t, y->s, y->t, z->s, z->t);
-        }
-
-        // maybe output the points
-        if (opts.test) {
-            gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, )\n", u1->s, u1->t, u2->s, u2->t);
-        } else if (do_print) {
+            if (opts.test || force) {
+                gmp_printf("0x%Zx, 0x%Zx, 0x%Zx, 0x%Zx, ", u1->s, u1->t, u2->s, u2->t);
+            }
+            if (force) {
+                ++retval;
+                printf("%u, ", i);
+            }
             gmp_printf(")\n");
         }
     }
@@ -65,12 +64,8 @@ int main(int argc, char **argv) {
 
     // free
     EVP_CIPHER_CTX_free(prng_ctx);
-    mpz2_clear(u2);
-    mpz2_clear(u1);
-    mpz2_clear(z);
-    mpz2_clear(y);
-    mpz2_clear(x);
+    mpz2_clears(x, y, z, u1, u2, NULL);
     curve2_uninit();
 
-    return 0;
+    return retval;
 }

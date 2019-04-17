@@ -14,17 +14,13 @@ struct mpz2_struct {
 };
 typedef struct mpz2_struct mpz_t2[1];
 
-// mpz_init for mpz_t2
-static inline void mpz2_init(mpz_t2 io) {
-    mpz_init(io->s);
-    mpz_init(io->t);
-}
+// init/clear for mpz_t2
+void mpz2_init(mpz_t2 io);
+void mpz2_clear(mpz_t2 io);
 
-// mpz_clear for mpz_t2
-static inline void mpz2_clear(mpz_t2 io) {
-    mpz_clear(io->s);
-    mpz_clear(io->t);
-}
+// multi-init/clear for mpz_t2
+void mpz2_inits(mpz_t2 io, ...);
+void mpz2_clears(mpz_t2 io, ...);
 
 #define __bls_hash__src__curve2__fp2_h__
 #endif  // __bls_hash__src__curve2__fp2_h__
