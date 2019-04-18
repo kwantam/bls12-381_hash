@@ -11,7 +11,8 @@
 #define NREPS 10
 
 int main(int argc, char **argv) {
-    const struct cmdline_opts opts = get_cmdline_opts(argc, argv);
+    HASH_INIT(x, y, z);
+    (void)do_print;  // do_print (defined in HASH_INIT) is otherwise unused
 
     // dump times to outfd to measure timing of outliers
     FILE *outfp;
@@ -20,25 +21,6 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    // initialize temp variables for curve computations
-    curve_init();
-
-    // get libgmp ready
-    mpz_t x, y, z;
-    mpz_inits(x, y, z, NULL);
-
-    // load libcrypto error strings and set up SHA and PRNG
-    ERR_load_crypto_strings();
-    SHA256_CTX hash_ctx;
-    CHECK_CRYPTO(SHA256_Init(&hash_ctx));
-    EVP_CIPHER_CTX *prng_ctx = EVP_CIPHER_CTX_new();
-    CHECK_CRYPTO(prng_ctx != NULL);
-
-    // hash the contents of stdin
-    hash_stdin(&hash_ctx);
-
-    struct timespec start, end;
-    // loop through different resulting PRNG keys
     for (unsigned i = 0; i < opts.nreps; ++i) {
         clock_gettime(CLOCK_MONOTONIC, &start);
         for (unsigned k = 0; k < NREPS; ++k) {
@@ -62,11 +44,7 @@ int main(int argc, char **argv) {
         fprintf(outfp, "%ld\n", elapsed);
     }
 
-    // free
-    EVP_CIPHER_CTX_free(prng_ctx);
-    mpz_clears(x, y, z, NULL);
-    curve_uninit();
-    fclose(outfp);
-
-    return 0;
+    fclose(stdout);  // make sure the fprint in HASH2_CLEAR doesn't have any effect
+    fclose(stderr);
+    HASH_CLEAR(x, y, z);
 }
