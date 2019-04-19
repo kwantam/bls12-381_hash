@@ -12,7 +12,7 @@ the SvdW map requires for efficiency. This simplifies implementation---especiall
 implementation---since both of those algorithms would require implementing arbitrary modular
 reductions rather than reductions modulo a fixed prime.
 
-The [paper](https://bls-has.crypto.fyi) derives the maps and describes our optimizations.
+The [paper](https://bls-hash.crypto.fyi) derives the maps and describes our optimizations.
 Our evaluation (see the paper) shows that the *constant-time* SWU map is never more
 than ~9% slower than the fastest (non--constant-time) implementations of the SW map. Moreover,
 comparing SW vs SWU when both are implemented in constant time using field ops only shows that
