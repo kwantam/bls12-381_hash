@@ -45,7 +45,7 @@ uint8_t *next_modq(EVP_CIPHER_CTX *cctx, mpz_t *out);
     const bool do_print = opts.test || !opts.quiet;                \
     C_INIT_FN();                                                   \
     MP_TYPE __VA_ARGS__;                                           \
-    MP_INIT_FN(__VA_ARGS__, NULL);                                 \
+    MP_INIT_FN(__VA_ARGS__, (void *)NULL);                         \
     ERR_load_crypto_strings();                                     \
     SHA256_CTX hash_ctx;                                           \
     CHECK_CRYPTO(SHA256_Init(&hash_ctx));                          \
@@ -60,7 +60,7 @@ uint8_t *next_modq(EVP_CIPHER_CTX *cctx, mpz_t *out);
     long elapsed = 1000000000 * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; \
     fprintf(opts.quiet ? stdout : stderr, "%ld\n", elapsed);                               \
     EVP_CIPHER_CTX_free(prng_ctx);                                                         \
-    MP_CLEAR_FN(__VA_ARGS__, NULL);                                                        \
+    MP_CLEAR_FN(__VA_ARGS__, (void *)NULL);                                                \
     C_UNINIT_FN();                                                                         \
     return retval
 
