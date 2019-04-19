@@ -59,14 +59,6 @@ static inline void mpz2_modp2(mpz_t2 out, const mpz_t2 in) {
     mpz_mod(out->t, in->t, fld_p);
 }
 
-// multiply in fp2 by sqrt(-1)
-// out == in is OK
-static inline void mul_modp2_i(mpz_t2 out, const mpz_t2 in) {
-    mpz_set(out->s, in->s);
-    mpz_sub(out->t, fld_p, in->t);  // sqrt(-1) * sqrt(-1) * t = -t
-    mpz_swap(out->s, out->t);
-}
-
 // multiply in fp2 by a scalar (i.e., a value in fp)
 static inline void mul_modp2_scalar(mpz_t2 out, const mpz_t2 in1, const mpz_t in2) {
     mul_modp(out->s, in1->s, in2);
