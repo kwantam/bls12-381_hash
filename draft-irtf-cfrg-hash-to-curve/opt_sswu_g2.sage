@@ -11,11 +11,14 @@ p = 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb1
 F = GF(p)
 Ell = EllipticCurve(F, [0,4])
 h = 3 * 11**2 * 10177**2 * 859267**2 * 52437899**2 # co-factor for G1
+assert Ell.order() % h == 0
 q = Ell.order() // h
 
 # BLS12-381 G2 curve
 F2.<X> = GF(p^2, modulus=[1, 0, 1])
 Ell2 = EllipticCurve(F2, [0, 4 * (1 + X)])
+h2 = Ell2.order() // q
+assert Ell2.order() % q == 0
 
 # 3-isogenous curve to Ell2
 Ell2p_a = F2(240 * X)
@@ -165,8 +168,10 @@ if __name__ == "__main__":
         print("")
         tv_text("alpha", pprint_hex(alpha))
         print("")
+        P = map2curve_osswu2(alpha, False)
         Pc = map2curve_osswu2(alpha, True)
-        assert Pc * q == Ell2(0,1,0)  # make sure that Pc is of the correct order
+        assert P * h2 * (3 * ell2_x ** 2 - 3) == Pc  # make sure fast cofactor clear method worked
+        assert Pc * q == Ell2(0,1,0)                 # make sure that Pc is of the correct order
         print("Output:")
         print("")
         vec = Pc[0]._vector_()
