@@ -6,12 +6,7 @@
 from hash_to_base import *
 from utils import *
 
-# BLS12-381 G1 curve
-p = 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
-F = GF(p)
-Ell = EllipticCurve(F, [0,4])
-h = 3 * 11**2 * 10177**2 * 859267**2 * 52437899**2 # co-factor for G1
-q = Ell.order() // h
+load("g1_common.sage")
 
 # u0 for G1. This is the smallest (in abs value) u0 such that
 # f1((sqrt(-3 u0^2) - u0)/2) is square, which makes exception handling easier
@@ -23,10 +18,6 @@ cx2_1 = (sqrt(F(-3 * u0_1 ** 2)) + F(u0_1)) / F(2)
 
 h2c_suite = "H2C-BLS12_381_1-SHA512-SvdW-"
 
-# the lexically larger of x and p-x is negative
-def is_negative(x):
-    return x > (p-1)//2
-
 # y^2 = f1(x) is the curve equation for Ell
 def f1(x):
     return F(x ** 3 + 4)
@@ -37,11 +28,8 @@ assert f1(cx1_1).is_square()
 # Shallue--van de Woestijne map
 def svdw_help(t):
     # first, compute the value to be inverted
-    inv_input = t ** 2 * (t**2 + f1(u0_1))
-    if inv_input == 0:
-        inv_output = 0
-    else:
-        inv_output = 1/F(inv_input)
+    inv_input = t ** 2 * (t ** 2 + f1(u0_1))
+    inv_output = 0 if inv_input == 0 else 1/F(inv_input)
 
     # now use inv_output to compute x1, x2, x3
     x12_common = inv_output * t ** 4 * sqrt(F(-3 * u0_1 ** 2))
@@ -69,9 +57,9 @@ def svdw_help(t):
 
 def map2curve_svdw(alpha, clear=False):
     t = F(h2b_from_label(h2c_suite, alpha))
-    tv("t ", t, 48)
     P = svdw_help(t)
     if clear:
+        tv("t ", t, 48)
         return h * P
     return P
 

@@ -6,19 +6,7 @@
 from hash_to_base import *
 from utils import *
 
-# BLS12-381 G1 curve
-p = 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
-F = GF(p)
-Ell = EllipticCurve(F, [0,4])
-h = 3 * 11**2 * 10177**2 * 859267**2 * 52437899**2 # co-factor for G1
-assert Ell.order() % h == 0
-q = Ell.order() // h
-
-# BLS12-381 G2 curve
-F2.<X> = GF(p^2, modulus=[1, 0, 1])
-Ell2 = EllipticCurve(F2, [0, 4 * (1 + X)])
-h2 = Ell2.order() // q
-assert Ell2.order() % q == 0
+load("g2_common.sage")
 
 # 3-isogenous curve to Ell2
 Ell2p_a = F2(240 * X)
@@ -29,62 +17,8 @@ iso2 = EllipticCurveIsogeny(Ell2p, [6 * (1 - X), 1], codomain=Ell2)
 
 h2c_suite = "H2C-BLS12_381_2-SHA512-OSSWU-"
 
-##
-## clear cofactor via untwist-Frobenius-twist endomorphism
-##
-# this is based on
-#   Budroni and Pintore, "Efficient Hash Maps to G2 on BLS curves."
-#   ePrint 2017/419, https://eprint.iacr.org/2017/419
-##
-# constants for Psi, the untwist-Frobenius-twist map
-iwsc_0 = 0xd0088f51cbff34d258dd3db21a5d66bb23ba5c279c2895fb39869507b587b120f55ffff58a9ffffdcff7fffffffd556
-iwsc = F2(iwsc_0 * (1 + X) - X)
-k_qi_x = 0x1a0111ea397fe699ec02408663d4de85aa0d857d89759ad4897d29650fb85f9b409427eb4f49fffd8bfd00000000aaad
-k_qi_y = 0x6af0e0437ff400b6831e36d6bd17ffe48395dabc2d3435e77f76e17009241c5ee67992f72ec05f4c81084fbede3cc09
-k_cx = F2(X * 0x1a0111ea397fe699ec02408663d4de85aa0d857d89759ad4897d29650fb85f9b409427eb4f49fffd8bfd00000000aaad)
-k_cy = 0x135203e60180a68ee2e9c448d77a2cd91c3dedd930b1cf60ef396489f61eb45e304466cf3e67fa0af1ee7b04121bdea2
-k_cy = F2(k_cy * (1 - X))
-onei = F2(1 + X)
-ell2_x = - 0xd201000000010000
-
-# shortcut for evaluating untwist without resorting to Fp12 arithmetic --- X coordinate
-def qi_x(x):
-    vec = x._vector_()
-    return F2(k_qi_x * (vec[0] - X * vec[1]))
-
-# shortcut for evaluating untwist without resorting to Fp12 arithmetic --- Y coordinate
-def qi_y(y):
-    vec = y._vector_()
-    return k_qi_y * F2(vec[0] + vec[1] + X * (vec[0] - vec[1]))
-
-# untwist-Frobenius-twist
-def psi(P):
-    x = onei * qi_x(iwsc * P[0])
-    y = onei * qi_y(iwsc * P[1])
-    return Ell2(x, y)
-
-# construction for Barreto-Lynn-Scott curves with embedding degree 12,
-# given in section 4.1 of Budroni and Pintore
-def clear_h2(P):
-    pP = psi(P)
-    pp2P = psi(psi(2 * P))
-    first = (ell2_x ** 2 - ell2_x - 1) * P
-    second = (ell2_x - 1) * pP
-    return first + second + pp2P
-
-##
-## SWU map for G2
-##
 # xi is the distinguished non-square for the SWU map
 xi_2 = F2(1 + X)
-# roots of unity for use in computing square roots
-roots1 = (F2(1)
-  , F2(X)
-  , F2(1028732146235106349975324479215795277384839936929757896155643118032610843298655225875571310552543014690878354869257*X
-      + 1028732146235106349975324479215795277384839936929757896155643118032610843298655225875571310552543014690878354869257)
-  , F2(2973677408986561043442465346520108879172042883009249989176415018091420807192182638567116318576472649347015917690530*X
-      + 1028732146235106349975324479215795277384839936929757896155643118032610843298655225875571310552543014690878354869257)
-  )
 # eta values for converting a failed attempt at sqrt(g(X0(t))) to sqrt(g(X1(t)))
 etas = (F2(426061185569912361983521454249761337083267257081408520893788542915383290290183480196466860748572708974347122096641)
    , F2(426061185569912361983521454249761337083267257081408520893788542915383290290183480196466860748572708974347122096641*X)
@@ -93,10 +27,6 @@ etas = (F2(426061185569912361983521454249761337083267257081408520893788542915383
    , F2(2713583864951539464555509046186133786636843934311948297439316841299765797761977357602316564891404861557145534838161*X
        + 1288825690270127928862280779549770369920038885627059587892741294824265852728860506840371064237610802480748737721626)
    )
-
-# we define an element to be negative if its first coordinate in the canonical power basis is negative
-def is_negative(x):
-    return x._vector_()[0] > (p-1) // 2
 
 # y^2 = g2p(x) is the curve equation for Ell2p
 def g2p(x):
@@ -150,10 +80,10 @@ def map2curve_osswu2(alpha, clear=False):
     t1 = h2b_from_label(h2c_suite + "coord1", alpha)
     t2 = h2b_from_label(h2c_suite + "coord2", alpha)
     t = F2(t1 + X * t2)
-    tv("t1 ", t1, 48)
-    tv("t2 ", t2, 48)
     P = osswu2_help(t)
     if clear:
+        tv("t1 ", t1, 48)
+        tv("t2 ", t2, 48)
         return clear_h2(P)
     return P
 

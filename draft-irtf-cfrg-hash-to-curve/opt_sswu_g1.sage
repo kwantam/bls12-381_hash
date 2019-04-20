@@ -6,12 +6,7 @@
 from hash_to_base import *
 from utils import *
 
-# BLS12-381 G1 curve
-p = 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
-F = GF(p)
-Ell = EllipticCurve(F, [0,4])
-h = 3 * 11**2 * 10177**2 * 859267**2 * 52437899**2 # co-factor for G1
-q = Ell.order() // h
+load("g1_common.sage")
 
 # 11-isogenous curve Ell'
 EllP_a = F(0x144698a3b8e9433d693a02c96d4982b0ea985383ee66a8d8e8981aefd881ac98936f8da0e0f97f5cf428082d584c1d)
@@ -36,10 +31,6 @@ xi_1 = F(-1)
 # y^2 = g1p(x) is the curve equation for EllP
 def g1p(x):
     return F(x**3 + EllP_a * x + EllP_b)
-
-# the lexically larger of x and (p-x) is the one we call negative
-def is_negative(x):
-    return x > (p - 1) // 2
 
 def osswu_help(t):
     # compute the value X0(t)
@@ -77,9 +68,9 @@ def osswu_help(t):
 # map from a string, optionally clearing the cofactor
 def map2curve_osswu(alpha, clear=False):
     t = F(h2b_from_label(h2c_suite, alpha))
-    tv("t ", t, 48)
     P = osswu_help(t)
     if clear:
+        tv("t ", t, 48)
         return h * P
     return P
 
