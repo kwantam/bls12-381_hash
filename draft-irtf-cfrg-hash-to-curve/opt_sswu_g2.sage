@@ -27,7 +27,7 @@ Ell2p = EllipticCurve(F2, [Ell2p_a, Ell2p_b])
 # isogeny map back to Ell2
 iso2 = EllipticCurveIsogeny(Ell2p, [6 * (1 - X), 1], codomain=Ell2)
 
-h2c_suite = "H2C-BLS12_381_2-SHA512-FT-"
+h2c_suite = "H2C-BLS12_381_2-SHA512-OSSWU-"
 
 ##
 ## clear cofactor via untwist-Frobenius-twist endomorphism

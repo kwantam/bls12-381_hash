@@ -28,7 +28,7 @@ EllP = EllipticCurve(F, [EllP_a, EllP_b])
 iso = EllipticCurveIsogeny(EllP, kpoly, codomain=Ell, degree=11)
 iso.switch_sign()  # we use the isogeny with the opposite sign for y; the choice is arbitrary
 
-h2c_suite = "H2C-BLS12_381_1-SHA512-FT-"
+h2c_suite = "H2C-BLS12_381_1-SHA512-OSSWU-"
 
 # xi is the distinguished non-square for the SWU map
 xi_1 = F(-1)
