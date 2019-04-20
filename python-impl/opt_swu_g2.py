@@ -4,6 +4,10 @@
 #
 # pure Python implementation of optimized simplified SWU map to BLS12-381 G2
 
+import sys
+if sys.version_info[0] < 3:
+    raise RuntimeError("this script requires Python 3")
+
 from fields import Fq2, p
 from curve_ops import clear_h2, from_jacobian, point_add, to_jacobian
 
