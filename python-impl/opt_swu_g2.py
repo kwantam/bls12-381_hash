@@ -35,8 +35,8 @@ def osswu2_help(t):
     # first, compute X0(t), detecting and handling exceptional case
     num_den_common = xi_2 ** 2 * t ** 4 + xi_2 * t ** 2
     if num_den_common == 0:
-        # exceptional case: recover by setting x0 to a known square,
-        # which we guarantee by choosing xi_2 to make the following square
+        # exceptional case: recover by setting x0 to a value s.t. g(x0) is a square
+        # we choose xi_2 the smallest nonsquare s.t. g(b/(xi a)) is square
         x0 = Ell2p_b / (xi_2 * Ell2p_a)
     else:
         x0 = -Ell2p_b * (num_den_common + 1) / (Ell2p_a * num_den_common)
@@ -64,7 +64,7 @@ def osswu2_help(t):
             return (x1, y1)
 
     # if we got here, something is wrong
-    assert False, "osswu2_help failed"
+    raise RuntimeError("osswu2_help failed for unknown reasons")
 
 ###
 ## 3-Isogeny from Ell2' to Ell2
@@ -124,7 +124,7 @@ def opt_swu2_map(t, t2=None):
     P = iso3(Pp)
     return clear_h2(P)
 
-if __name__ == "__main__":
+def run_tests():
     import random
     from curve_ops import psi
     for _ in range(0, 100):
@@ -145,3 +145,6 @@ if __name__ == "__main__":
         # now test end-to-end
         P = opt_swu2_map(t1, t2)
         assert P[0] ** 3 + Fq2(p, 4, 4) == P[1] ** 2
+
+if __name__ == "__main__":
+    run_tests()

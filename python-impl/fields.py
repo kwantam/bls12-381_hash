@@ -12,6 +12,7 @@ class Fq(int):
     """
     Represents an element of a finite field mod a prime q.
     """
+    Q = None
     extension = 1
 
     def __new__(cls, Q, x):
@@ -52,15 +53,8 @@ class Fq(int):
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):
-            return (super().__eq__(other))
-        else:
-            return (super().__eq__(other) and self.Q == other.Q)
-
-    def __lt__(self, other):
-        return (super().__lt__(other))
-
-    def __gt__(self, other):
-        return (super().__gt__(other))
+            return super().__eq__(other)
+        return super().__eq__(other) and self.Q == other.Q
 
     def __str__(self):
         s = hex(int(self))
@@ -70,18 +64,14 @@ class Fq(int):
     def __repr__(self):
         return "Fq(" + hex(int(self)) + ")"
 
-    def serialize(self):
-        return super().to_bytes(48, "big")
-
     def __pow__(self, other):
         if other == 0:
             return Fq(self.Q, 1)
-        elif other == 1:
+        if other == 1:
             return self
-        elif other % 2 == 0:
+        if other % 2 == 0:
             return (self * self) ** (other // 2)
-        else:
-            return (self * self) ** (other // 2) * self
+        return (self * self) ** (other // 2) * self
 
     def __invert__(self):
         """
@@ -107,52 +97,6 @@ class Fq(int):
     def __iter__(self):
         yield self
 
-    def modsqrt(self):
-        if int(self) == 0:
-            return Fq(self.Q, 0)
-        if pow(int(self), (self.Q - 1) // 2, self.Q) != 1:
-            raise ValueError("No sqrt exists")
-        if self.Q % 4 == 3:
-            return Fq(self.Q, pow(int(self), (self.Q + 1) // 4, self.Q))
-        if self.Q % 8 == 5:
-            return Fq(self.Q, pow(int(self), (self.Q + 3) // 8, self.Q))
-
-        # p % 8 == 1. Tonelli Shanks algorithm for finding square root
-        S = 0
-        q = self.Q - 1
-
-        while q % 2 == 0:
-            q = q // 2
-            S += 1
-
-        z = 0
-        for i in range(self.Q):
-            euler = pow(i, (self.Q - 1)//2, self.Q)
-            if euler == -1 % self.Q:
-                z = i
-                break
-
-        M = S
-        c = pow(z, q, self.Q)
-        t = pow(int(self), q, self.Q)
-        R = pow(int(self), (q + 1) // 2, self.Q)
-
-        while True:
-            if t == 0:
-                return Fq(self.Q, 0)
-            if t == 1:
-                return Fq(self.Q, R)
-            i = 0
-            f = t
-            while f != 1:
-                f = pow(f, 2, self.Q)
-                i += 1
-            b = pow(c, pow(2, M - i - 1, self.Q), self.Q)
-            M = i
-            c = pow(b, 2, self.Q)
-            t = (t * c) % self.Q
-            R = (R * b) % self.Q
-
     def __deepcopy__(self, memo):
         return Fq(self.Q, int(self))
 
@@ -165,9 +109,9 @@ class Fq(int):
         return Fq(Q, 1)
 
     @classmethod
-    def from_fq(cls, Q, fq):
+    def from_fq(cls, _, fq):
         return fq
-    
+
 
 class FieldExtBase(tuple):
     """
@@ -175,13 +119,17 @@ class FieldExtBase(tuple):
     The elements of the tuple can be other FieldExtBase or they can be
     Fq elements. For example, Fq2 = (Fq, Fq). Fq12 = (Fq6, Fq6), etc.
     """
+    extension = None
+    basefield = None
+    embedding = None
     root = None
+    Q = None
 
     def __new__(cls, Q, *args):
         new_args = args[:]
         try:
             arg_extension = args[0].extension
-            args[1].extension
+            args[1].extension  # pylint: disable=pointless-statement
         except AttributeError:
             if len(args) != 2:
                 raise Exception("Invalid number of arguments")
@@ -191,7 +139,7 @@ class FieldExtBase(tuple):
             if len(args) != cls.embedding:
                 raise Exception("Invalid number of arguments")
             for arg in new_args:
-                assert(arg.extension == arg_extension)
+                assert arg.extension == arg_extension
         assert all(isinstance(arg, cls.basefield
                               if cls.basefield is not Fq else int)
                    for arg in new_args)
@@ -209,7 +157,7 @@ class FieldExtBase(tuple):
     def __add__(self, other):
         cls = type(self)
         if not isinstance(other, cls):
-            if type(other) != int and other.extension > self.extension:
+            if type(other) != int and other.extension > self.extension:  # pylint: disable=unidiomatic-typecheck
                 return NotImplemented
             other_new = [cls.basefield.zero(self.Q) for _ in self]
             other_new[0] = other_new[0] + other
@@ -265,9 +213,11 @@ class FieldExtBase(tuple):
     def __floordiv__(self, other):
         return self * ~other
 
+    __truediv__ = __floordiv__
+
     def __eq__(self, other):
         if not isinstance(other, type(self)):
-            if isinstance(other, FieldExtBase) or isinstance(other, int):
+            if isinstance(other, (FieldExtBase, int)):
                 if (not isinstance(other, FieldExtBase)
                    or self.extension > other.extension):
                     for i in range(1, self.embedding):
@@ -276,15 +226,11 @@ class FieldExtBase(tuple):
                     return self[0] == other
                 return NotImplemented
             return NotImplemented
-        else:
-            return (super().__eq__(other) and self.Q == other.Q)
+        return super().__eq__(other) and self.Q == other.Q
 
     def __lt__(self, other):
         # Reverse the order for comparison (3i + 1 > 2i + 7)
         return self[::-1].__lt__(other[::-1])
-
-    def __gt__(self, other):
-        return (super().__gt__(other))
 
     def __neq__(self, other):
         return not self.__eq__(other)
@@ -298,17 +244,6 @@ class FieldExtBase(tuple):
         return ("Fq" + str(self.extension) + "(" + ", ".join([a.__repr__()
                                                              for a in self])
                 + ")")
-
-    # Returns the concatenated coordinates in big endian bytes
-    def serialize(self):
-        sum_bytes = bytes([])
-        for x in self:
-            if type(x) != FieldExtBase and type(x) != Fq:
-                x = Fq.from_fq(self.Q, x)
-            sum_bytes += x.serialize()
-        return sum_bytes
-
-    __truediv__ = __floordiv__
 
     def __pow__(self, e):
         assert isinstance(e, int) and e >= 0
@@ -348,11 +283,6 @@ class FieldExtBase(tuple):
         ret.Q = Q
         if cls == Fq2:
             ret.set_root(Fq(Q, -1))
-        elif cls == Fq6:
-            ret.set_root(Fq2(Q, Fq.one(Q), Fq.one(Q)))
-        elif cls == Fq12:
-            r = Fq6(Q, Fq2.zero(Q), Fq2.one(Q), Fq2.zero(Q))
-            ret.set_root(r)
         return ret
 
     def __deepcopy__(self, memo):
@@ -368,7 +298,8 @@ class Fq2(FieldExtBase):
     embedding = 2
     basefield = Fq
 
-    def __init__(self, Q, *args):
+    def __init__(self, Q, *_):
+        # pylint: disable=super-init-not-called
         super().set_root(Fq(Q, -1))
 
     def __invert__(self):
@@ -377,46 +308,16 @@ class Fq2(FieldExtBase):
         ret = Fq2(self.Q, a * factor, -b * factor)
         return ret
 
-    def mul_by_nonresidue(self):
-        # multiply by u + 1
-        a, b = self
-        return Fq2(self.Q, a - b, a + b)
-
-    def modsqrt(self):
-        """
-        Using algorithm 8 (complex method) for square roots in
-        https://eprint.iacr.org/2012/685.pdf
-        This is necessary for computing y value given an x value.
-        """
-        a0, a1 = self
-        if a1 == Fq.zero(self.Q):
-            return a0.modsqrt()
-        alpha = pow(a0, 2) + pow(a1, 2)
-        gamma = pow(alpha, (self.Q - 1)//2)
-        if (gamma == Fq(self.Q, -1)):
-            raise ValueError("No sqrt exists")
-        alpha = alpha.modsqrt()
-        delta = (a0 + alpha) * ~Fq(self.Q, 2)
-        gamma = pow(delta, (self.Q - 1)//2)
-        if (gamma == Fq(self.Q, -1)):
-            delta = (a0 - alpha) * ~Fq(self.Q, 2)
-
-        x0 = delta.modsqrt()
-        x1 = a1 * ~(2*x0)
-        return Fq2(self.Q, x0, x1)
-
-"""
-Copyright 2018 Chia Network Inc
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-   http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
+# Copyright 2018 Chia Network Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
