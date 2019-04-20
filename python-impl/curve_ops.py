@@ -69,6 +69,9 @@ def x_chain(P):
 # We use the version given in section 4.1 of
 #    Budroni and Pintore, "Efficient hash maps to G2 on BLS curves,"
 #    ePrint 2017/419 https://eprint.iacr.org/2017/419
+# NOTE: this impl works for affine coordinates. See ../src/test/g2_test.sage for a version
+#       that works for Jacobian projective coordinates without computing an inversion.
+#
 # constants for Psi, the untwist-Frobenius-twist endomorphism
 iwsc = 0xd0088f51cbff34d258dd3db21a5d66bb23ba5c279c2895fb39869507b587b120f55ffff58a9ffffdcff7fffffffd556
 iwsc = Fq2(p, iwsc, iwsc - 1)
