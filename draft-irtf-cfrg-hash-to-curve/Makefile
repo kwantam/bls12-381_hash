@@ -2,7 +2,7 @@
 #
 # (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
-TEST_PROGS := hash_to_base
+TEST_PROGS := hash_to_base opt_sswu_g1
 
 all: test
 
