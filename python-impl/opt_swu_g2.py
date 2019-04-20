@@ -26,7 +26,7 @@ etas = (Fq2(p, ev1, 0), Fq2(p, 0, ev1), Fq2(p, ev2, ev2), Fq2(p, ev2, p - ev2))
 del ev1, ev2
 
 ###
-## Simplified SWU map, with optimized and adapted to Ell2'
+## Simplified SWU map, optimized and adapted to Ell2'
 ###
 # This function maps an element of Fp^2 to the curve Ell2', 3-isogenous to Ell2.
 def osswu2_help(t):
