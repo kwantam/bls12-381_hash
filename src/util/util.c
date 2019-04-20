@@ -98,6 +98,8 @@ static inline bool next_modp_nct(EVP_CIPHER_CTX *cctx, mpz_t ret) {
 // constant-time rejection sampling for modp
 // p is ~0.8 * 2^381, so with 20% probability we do not find a residue.
 // 0.2^56 is ~2^-130, i.e., sufficiently low failure probability
+//
+// NOTE: an easier way to do this with negligible bias is to hash to 762 bits and reduce mod p (in constant time)
 #define NUM_SAMP_P 56
 static inline bool next_modp_ct(EVP_CIPHER_CTX *cctx, mpz_t ret) {
     uint64_t p_out[P_LEN / 8] = {0};
