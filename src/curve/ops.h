@@ -31,7 +31,7 @@ extern jac_point bint_precomp[4][4][4];
 void precomp_finish(void);
 
 // addition chain for clearing cofactor
-void clear_h_chain(void);
+void clear_h_chain(jac_point *restrict out, const jac_point *restrict in);
 
 // helper for construction #3: add random multiple of gPrime and clear h
 void addrG_clear_h_help(const uint8_t *r);

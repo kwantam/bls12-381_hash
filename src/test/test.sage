@@ -6,6 +6,7 @@
 import sys
 
 p = 0x1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab
+ell_u = -0xd201000000010000
 F = GF(p)
 Ell = EllipticCurve(F, [0, 4])
 h = 3 * 11**2 * 10177**2 * 859267**2 * 52437899**2
@@ -117,11 +118,11 @@ if __name__ == "__main__":
             JEll(xOut, yOut, zOut)
 
     elif sys.argv[1] == "1":
-        assert all( JEll(xOut, yOut, zOut) == h * svdw(t)
+        assert all( JEll(xOut, yOut, zOut) == (ell_u - 1) * svdw(t)
                     for (t, xOut, yOut, zOut) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "2":
-        assert all( JEll(xOut, yOut, zOut) == h * (svdw(t1) + svdw(t2))
+        assert all( JEll(xOut, yOut, zOut) == (ell_u - 1) * (svdw(t1) + svdw(t2))
                     for (t1, t2, xOut, yOut, zOut) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "rG":
@@ -130,12 +131,12 @@ if __name__ == "__main__":
 
     elif sys.argv[1] == "u1":
         init_iso()
-        assert all( JEll(xOut, yOut, zOut) == h * iso(swu(u))
+        assert all( JEll(xOut, yOut, zOut) == (ell_u - 1) * iso(swu(u))
                     for (xOut, yOut, zOut, u) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "u2":
         init_iso()
-        assert all( JEll(xOut, yOut, zOut) == h * iso(swu(u1) + swu(u2))
+        assert all( JEll(xOut, yOut, zOut) == (ell_u - 1) * iso(swu(u1) + swu(u2))
                     for (xOut, yOut, zOut, u1, u2) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "urG":

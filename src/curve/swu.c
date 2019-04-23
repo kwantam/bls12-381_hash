@@ -228,8 +228,8 @@ void swu_map(mpz_t x, mpz_t y, mpz_t z, const mpz_t u, const bool constant_time)
     }
     eval_iso11();
 
-    clear_h_chain();
-    from_jac_point(x, y, z, jp_tmp + 7);
+    clear_h_chain(jp_tmp, jp_tmp + 1);
+    from_jac_point(x, y, z, jp_tmp);
 }
 
 // evaluate the SWU map twice, add results together, apply isogeny map, clear cofactor
@@ -244,8 +244,8 @@ void swu_map2(mpz_t x, mpz_t y, mpz_t z, const mpz_t u1, const mpz_t u2, const b
     point_add(jp_tmp + 1, jp_tmp, jp_tmp + 1);
     eval_iso11();
 
-    clear_h_chain();
-    from_jac_point(x, y, z, jp_tmp + 7);
+    clear_h_chain(jp_tmp, jp_tmp + 1);
+    from_jac_point(x, y, z, jp_tmp);
 }
 
 // evalute the SWU map once, apply isogeny map, and clear cofactor while adding a random point in subgroup

@@ -99,78 +99,41 @@ void point_add(jac_point *out, const jac_point *in1, const jac_point *in2) {
 // temporary points for intermediate computations (mostly used in clear_h_chain())
 jac_point jp_tmp[NUM_TMP_JP];
 
-// Addition chain: Bos-Coster (win=7) : 147 links, 8 variables
-// input point is taken from jp_tmp[1], output is in jp_tmp[7]
-// TODO(rsw): is there a faster addition-subtraction chain?
-void clear_h_chain(void) {
-    point_double(jp_tmp + 3, jp_tmp + 1);
-    point_add(jp_tmp + 2, jp_tmp + 3, jp_tmp + 1);
-    point_double(jp_tmp + 5, jp_tmp + 3);
-    point_double(jp_tmp + 4, jp_tmp + 5);
-    point_add(jp_tmp + 1, jp_tmp + 4, jp_tmp + 2);
-    point_double(jp_tmp + 7, jp_tmp + 4);
-    point_add(jp_tmp, jp_tmp + 7, jp_tmp + 3);
-    point_add(jp_tmp + 6, jp_tmp + 7, jp_tmp + 5);
-    point_double(jp_tmp + 7, jp_tmp);
-    point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp + 6);
-    point_add(jp_tmp, jp_tmp + 7, jp_tmp);
-    point_add(jp_tmp + 1, jp_tmp, jp_tmp + 1);
-    point_add(jp_tmp + 5, jp_tmp + 1, jp_tmp + 5);
-    point_add(jp_tmp + 4, jp_tmp + 5, jp_tmp + 4);
-    point_add(jp_tmp, jp_tmp + 4, jp_tmp);
-    point_add(jp_tmp + 3, jp_tmp, jp_tmp + 3);
-    point_add(jp_tmp + 7, jp_tmp + 3, jp_tmp + 7);
-    for (int nops = 0; nops < 7; nops++) {
-        point_double(jp_tmp + 7, jp_tmp + 7);
+// addition chain: Bos-Coster (win=2) : 70 links, 2 variables
+//
+// Mike Scott pointed out that, rather than multiplying by h = (u-1)^2/3,
+// one can clear the cofactor simply by multiplying by (u-1).
+void clear_h_chain(jac_point *restrict out, const jac_point *restrict in) {
+    point_double(out, in);
+    point_add(out, out, in);
+    for (int nops = 0; nops < 2; nops++) {
+        point_double(out, out);
     }
-    point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp + 5);
-    for (int nops = 0; nops < 5; nops++) {
-        point_double(jp_tmp + 7, jp_tmp + 7);
+    point_add(out, out, in);
+    for (int nops = 0; nops < 3; nops++) {
+        point_double(out, out);
     }
-    point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp + 2);
-    for (int nops = 0; nops < 18; nops++) {
-        point_double(jp_tmp + 7, jp_tmp + 7);
-    }
-    point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp + 1);
+    point_add(out, out, in);
     for (int nops = 0; nops < 9; nops++) {
-        point_double(jp_tmp + 7, jp_tmp + 7);
+        point_double(out, out);
     }
-    point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp);
-    for (int nops = 0; nops < 7; nops++) {
-        point_double(jp_tmp + 7, jp_tmp + 7);
+    point_add(out, out, in);
+    for (int nops = 0; nops < 32; nops++) {
+        point_double(out, out);
     }
-    point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp + 4);
-    for (int nops = 0; nops < 9; nops++) {
-        point_double(jp_tmp + 7, jp_tmp + 7);
+    point_add(out, out, in);
+    for (int nops = 0; nops < 16; nops++) {
+        point_double(out, out);
     }
-    point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp + 3);
-    for (int nops = 0; nops < 5; nops++) {
-        point_double(jp_tmp + 7, jp_tmp + 7);
-    }
-    point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp + 2);
-    for (int nops = 0; nops < 17; nops++) {
-        point_double(jp_tmp + 7, jp_tmp + 7);
-    }
-    point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp + 1);
-    for (int nops = 0; nops < 9; nops++) {
-        point_double(jp_tmp + 7, jp_tmp + 7);
-    }
-    point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp);
-    for (int nops = 0; nops < 23; nops++) {
-        point_double(jp_tmp + 7, jp_tmp + 7);
-    }
-    point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp + 1);
-    for (int nops = 0; nops < 9; nops++) {
-        point_double(jp_tmp + 7, jp_tmp + 7);
-    }
-    point_add(jp_tmp + 7, jp_tmp + 7, jp_tmp);
+    point_add(out, out, in);
+    bint_neg(out->Y, out->Y, 2);
 }
 
 // clear BLS12-381 cofactor
 void clear_h(mpz_t X, mpz_t Y, mpz_t Z) {
     to_jac_point(jp_tmp + 1, X, Y, Z);
-    clear_h_chain();
-    from_jac_point(X, Y, Z, jp_tmp + 7);
+    clear_h_chain(jp_tmp, jp_tmp + 1);
+    from_jac_point(X, Y, Z, jp_tmp);
 }
 
 // add 2 points together, then clear cofactor
@@ -178,8 +141,8 @@ void add2_clear_h(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, 
     to_jac_point(jp_tmp, X1, Y1, Z1);
     to_jac_point(jp_tmp + 1, X2, Y2, Z2);
     point_add(jp_tmp + 1, jp_tmp + 1, jp_tmp);
-    clear_h_chain();
-    from_jac_point(X1, Y1, Z1, jp_tmp + 7);
+    clear_h_chain(jp_tmp, jp_tmp + 1);
+    from_jac_point(X1, Y1, Z1, jp_tmp);
 }
 
 // precompute the fixed part of the table (based on G' and 2^128 * G') for addrG

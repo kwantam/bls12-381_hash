@@ -48,7 +48,7 @@ k_cy = 0x135203e60180a68ee2e9c448d77a2cd91c3dedd930b1cf60ef396489f61eb45e304466c
 k_cy = F2(k_cy * (1 - X))
 onei = F2(1 + X)
 
-ell2_x = - 0xd201000000010000
+ell_u = - 0xd201000000010000
 
 def qi_x(x):
     vec = x._vector_()
@@ -84,8 +84,8 @@ def psi_z(P):
 def clear_h2(P):
     pP = psi(P)
     pp2P = psi(psi(2 * P))
-    first = (ell2_x ** 2 - ell2_x - 1) * P
-    second = (ell2_x - 1) * pP
+    first = (ell_u ** 2 - ell_u - 1) * P
+    second = (ell_u - 1) * pP
     return first + second + pp2P
 
 def init_iso2():
