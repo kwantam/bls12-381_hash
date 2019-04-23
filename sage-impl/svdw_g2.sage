@@ -80,8 +80,8 @@ if __name__ == "__main__":
         print("")
         P = map2curve_svdw2(alpha, False)
         Pc = map2curve_svdw2(alpha, True)
-        assert P * h2 * (3 * ell2_x ** 2 - 3) == Pc  # make sure that fast cofactor clear method worked
-        assert Pc * q == Ell2(0,1,0)                 # make sure that Pc is of the correct order
+        assert P * h2 * (3 * ell_u ** 2 - 3) == Pc  # make sure that fast cofactor clear method worked
+        assert Pc * q == Ell2(0,1,0)                # make sure that Pc is of the correct order
         print("Output:")
         print("")
         vec = Pc[0]._vector_()

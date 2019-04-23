@@ -60,7 +60,7 @@ def map2curve_svdw(alpha, clear=False):
     P = svdw_help(t)
     if clear:
         tv("t ", t, 48)
-        return h * P
+        return (ell_u - 1) * P
     return P
 
 if __name__ == "__main__":
@@ -76,8 +76,8 @@ if __name__ == "__main__":
         print("")
         P = map2curve_svdw(alpha, False)
         Pc = map2curve_svdw(alpha, True)
-        assert P * h == Pc           # make sure that Pc is correct relative to P
-        assert Pc * q == Ell(0,1,0)  # make sure that Pc is of the correct order
+        assert P * (ell_u - 1) == Pc  # make sure that Pc is correct relative to P
+        assert Pc * q == Ell(0,1,0)   # make sure that Pc is of the correct order
         print("Output:")
         print("")
         tv("x", Pc[0], 48)

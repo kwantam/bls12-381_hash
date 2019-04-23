@@ -34,7 +34,6 @@ k_cx = F2(X * 0x1a0111ea397fe699ec02408663d4de85aa0d857d89759ad4897d29650fb85f9b
 k_cy = 0x135203e60180a68ee2e9c448d77a2cd91c3dedd930b1cf60ef396489f61eb45e304466cf3e67fa0af1ee7b04121bdea2
 k_cy = F2(k_cy * (1 - X))
 onei = F2(1 + X)
-ell2_x = - 0xd201000000010000
 
 # shortcut for evaluating untwist without resorting to Fp12 arithmetic --- X coordinate
 def qi_x(x):
@@ -57,8 +56,8 @@ def psi(P):
 def clear_h2(P):
     pP = psi(P)
     pp2P = psi(psi(2 * P))
-    first = (ell2_x ** 2 - ell2_x - 1) * P
-    second = (ell2_x - 1) * pP
+    first = (ell_u ** 2 - ell_u - 1) * P
+    second = (ell_u - 1) * pP
     return first + second + pp2P
 
 # roots of unity for use in computing square roots
