@@ -15,6 +15,7 @@ extern const uint8_t BLS12_381_p[P_LEN];
 // 1 - z, parameter of BLS curve
 #define ZM1_LEN 8
 extern const uint8_t BLS12_381_zm1[ZM1_LEN];
+extern const uint8_t BLS12_381_z[ZM1_LEN];
 
 // base point G' : ./hash_and_check -n 1 <<< "bls12_381 random base point"
 extern const bint_ty g_prime_x;

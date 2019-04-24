@@ -8,6 +8,7 @@
 #include "consts.h"
 #include "curve.h"
 #include "globals.h"
+#include "multiexp.h"
 
 #include <string.h>
 
@@ -144,67 +145,19 @@ void add2_clear_h(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, 
     from_jac_point(X1, Y1, Z1, jp_tmp);
 }
 
-// precompute the fixed part of the table (based on G') for addrG
-jac_point bint_precomp[4][4];
-void precomp_init(void) {
-    memset(bint_precomp[0][0].X, 0, sizeof(bint_ty));
-    memset(bint_precomp[0][0].Z, 0, sizeof(bint_ty));
-    bint_set1(bint_precomp[0][0].Y);
+// the below macro defines two functions:
+//   - precompute the fixed part of the table (based on G') for addrG
+//   - precompute the part of the addrG table that involves the input point
+BINT_MEXP_PRECOMP()
 
-    memcpy(bint_precomp[0][1].X, g_prime_x, sizeof(g_prime_x));
-    memcpy(bint_precomp[0][1].Y, g_prime_y, sizeof(g_prime_y));
-    bint_set1(bint_precomp[0][1].Z);
-    point_double(&bint_precomp[0][2], &bint_precomp[0][1]);
-    point_add(&bint_precomp[0][3], &bint_precomp[0][2], &bint_precomp[0][1]);
-}
-
-// precompute the part of the addrG table that involves the input point
-void precomp_finish(const jac_point *in) {
-    if (in != NULL) {
-        memcpy(&bint_precomp[1][0], in, sizeof(jac_point));  // copy input point into precomp table
-    }
-    point_double(&bint_precomp[2][0], &bint_precomp[1][0]);
-    point_add(&bint_precomp[3][0], &bint_precomp[2][0], &bint_precomp[1][0]);
-
-    for (unsigned i = 1; i < 4; ++i) {
-        for (unsigned j = 1; j < 4; ++j) {
-            point_add(&bint_precomp[i][j], &bint_precomp[i][0], &bint_precomp[0][j]);
-        }
-    }
-}
-
-// this is a 2-point multiplication
+// the below macro defines a 2-point multiplication
 //     point 1 is (1 - z) * (X, Y)
 //     point 2 is r * G'
 // where (1 - z) is the BLS parameter for BLS12-381 and G' is an element of the order-q subgroup
 //
 // NOTE this function leaks bits of r via memory accesses, even when constant_time is true
 // TODO(rsw): signed exponent recoding?
-void addrG_clear_h_help(const uint8_t *r, const bool constant_time) {
-    {
-        const uint8_t h_idx = BLS12_381_zm1[0] >> 6;  // definitely not 0
-        const uint8_t r_idx = r[0] >> 6;
-        memcpy(jp_tmp, &bint_precomp[h_idx][r_idx], sizeof(jac_point));
-    }
-    for (unsigned idx = 0; idx < ZM1_LEN; ++idx) {
-        // 0th iteration, we've already done the above copy
-        uint8_t mask = (idx == 0) ? 0x30 : 0xc0;
-        uint8_t shift = (idx == 0) ? 4 : 6;
-        for (; mask != 0; mask = mask >> 2, shift -= 2) {
-            // double if the point is not zero
-            point_double(jp_tmp, jp_tmp);
-            point_double(jp_tmp, jp_tmp);
-
-            const uint8_t h_idx = (BLS12_381_zm1[idx] & mask) >> shift;
-            const uint8_t r_idx = (r[idx] & mask) >> shift;
-            if ((h_idx | r_idx) != 0) {
-                point_add(jp_tmp, jp_tmp, &bint_precomp[h_idx][r_idx]);
-            } else if (constant_time) {
-                point_add(jp_tmp + 1, jp_tmp + 1, jp_tmp + 1);
-            }
-        }
-    }
-}
+BINT_MEXP_FUNCTION(, zm1, , 1)
 
 // compute h*(inX, inY) + r*gPrime via multi-point multiplication
 void addrG_clear_h(mpz_t X, mpz_t Y, mpz_t Z, const uint8_t *r, const bool constant_time) {

@@ -15,6 +15,10 @@ const uint8_t BLS12_381_p[] = {
 const uint8_t BLS12_381_zm1[] = {
     0xd2, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01,
 };
+// z, parameter of BLS curve
+const uint8_t BLS12_381_z[] = {
+    0xd2, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
+};
 
 // base point G'
 // NOTE this is in Montgomery repr suitable for use with bint.

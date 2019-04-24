@@ -17,6 +17,11 @@ Ell2p = EllipticCurve(F2, [Ell2p_a, Ell2p_b])
 iso2 = None
 u0_2 = F2(-1)
 
+g2Prime = Ell2(2888025127383774218547426203466483772040186093195345830147711624705546143601566524841766176445636819636306467736772*X
+               + 1385802964428802453122999152121204091033097285605303982883523884335991775185129616972311723971789162393576393278239,
+               2282535412998194220439573966608267627778184634235372596994146652424548410336459204068314520774907147807993374653339*X
+               + 1433251262661988826708874744949355406344615669536276237122598131792808866861128829548688732494028409806472020804257)
+
 cx1_2 = (sqrt(F2(-3 * u0_2 ** 2)) - F2(u0_2)) / F2(2)
 cx2_2 = (sqrt(F2(-3 * u0_2 ** 2)) + F2(u0_2)) / F2(2)
 
@@ -225,6 +230,10 @@ if __name__ == "__main__":
         assert all( JEll2(x1s, x1t, y1s, y1t, z1s, z1t) == clear_h2(svdw2(F2(t1s + X * t1t)) + svdw2(F2(t2s + X * t2t)))
                     for (t1s, t1t, t2s, t2t, x1s, x1t, y1s, y1t, z1s, z1t) in ( eval(l) for l in sys.stdin.readlines() ) )
 
+    elif sys.argv[1] == "rG":
+        assert all( JEll2(xs, xt, ys, yt, zs, zt) == clear_h2(svdw2(F2(ts + X * tt))) + r * g2Prime
+                    for (ts, tt, r, xs, xt, ys, yt, zs, zt) in ( eval(l) for l in sys.stdin.readlines() ) )
+
     elif sys.argv[1] == "u1":
         init_iso2()
         assert all( JEll2(xs, xt, ys, yt, zs, zt) == clear_h2(iso2(swu2(F2(ts + X * tt))))
@@ -234,6 +243,11 @@ if __name__ == "__main__":
         init_iso2()
         assert all( JEll2(xs, xt, ys, yt, zs, zt) == clear_h2(iso2(swu2(F2(t1s + X * t1t)) + swu2(F2(t2s + X * t2t))))
                     for (xs, xt, ys, yt, zs, zt, t1s, t1t, t2s, t2t) in ( eval(l) for l in sys.stdin.readlines() ) )
+
+    elif sys.argv[1] == "urG":
+        init_iso2()
+        assert all( JEll2(xs, xt, ys, yt, zs, zt) == clear_h2(iso2(swu2(F2(ts + X * tt)))) + r * g2Prime
+                    for (xs, xt, ys, yt, zs, zt, ts, tt, r) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     else:
         usage()

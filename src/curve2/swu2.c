@@ -242,3 +242,14 @@ void swu2_map2(mpz_t2 x, mpz_t2 y, mpz_t2 z, const mpz_t2 u1, const mpz_t2 u2, c
     clear_h2_help();
     from_jac_point2(x, y, z, jp2_tmp + 1);
 }
+
+void swu2_map_rG2(mpz_t2 x, mpz_t2 y, mpz_t2 z, const mpz_t2 u, const uint8_t *r, const bool constant_time) {
+    if (constant_time) {
+        swu2_help_ct(1, u);
+    } else {
+        swu2_help(1, u);
+    }
+    eval_iso3();
+    addrG2_psi(r, constant_time);  // multi-point mult
+    from_jac_point2(x, y, z, jp2_tmp + 1);
+}

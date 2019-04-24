@@ -19,8 +19,8 @@ if [ ! -z "$2" ]; then
 fi
 
 
-if [ "${#bench1_vals[@]}" != 29 ] || ( [ "$NUM_BENCH" = "2" ] && [ "${#bench2_vals[@]}" != 27 ] ); then
-    echo "ERROR: input files must have 27 lines"
+if [ "${#bench1_vals[@]}" != 34 ] || ( [ "$NUM_BENCH" = "2" ] && [ "${#bench2_vals[@]}" != 34 ] ); then
+    echo "ERROR: input files must have 34 lines"
     exit 1
 fi
 
@@ -123,6 +123,18 @@ show_q_fq_cq 1 1
 echo "\\cmidrule{2-6}"
 
 echo "& Construction \\#5 & \\S\\ref{sec:blsmap} &"
+show_q_fq_cq 1 0
+show_q_fq_cq 1 0
+show_q_fq_cq 1 1
+echo "%"
+
+echo "&& \\S\\ref{sec:blsmap2} &"
+show_q_fq_cq 0 0
+show_q_fq_cq 1 0
+show_q_fq_cq 1 1
+echo "\\cmidrule{2-6}"
+
+echo "& Construction \\#6 & \\S\\ref{sec:blsmap} &"
 show_q_fq_cq 1 0
 show_q_fq_cq 1 0
 show_q_fq_cq 1 1

@@ -1,4 +1,4 @@
-// test: hash to curve 11-isogenous to BLS12-381 using SWU map
+// hash to curve 11-isogenous to BLS12-381 G1 using two SWU map evaluations
 //
 // (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
