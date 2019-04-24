@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
             mpz_set_ui(z->s, 1);
             mpz_set_ui(z->t, 0);
         }
-        const uint8_t *r = next_zm1b(prng_ctx, opts.test ? &rr : NULL);
+        const uint8_t *r = next_128b(prng_ctx, opts.test ? &rr : NULL);
         addrG2_clear_h2(x, y, z, r, opts.constant_time);
 
         // show results

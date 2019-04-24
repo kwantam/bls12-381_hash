@@ -20,6 +20,8 @@ extern const uint8_t BLS12_381_z[ZM1_LEN];
 // base point G' : ./hash_and_check -n 1 <<< "bls12_381 random base point"
 extern const bint_ty g_prime_x;
 extern const bint_ty g_prime_y;
+extern const bint_ty g_prime_ll64_x;
+extern const bint_ty g_prime_ll64_y;
 
 // constants for the Shallue and van de Woestijne mapping
 extern const uint64_t Icx1[6];

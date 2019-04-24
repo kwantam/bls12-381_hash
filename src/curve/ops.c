@@ -161,8 +161,8 @@ BINT_MEXP_FUNCTION(, zm1, , 1)
 
 // compute h*(inX, inY) + r*gPrime via multi-point multiplication
 void addrG_clear_h(mpz_t X, mpz_t Y, mpz_t Z, const uint8_t *r, const bool constant_time) {
-    to_jac_point(&bint_precomp[1][0], X, Y, Z);  // convert input point
-    precomp_finish(NULL);                        // precompute the values for the multi-point mult table
-    addrG_clear_h_help(r, constant_time);        // do the multi-point multiplication
-    from_jac_point(X, Y, Z, jp_tmp);             // convert result
+    to_jac_point(&bint_precomp[1][0][0], X, Y, Z);  // convert input point
+    precomp_finish(NULL);                           // precompute the values for the multi-point mult table
+    addrG_clear_h_help(r, constant_time);           // do the multi-point multiplication
+    from_jac_point(X, Y, Z, jp_tmp);                // convert result
 }

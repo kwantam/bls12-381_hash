@@ -36,7 +36,7 @@ void mpz_set_pm1(mpz_t out);
 void hash_stdin(SHA256_CTX *ctx);
 void next_prng(EVP_CIPHER_CTX *cctx, const SHA256_CTX *hctx, uint32_t idx);
 bool next_modp(EVP_CIPHER_CTX *cctx, mpz_t ret);
-uint8_t *next_zm1b(EVP_CIPHER_CTX *cctx, mpz_t *out);
+uint8_t *next_128b(EVP_CIPHER_CTX *cctx, mpz_t *out);
 
 // these are ugly, but they let us avoid repeating a bunch of boilerplate in every executable
 #define HASH_INIT_GENERIC(C_INIT_FN, MP_TYPE, MP_INIT_FN, ...)     \

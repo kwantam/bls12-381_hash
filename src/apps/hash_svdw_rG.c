@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
             svdw_map(x, y, t);
             mpz_set_ui(z, 1);
         }
-        const uint8_t *r = next_zm1b(prng_ctx, opts.test ? &rr : NULL);
+        const uint8_t *r = next_128b(prng_ctx, opts.test ? &rr : NULL);
         addrG_clear_h(x, y, z, r, opts.constant_time);
 
         // show results

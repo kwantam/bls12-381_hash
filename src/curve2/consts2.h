@@ -18,6 +18,8 @@ extern const uint64_t Ieta2[6];
 // base point G2'
 extern const bint2_ty g2_prime_x;
 extern const bint2_ty g2_prime_y;
+extern const bint2_ty g2_prime_ll64_x;
+extern const bint2_ty g2_prime_ll64_y;
 
 #define __bls_hash__src__curve2__consts2_h__
 #endif  // __bls_hash__src__curve2__consts2_h__

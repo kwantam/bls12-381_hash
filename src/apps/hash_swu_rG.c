@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
     for (unsigned i = 0; i < opts.nreps; ++i) {
         next_prng(prng_ctx, &hash_ctx, i);
         next_modp(prng_ctx, u);
-        const uint8_t *r = next_zm1b(prng_ctx, opts.test ? &rr : NULL);
+        const uint8_t *r = next_128b(prng_ctx, opts.test ? &rr : NULL);
         swu_map_rG(x, y, z, u, r, opts.constant_time);
 
         // show results

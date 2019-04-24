@@ -23,12 +23,20 @@ const uint8_t BLS12_381_z[] = {
 // base point G'
 // NOTE this is in Montgomery repr suitable for use with bint.
 const bint_ty g_prime_x = {
-    0x002a30064e34c56dLL, 0x003aa6a55dfeb22dLL, 0x00450d6874c1a102LL, 0x0083d18a9f4ac8c2LL,
-    0x000c3bb918f2486eLL, 0x00806dbe57c6fc11LL, 0x0000091321f4828aLL,
+    0x2a30064e34c56dLL, 0x3aa6a55dfeb22dLL, 0x450d6874c1a102LL, 0x83d18a9f4ac8c2LL,
+    0x0c3bb918f2486eLL, 0x806dbe57c6fc11LL, 0x00091321f4828aLL,
 };
 const bint_ty g_prime_y = {
-    0x00d4765ae8b96829LL, 0x0063f371895612abLL, 0x00f2c99cf9caa880LL, 0x00e72319c3567913LL,
-    0x002ddfc71c8ebc2fLL, 0x005a909fdcdc5999LL, 0x00000a4f73e2948bLL,
+    0xd4765ae8b96829LL, 0x63f371895612abLL, 0xf2c99cf9caa880LL, 0xe72319c3567913LL,
+    0x2ddfc71c8ebc2fLL, 0x5a909fdcdc5999LL, 0x000a4f73e2948bLL,
+};
+const bint_ty g_prime_ll64_x = {
+    0x53798281bff04cLL, 0x3660d5b51eb468LL, 0x9f6d37711018d3LL, 0x9ae32b681f98bfLL,
+    0xaa40142d803622LL, 0x5a01295ccaff04LL, 0x00191c284cded1LL,
+};
+const bint_ty g_prime_ll64_y = {
+    0x47cca4e0d7c9bfLL, 0x5aeb6da3baa1e4LL, 0xb7de79122df25eLL, 0xf345aa1ddf8085LL,
+    0x5c0dd1a8ba473cLL, 0x9af24bc4063dd4LL, 0x0010e4edce0cb8LL,
 };
 
 // constants for the Shallue and van de Woestijne mapping

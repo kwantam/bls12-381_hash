@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
         next_prng(prng_ctx, &hash_ctx, i);
         next_modp(prng_ctx, u->s);
         next_modp(prng_ctx, u->t);
-        const uint8_t *r = next_zm1b(prng_ctx, opts.test ? &rr : NULL);
+        const uint8_t *r = next_128b(prng_ctx, opts.test ? &rr : NULL);
         swu2_map_rG2(x, y, z, u, r, opts.constant_time);
 
         // show results

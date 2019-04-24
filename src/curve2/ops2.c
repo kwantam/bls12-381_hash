@@ -214,13 +214,13 @@ void addrG2_psi(const uint8_t *r, const bool constant_time) {
     point2_add(jp2_tmp, jp2_tmp, jp2_tmp + 1);  // t0 = (-x + 1) P
     bint2_neg(jp2_tmp[1].Y, jp2_tmp[1].Y, 3);   // t1 = -P (NOTE: bup=3 because point2_add leaves Y unredc'd)
     psi2(jp2_tmp + 2, jp2_tmp + 1);             // t2 = - psi(P)
-    point2_add(&bint2_precomp[1][0], jp2_tmp, jp2_tmp + 2);  // pc[1][0] = (-x + 1) P - psi(P)
-    precomp2_finish(NULL);                                   // multi-point table values
-    addrG2_clear_h2_help(r, constant_time);                  // t0 = (x^2 - x) P + x psi(P) + r G2
-    point2_add(jp2_tmp, jp2_tmp, jp2_tmp + 2);               // t0 = (x^2 - x) P + (x - 1) psi(P) + r G2
-    point2_add(jp2_tmp + 1, jp2_tmp, jp2_tmp + 1);           // t1 = (x^2 - x - 1) P + (x - 1) psi(P) + r G2
-    psi2(jp2_tmp + 2, jp2_tmp + 4);                          // psi(2P)
-    psi2(jp2_tmp + 2, jp2_tmp + 2);                          // psi(psi(2P))
+    point2_add(&bint2_precomp[1][0][0], jp2_tmp, jp2_tmp + 2);  // pc[1][0] = (-x + 1) P - psi(P)
+    precomp2_finish(NULL);                                      // multi-point table values
+    addrG2_clear_h2_help(r, constant_time);                     // t0 = (x^2 - x) P + x psi(P) + r G2
+    point2_add(jp2_tmp, jp2_tmp, jp2_tmp + 2);                  // t0 = (x^2 - x) P + (x - 1) psi(P) + r G2
+    point2_add(jp2_tmp + 1, jp2_tmp, jp2_tmp + 1);              // t1 = (x^2 - x - 1) P + (x - 1) psi(P) + r G2
+    psi2(jp2_tmp + 2, jp2_tmp + 4);                             // psi(2P)
+    psi2(jp2_tmp + 2, jp2_tmp + 2);                             // psi(psi(2P))
     point2_add(jp2_tmp + 1, jp2_tmp + 1, jp2_tmp + 2);  // t1 = (x^2 - x - 1) P + (x - 1) psi(P) + psi(psi(2P)) + r G2
 }
 

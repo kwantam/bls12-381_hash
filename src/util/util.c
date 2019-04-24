@@ -78,18 +78,17 @@ bool next_modp(EVP_CIPHER_CTX *cctx, mpz_t ret) {
     return b;
 }
 
-// return the next value with the same bit length as (1-z)
-// from the PRNG represented by the supplied cipher context
+// return the next value with 128 bits from the PRNG represented by the supplied cipher context
 //
 // return value is pointer to static buffer containing bytes of value
 // (this is because the multiexp routine in curve/curve.c expects this format)
 //
 // Also, if out is not NULL, convert byte buffer to mpz_t (used for testing)
-uint8_t *next_zm1b(EVP_CIPHER_CTX *cctx, mpz_t *out) {
-    static uint8_t ret[ZM1_LEN];
-    next_com(cctx, ret, ZM1_LEN);
+uint8_t *next_128b(EVP_CIPHER_CTX *cctx, mpz_t *out) {
+    static uint8_t ret[2 * ZM1_LEN];
+    next_com(cctx, ret, 2 * ZM1_LEN);
     if (out != NULL) {
-        mpz_import(*out, ZM1_LEN, 1, 1, 1, 0, ret);
+        mpz_import(*out, 2 * ZM1_LEN, 1, 1, 1, 0, ret);
     }
     return ret;
 }
