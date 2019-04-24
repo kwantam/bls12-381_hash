@@ -203,9 +203,8 @@ void clear_h2(mpz_t2 x, mpz_t2 y, mpz_t2 z) {
     from_jac_point2(x, y, z, jp2_tmp + 1);
 }
 
-// these macros define the multiexp helper functions (see multiexp.h)
-BINT_MEXP_PRECOMP(2)
-BINT_MEXP_FUNCTION(2, z, static inline, 3)
+// this macro defines the multiexp helper functions (see multiexp.h)
+BINT_MEXP(2, z, static inline, 3)
 
 // actual work of computing psi(P) + r G2
 void addrG2_psi(const uint8_t *r, const bool constant_time) {

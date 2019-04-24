@@ -148,16 +148,13 @@ void add2_clear_h(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, 
 // the below macro defines two functions:
 //   - precompute the fixed part of the table (based on G') for addrG
 //   - precompute the part of the addrG table that involves the input point
-BINT_MEXP_PRECOMP()
-
-// the below macro defines a 2-point multiplication
+//   - 2-point multiplication
 //     point 1 is (1 - z) * (X, Y)
 //     point 2 is r * G'
 // where (1 - z) is the BLS parameter for BLS12-381 and G' is an element of the order-q subgroup
 //
-// NOTE this function leaks bits of r via memory accesses, even when constant_time is true
 // TODO(rsw): signed exponent recoding?
-BINT_MEXP_FUNCTION(, zm1, , 1)
+BINT_MEXP(, zm1, , 1)
 
 // compute h*(inX, inY) + r*gPrime via multi-point multiplication
 void addrG_clear_h(mpz_t X, mpz_t Y, mpz_t Z, const uint8_t *r, const bool constant_time) {

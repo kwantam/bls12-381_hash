@@ -4,7 +4,9 @@
 
 #ifndef __bls_hash__src__curve__multiexp_h__
 
-#define BINT_MEXP_PRECOMP(NUM)                                                                                         \
+// parameterized multiexp impl that we instantiate for both curve and curve2
+// oh to have templates...
+#define BINT_MEXP(NUM, ZVAL, VISIBILITY, DUMMY)                                                                        \
     jac_point##NUM bint##NUM##_precomp[4][4][4];                                                                       \
     void precomp##NUM##_init(void) {                                                                                   \
         memcpy(bint##NUM##_precomp[0][0][1].X, g##NUM##_prime_x, sizeof(g##NUM##_prime_x));                            \
@@ -47,9 +49,22 @@
                 }                                                                                                      \
             }                                                                                                          \
         }                                                                                                              \
-    }
-
-#define BINT_MEXP_FUNCTION(NUM, ZVAL, VISIBILITY, DUMMY)                                                               \
+    }                                                                                                                  \
+                                                                                                                       \
+    static inline void obliv_select(jac_point##NUM *out, const uint8_t h, const uint8_t r2, const uint8_t r1) {        \
+        for (unsigned i = 0; i < 4; ++i) {                                                                             \
+            for (unsigned j = 0; j < 4; ++j) {                                                                         \
+                if (h == 0 && i == 0 && j == 0) { /* h, i, and j are public, so this is OK */                          \
+                    continue;                                                                                          \
+                }                                                                                                      \
+                const bool select = i == r2 && j == r1;                                                                \
+                bint##NUM##_condassign(out->X, select, bint##NUM##_precomp[h][i][j].X, out->X);                        \
+                bint##NUM##_condassign(out->Y, select, bint##NUM##_precomp[h][i][j].Y, out->Y);                        \
+                bint##NUM##_condassign(out->Z, select, bint##NUM##_precomp[h][i][j].Z, out->Z);                        \
+            }                                                                                                          \
+        }                                                                                                              \
+    }                                                                                                                  \
+                                                                                                                       \
     VISIBILITY void addrG##NUM##_clear_h##NUM##_help(const uint8_t *r, const bool constant_time) {                     \
         /* WARNING: this function leaks bits of r through memory accesses even when constant_time is true) */          \
         const uint8_t *r1 = r + ZM1_LEN;                                                                               \
@@ -58,7 +73,11 @@
             const uint8_t h_idx = BLS12_381_##ZVAL[0] >> 6; /* definitely not 0 */                                     \
             const uint8_t r2_idx = r2[0] >> 6;                                                                         \
             const uint8_t r1_idx = r1[0] >> 6;                                                                         \
-            memcpy(jp##NUM##_tmp, &bint##NUM##_precomp[h_idx][r2_idx][r1_idx], sizeof(jac_point##NUM));                \
+            if (constant_time) {                                                                                       \
+                obliv_select(jp##NUM##_tmp, h_idx, r2_idx, r1_idx);                                                    \
+            } else {                                                                                                   \
+                memcpy(jp##NUM##_tmp, &bint##NUM##_precomp[h_idx][r2_idx][r1_idx], sizeof(jac_point##NUM));            \
+            }                                                                                                          \
         }                                                                                                              \
         for (unsigned idx = 0; idx < ZM1_LEN; ++idx) {                                                                 \
             /* 0th iteration, we've already done the above copy */                                                     \
@@ -73,8 +92,8 @@
                 const uint8_t r1_idx = (r1[idx] & mask) >> shift;                                                      \
                 const bool nonzero = (h_idx | r2_idx | r1_idx) != 0;                                                   \
                 if (constant_time) {                                                                                   \
-                    point##NUM##_add(jp##NUM##_tmp + (DUMMY), jp##NUM##_tmp,                                           \
-                                     &bint##NUM##_precomp[h_idx][r2_idx][r1_idx]);                                     \
+                    obliv_select(jp##NUM##_tmp + (DUMMY), h_idx, r2_idx, r1_idx);                                      \
+                    point##NUM##_add(jp##NUM##_tmp + (DUMMY), jp##NUM##_tmp + (DUMMY), jp##NUM##_tmp);                 \
                     bint##NUM##_condassign(jp##NUM##_tmp[0].X, nonzero, jp##NUM##_tmp[(DUMMY)].X, jp##NUM##_tmp[0].X); \
                     bint##NUM##_condassign(jp##NUM##_tmp[0].Y, nonzero, jp##NUM##_tmp[(DUMMY)].Y, jp##NUM##_tmp[0].Y); \
                     bint##NUM##_condassign(jp##NUM##_tmp[0].Z, nonzero, jp##NUM##_tmp[(DUMMY)].Z, jp##NUM##_tmp[0].Z); \
