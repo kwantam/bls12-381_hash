@@ -4,6 +4,33 @@
 
 #ifndef __bls_hash__src__curve__multiexp_h__
 
+#define MAKE_MEXP_FN(NUM, ZVAL, DUMMY, CT, ST1, ST2)                               \
+    static inline void addrG##NUM##_clear_h##NUM##_help_##CT(const uint8_t *r) {   \
+        const uint8_t *r1 = r + ZM1_LEN;                                           \
+        const uint8_t *r2 = r;                                                     \
+        {                                                                          \
+            const uint8_t h_idx = BLS12_381_##ZVAL[0] >> 6; /* definitely not 0 */ \
+            const uint8_t r2_idx = r2[0] >> 6;                                     \
+            const uint8_t r1_idx = r1[0] >> 6;                                     \
+            ST1;                                                                   \
+        }                                                                          \
+        for (unsigned idx = 0; idx < ZM1_LEN; ++idx) {                             \
+            /* 0th iteration, we've already done the above copy */                 \
+            uint8_t mask = (idx == 0) ? 0x30 : 0xc0;                               \
+            uint8_t shift = (idx == 0) ? 4 : 6;                                    \
+            for (; mask != 0; mask = mask >> 2, shift -= 2) {                      \
+                point##NUM##_double(jp##NUM##_tmp, jp##NUM##_tmp);                 \
+                point##NUM##_double(jp##NUM##_tmp, jp##NUM##_tmp);                 \
+                                                                                   \
+                const uint8_t h_idx = (BLS12_381_##ZVAL[idx] & mask) >> shift;     \
+                const uint8_t r2_idx = (r2[idx] & mask) >> shift;                  \
+                const uint8_t r1_idx = (r1[idx] & mask) >> shift;                  \
+                const bool nonzero = (h_idx | r2_idx | r1_idx) != 0;               \
+                ST2                                                                \
+            }                                                                      \
+        }                                                                          \
+    }
+
 // parameterized multiexp impl that we instantiate for both curve and curve2
 // oh to have templates...
 #define BINT_MEXP(NUM, ZVAL, VISIBILITY, DUMMY)                                                                        \
@@ -65,42 +92,24 @@
         }                                                                                                              \
     }                                                                                                                  \
                                                                                                                        \
-    VISIBILITY void addrG##NUM##_clear_h##NUM##_help(const uint8_t *r, const bool constant_time) {                     \
-        /* WARNING: this function leaks bits of r through memory accesses even when constant_time is true) */          \
-        const uint8_t *r1 = r + ZM1_LEN;                                                                               \
-        const uint8_t *r2 = r;                                                                                         \
-        {                                                                                                              \
-            const uint8_t h_idx = BLS12_381_##ZVAL[0] >> 6; /* definitely not 0 */                                     \
-            const uint8_t r2_idx = r2[0] >> 6;                                                                         \
-            const uint8_t r1_idx = r1[0] >> 6;                                                                         \
-            if (constant_time) {                                                                                       \
-                obliv_select(jp##NUM##_tmp, h_idx, r2_idx, r1_idx);                                                    \
-            } else {                                                                                                   \
-                memcpy(jp##NUM##_tmp, &bint##NUM##_precomp[h_idx][r2_idx][r1_idx], sizeof(jac_point##NUM));            \
-            }                                                                                                          \
-        }                                                                                                              \
-        for (unsigned idx = 0; idx < ZM1_LEN; ++idx) {                                                                 \
-            /* 0th iteration, we've already done the above copy */                                                     \
-            uint8_t mask = (idx == 0) ? 0x30 : 0xc0;                                                                   \
-            uint8_t shift = (idx == 0) ? 4 : 6;                                                                        \
-            for (; mask != 0; mask = mask >> 2, shift -= 2) {                                                          \
-                point##NUM##_double(jp##NUM##_tmp, jp##NUM##_tmp);                                                     \
-                point##NUM##_double(jp##NUM##_tmp, jp##NUM##_tmp);                                                     \
+    MAKE_MEXP_FN(                                                                                                      \
+        NUM, ZVAL, DUMMY, nct,                                                                                         \
+        memcpy(jp##NUM##_tmp, &bint##NUM##_precomp[h_idx][r2_idx][r1_idx], sizeof(jac_point##NUM)),                    \
+        if (nonzero) { point##NUM##_add(jp##NUM##_tmp, jp##NUM##_tmp, &bint##NUM##_precomp[h_idx][r2_idx][r1_idx]); }) \
                                                                                                                        \
-                const uint8_t h_idx = (BLS12_381_##ZVAL[idx] & mask) >> shift;                                         \
-                const uint8_t r2_idx = (r2[idx] & mask) >> shift;                                                      \
-                const uint8_t r1_idx = (r1[idx] & mask) >> shift;                                                      \
-                const bool nonzero = (h_idx | r2_idx | r1_idx) != 0;                                                   \
-                if (constant_time) {                                                                                   \
-                    obliv_select(jp##NUM##_tmp + (DUMMY), h_idx, r2_idx, r1_idx);                                      \
-                    point##NUM##_add(jp##NUM##_tmp + (DUMMY), jp##NUM##_tmp + (DUMMY), jp##NUM##_tmp);                 \
-                    bint##NUM##_condassign(jp##NUM##_tmp[0].X, nonzero, jp##NUM##_tmp[(DUMMY)].X, jp##NUM##_tmp[0].X); \
-                    bint##NUM##_condassign(jp##NUM##_tmp[0].Y, nonzero, jp##NUM##_tmp[(DUMMY)].Y, jp##NUM##_tmp[0].Y); \
-                    bint##NUM##_condassign(jp##NUM##_tmp[0].Z, nonzero, jp##NUM##_tmp[(DUMMY)].Z, jp##NUM##_tmp[0].Z); \
-                } else if (nonzero) {                                                                                  \
-                    point##NUM##_add(jp##NUM##_tmp, jp##NUM##_tmp, &bint##NUM##_precomp[h_idx][r2_idx][r1_idx]);       \
-                }                                                                                                      \
-            }                                                                                                          \
+    MAKE_MEXP_FN(NUM, ZVAL, DUMMY, ct, obliv_select(jp##NUM##_tmp, h_idx, r2_idx, r1_idx),                             \
+                 obliv_select(jp##NUM##_tmp + (DUMMY), h_idx, r2_idx, r1_idx);                                         \
+                 point##NUM##_add(jp##NUM##_tmp + (DUMMY), jp##NUM##_tmp + (DUMMY), jp##NUM##_tmp);                    \
+                 bint##NUM##_condassign(jp##NUM##_tmp[0].X, nonzero, jp##NUM##_tmp[(DUMMY)].X, jp##NUM##_tmp[0].X);    \
+                 bint##NUM##_condassign(jp##NUM##_tmp[0].Y, nonzero, jp##NUM##_tmp[(DUMMY)].Y, jp##NUM##_tmp[0].Y);    \
+                 bint##NUM##_condassign(jp##NUM##_tmp[0].Z, nonzero, jp##NUM##_tmp[(DUMMY)].Z, jp##NUM##_tmp[0].Z);)   \
+                                                                                                                       \
+    /* NOLINTNEXTLINE(bugprone-macro-parentheses) */                                                                   \
+    VISIBILITY void addrG##NUM##_clear_h##NUM##_help(const uint8_t *r, const bool constant_time) {                     \
+        if (constant_time) {                                                                                           \
+            addrG##NUM##_clear_h##NUM##_help_ct(r);                                                                    \
+        } else {                                                                                                       \
+            addrG##NUM##_clear_h##NUM##_help_nct(r);                                                                   \
         }                                                                                                              \
     }
 
