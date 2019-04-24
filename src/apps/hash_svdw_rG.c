@@ -14,15 +14,17 @@ int main(int argc, char **argv) {
 
     for (unsigned i = 0; i < opts.nreps; ++i) {
         next_prng(prng_ctx, &hash_ctx, i);
-        next_modp(prng_ctx, t, false);
-        if (opts.field_only) {
+        next_modp(prng_ctx, t);
+        if (opts.constant_time) {
+            svdw_map_ct(x, y, z, t);
+        } else if (opts.field_only) {
             svdw_map_fo(x, y, z, t);
         } else {
             svdw_map(x, y, t);
             mpz_set_ui(z, 1);
         }
-        const uint8_t *r = next_modq(prng_ctx, opts.test ? &rr : NULL);
-        addrG_clear_h(x, y, z, r);
+        const uint8_t *r = next_zm1b(prng_ctx, opts.test ? &rr : NULL);
+        addrG_clear_h(x, y, z, r, opts.constant_time);
 
         // show results
         //   test:      (t, r, xO, yO, zO)

@@ -126,7 +126,6 @@ void clear_h_chain(jac_point *restrict out, const jac_point *restrict in) {
         point_double(out, out);
     }
     point_add(out, out, in);
-    bint_neg(out->Y, out->Y, 2);
 }
 
 // clear BLS12-381 cofactor
@@ -145,87 +144,72 @@ void add2_clear_h(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, 
     from_jac_point(X1, Y1, Z1, jp_tmp);
 }
 
-// precompute the fixed part of the table (based on G' and 2^128 * G') for addrG
-jac_point bint_precomp[4][4][4];
+// precompute the fixed part of the table (based on G') for addrG
+jac_point bint_precomp[4][4];
 void precomp_init(void) {
-    memcpy(bint_precomp[0][0][1].X, g_prime_x, sizeof(g_prime_x));
-    memcpy(bint_precomp[0][0][1].Y, g_prime_y, sizeof(g_prime_y));
-    bint_set1(bint_precomp[0][0][1].Z);
-    point_double(&bint_precomp[0][0][2], &bint_precomp[0][0][1]);
-    point_add(&bint_precomp[0][0][3], &bint_precomp[0][0][2], &bint_precomp[0][0][1]);
+    memset(bint_precomp[0][0].X, 0, sizeof(bint_ty));
+    memset(bint_precomp[0][0].Z, 0, sizeof(bint_ty));
+    bint_set1(bint_precomp[0][0].Y);
 
-    memcpy(bint_precomp[0][1][0].X, g_prime_ll128_x, sizeof(g_prime_ll128_x));
-    memcpy(bint_precomp[0][1][0].Y, g_prime_ll128_y, sizeof(g_prime_ll128_y));
-    bint_set1(bint_precomp[0][1][0].Z);
-    point_double(&bint_precomp[0][2][0], &bint_precomp[0][1][0]);
-    point_add(&bint_precomp[0][3][0], &bint_precomp[0][2][0], &bint_precomp[0][1][0]);
-
-    for (unsigned i = 1; i < 4; ++i) {
-        for (unsigned j = 1; j < 4; ++j) {
-            point_add(&bint_precomp[0][i][j], &bint_precomp[0][i][0], &bint_precomp[0][0][j]);
-        }
-    }
+    memcpy(bint_precomp[0][1].X, g_prime_x, sizeof(g_prime_x));
+    memcpy(bint_precomp[0][1].Y, g_prime_y, sizeof(g_prime_y));
+    bint_set1(bint_precomp[0][1].Z);
+    point_double(&bint_precomp[0][2], &bint_precomp[0][1]);
+    point_add(&bint_precomp[0][3], &bint_precomp[0][2], &bint_precomp[0][1]);
 }
 
 // precompute the part of the addrG table that involves the input point
-void precomp_finish(void) {
-    // precondition: bint_precomp[1][0][0] is the point we need to fill the table with
-    point_double(&bint_precomp[2][0][0], &bint_precomp[1][0][0]);
-    point_add(&bint_precomp[3][0][0], &bint_precomp[2][0][0], &bint_precomp[1][0][0]);
+void precomp_finish(const jac_point *in) {
+    if (in != NULL) {
+        memcpy(&bint_precomp[1][0], in, sizeof(jac_point));  // copy input point into precomp table
+    }
+    point_double(&bint_precomp[2][0], &bint_precomp[1][0]);
+    point_add(&bint_precomp[3][0], &bint_precomp[2][0], &bint_precomp[1][0]);
 
     for (unsigned i = 1; i < 4; ++i) {
-        for (unsigned j = 0; j < 4; ++j) {
-            for (unsigned k = 0; k < 4; ++k) {
-                if (j == 0 && k == 0) {
-                    continue;
-                }
-                point_add(&bint_precomp[i][j][k], &bint_precomp[i][0][0], &bint_precomp[0][j][k]);
-            }
+        for (unsigned j = 1; j < 4; ++j) {
+            point_add(&bint_precomp[i][j], &bint_precomp[i][0], &bint_precomp[0][j]);
         }
     }
 }
 
-// this is a 3-point multiplication
-//     point 1 is h * (X, Y)
-//     point 2 is r1 * G'
-//     point 3 is r2 * 2^128 * G'
-// where h is the cofactor, G' is an element of the order-q subgroup, and
-//     r = r2 * 2^128 + r1
-// is a random element of Zq. h is 126 bits, so splitting r saves doublings.
+// this is a 2-point multiplication
+//     point 1 is (1 - z) * (X, Y)
+//     point 2 is r * G'
+// where (1 - z) is the BLS parameter for BLS12-381 and G' is an element of the order-q subgroup
 //
-// NOTE this function is not constant time, and it leaks bits of r through memory accesses
+// NOTE this function leaks bits of r via memory accesses, even when constant_time is true
 // TODO(rsw): signed exponent recoding?
-void addrG_clear_h_help(const uint8_t *r) {
-    const uint8_t *r2 = r + 16;
-    bool is_zero = true;
-    for (unsigned idx = 0; idx < 16; ++idx) {
-        for (uint8_t mask = 3 << 6, shift = 6; mask != 0; mask = mask >> 2, shift -= 2) {
+void addrG_clear_h_help(const uint8_t *r, const bool constant_time) {
+    {
+        const uint8_t h_idx = BLS12_381_zm1[0] >> 6;  // definitely not 0
+        const uint8_t r_idx = r[0] >> 6;
+        memcpy(jp_tmp, &bint_precomp[h_idx][r_idx], sizeof(jac_point));
+    }
+    for (unsigned idx = 0; idx < ZM1_LEN; ++idx) {
+        // 0th iteration, we've already done the above copy
+        uint8_t mask = (idx == 0) ? 0x30 : 0xc0;
+        uint8_t shift = (idx == 0) ? 4 : 6;
+        for (; mask != 0; mask = mask >> 2, shift -= 2) {
             // double if the point is not zero
-            if (!is_zero) {
-                point_double(jp_tmp, jp_tmp);
-                point_double(jp_tmp, jp_tmp);
-            }
+            point_double(jp_tmp, jp_tmp);
+            point_double(jp_tmp, jp_tmp);
 
-            uint8_t h_idx = (BLS12_381_h[idx] & mask) >> shift;
-            uint8_t r_idx = (r[idx] & mask) >> shift;
-            uint8_t r2_idx = (r2[idx] & mask) >> shift;
-            if ((h_idx | r_idx | r2_idx) != 0) {
-                jac_point *tp = &bint_precomp[h_idx][r_idx][r2_idx];
-                if (is_zero) {
-                    is_zero = false;
-                    memcpy(jp_tmp, tp, sizeof(jac_point));
-                } else {
-                    point_add(jp_tmp, jp_tmp, tp);
-                }
+            const uint8_t h_idx = (BLS12_381_zm1[idx] & mask) >> shift;
+            const uint8_t r_idx = (r[idx] & mask) >> shift;
+            if ((h_idx | r_idx) != 0) {
+                point_add(jp_tmp, jp_tmp, &bint_precomp[h_idx][r_idx]);
+            } else if (constant_time) {
+                point_add(jp_tmp + 1, jp_tmp + 1, jp_tmp + 1);
             }
         }
     }
 }
 
 // compute h*(inX, inY) + r*gPrime via multi-point multiplication
-void addrG_clear_h(mpz_t X, mpz_t Y, mpz_t Z, const uint8_t *r) {
-    to_jac_point(&bint_precomp[1][0][0], X, Y, Z);  // convert input point
-    precomp_finish();                               // precompute the values for the multi-point mult table
-    addrG_clear_h_help(r);                          // do the multi-point multiplication
-    from_jac_point(X, Y, Z, jp_tmp);                // convert result
+void addrG_clear_h(mpz_t X, mpz_t Y, mpz_t Z, const uint8_t *r, const bool constant_time) {
+    to_jac_point(&bint_precomp[1][0], X, Y, Z);  // convert input point
+    precomp_finish(NULL);                        // precompute the values for the multi-point mult table
+    addrG_clear_h_help(r, constant_time);        // do the multi-point multiplication
+    from_jac_point(X, Y, Z, jp_tmp);             // convert result
 }

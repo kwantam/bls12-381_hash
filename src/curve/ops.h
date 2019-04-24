@@ -7,6 +7,7 @@
 #include "bint_consts.h"
 
 #include <gmp.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 // forward declarations for bint import/export functions to avoid including bint.h here
@@ -21,20 +22,17 @@ typedef struct jac_point_s {
 } jac_point;
 
 // temporary points for intermediate computations (mostly used in clear_h_chain())
-#define NUM_TMP_JP 8
+#define NUM_TMP_JP 2
 extern jac_point jp_tmp[NUM_TMP_JP];
 
-// precomputed values for three-point multiplication
-extern jac_point bint_precomp[4][4][4];
-
 // precompute the part of the addrG table that involves the input point
-void precomp_finish(void);
+void precomp_finish(const jac_point *in);
 
 // addition chain for clearing cofactor
 void clear_h_chain(jac_point *restrict out, const jac_point *restrict in);
 
 // helper for construction #3: add random multiple of gPrime and clear h
-void addrG_clear_h_help(const uint8_t *r);
+void addrG_clear_h_help(const uint8_t *r, const bool constant_time);
 
 // add two points in Jacobian coordinates
 void point_add(jac_point *out, const jac_point *in1, const jac_point *in2);

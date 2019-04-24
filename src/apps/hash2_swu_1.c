@@ -18,8 +18,8 @@ int main(int argc, char **argv) {
             mpz_set_ui(u->s, 0);
             mpz_set_ui(u->t, 0);
         } else {
-            next_modp(prng_ctx, u->s, opts.constant_time);
-            next_modp(prng_ctx, u->t, opts.constant_time);
+            next_modp(prng_ctx, u->s);
+            next_modp(prng_ctx, u->t);
         }
         swu2_map(x, y, z, u, opts.constant_time);
 

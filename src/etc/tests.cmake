@@ -15,6 +15,7 @@ add_test(NAME t_simple_hash_svdw_rG_fo COMMAND "${PROJECT_SOURCE_DIR}/test/run_s
 
 add_test(NAME t_simple_hash_svdw_1_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_simple_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_svdw_1" "c")
 add_test(NAME t_simple_hash_svdw_2_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_simple_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_svdw_2" "c")
+add_test(NAME t_simple_hash_svdw_rG_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_simple_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_svdw_rG" "c")
 
 add_test(NAME t_simple_hash_swu_1 COMMAND "${PROJECT_SOURCE_DIR}/test/run_simple_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_1")
 add_test(NAME t_simple_hash_swu_2 COMMAND "${PROJECT_SOURCE_DIR}/test/run_simple_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_2")
@@ -22,6 +23,7 @@ add_test(NAME t_simple_hash_swu_rG COMMAND "${PROJECT_SOURCE_DIR}/test/run_simpl
 
 add_test(NAME t_simple_hash_swu_1_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_simple_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_1" "c")
 add_test(NAME t_simple_hash_swu_2_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_simple_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_2" "c")
+add_test(NAME t_simple_hash_swu_rG_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_simple_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_rG" "c")
 
 add_test(NAME t_simple_hash2_and_check COMMAND "${PROJECT_SOURCE_DIR}/test/run_simple_test.sh" "${CMAKE_BINARY_DIR}/apps/hash2_and_check")
 add_test(NAME t_simple_hash2_and_check_fo COMMAND "${PROJECT_SOURCE_DIR}/test/run_simple_test.sh" "${CMAKE_BINARY_DIR}/apps/hash2_and_check" "f")
@@ -56,6 +58,7 @@ if (DEFINED SAGEMATH)
 
     add_test(NAME t_hash_svdw_1_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_svdw_1" "${PROJECT_SOURCE_DIR}/test/test.sage" 1 c)
     add_test(NAME t_hash_svdw_2_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_svdw_2" "${PROJECT_SOURCE_DIR}/test/test.sage" 2 c)
+    add_test(NAME t_hash_svdw_rG_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_svdw_rG" "${PROJECT_SOURCE_DIR}/test/test.sage" rG c)
 
     add_test(NAME t_hash_swu_1 COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_1" "${PROJECT_SOURCE_DIR}/test/test.sage" u1)
     add_test(NAME t_hash_swu_2 COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_2" "${PROJECT_SOURCE_DIR}/test/test.sage" u2)
@@ -63,6 +66,7 @@ if (DEFINED SAGEMATH)
 
     add_test(NAME t_hash_swu_1_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_1" "${PROJECT_SOURCE_DIR}/test/test.sage" u1 c)
     add_test(NAME t_hash_swu_2_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_2" "${PROJECT_SOURCE_DIR}/test/test.sage" u2 c)
+    add_test(NAME t_hash_swu_rG_ct COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash_swu_rG" "${PROJECT_SOURCE_DIR}/test/test.sage" urG c)
 
     add_test(NAME t_hash2_and_check COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash2_and_check" "${PROJECT_SOURCE_DIR}/test/g2_test.sage" hac)
     add_test(NAME t_hash2_and_check_fo COMMAND "${PROJECT_SOURCE_DIR}/test/run_test.sh" "${CMAKE_BINARY_DIR}/apps/hash2_and_check" "${PROJECT_SOURCE_DIR}/test/g2_test.sage" hac f)

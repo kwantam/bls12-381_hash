@@ -118,30 +118,30 @@ if __name__ == "__main__":
             JEll(xOut, yOut, zOut)
 
     elif sys.argv[1] == "1":
-        assert all( JEll(xOut, yOut, zOut) == (ell_u - 1) * svdw(t)
+        assert all( JEll(xOut, yOut, zOut) == (1 - ell_u) * svdw(t)
                     for (t, xOut, yOut, zOut) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "2":
-        assert all( JEll(xOut, yOut, zOut) == (ell_u - 1) * (svdw(t1) + svdw(t2))
+        assert all( JEll(xOut, yOut, zOut) == (1 - ell_u) * (svdw(t1) + svdw(t2))
                     for (t1, t2, xOut, yOut, zOut) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "rG":
-        assert all( JEll(xOut, yOut, zOut) == h * svdw(t) + r * gPrime
+        assert all( JEll(xOut, yOut, zOut) == (1 - ell_u) * svdw(t) + r * gPrime
                     for (t, r, xOut, yOut, zOut) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "u1":
         init_iso()
-        assert all( JEll(xOut, yOut, zOut) == (ell_u - 1) * iso(swu(u))
+        assert all( JEll(xOut, yOut, zOut) == (1 - ell_u) * iso(swu(u))
                     for (xOut, yOut, zOut, u) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "u2":
         init_iso()
-        assert all( JEll(xOut, yOut, zOut) == (ell_u - 1) * iso(swu(u1) + swu(u2))
+        assert all( JEll(xOut, yOut, zOut) == (1 - ell_u) * iso(swu(u1) + swu(u2))
                     for (xOut, yOut, zOut, u1, u2) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     elif sys.argv[1] == "urG":
         init_iso()
-        assert all( JEll(xOut, yOut, zOut) == h * iso(swu(u)) + r * gPrime
+        assert all( JEll(xOut, yOut, zOut) == (1 - ell_u) * iso(swu(u)) + r * gPrime
                     for (xOut, yOut, zOut, u, r) in ( eval(l) for l in sys.stdin.readlines() ) )
 
     else:

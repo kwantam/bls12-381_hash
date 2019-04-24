@@ -13,10 +13,10 @@ int main(int argc, char **argv) {
 
     for (unsigned i = 0; i < opts.nreps; ++i) {
         next_prng(prng_ctx, &hash_ctx, i);
-        next_modp(prng_ctx, u1->s, opts.constant_time);
-        next_modp(prng_ctx, u1->t, opts.constant_time);
-        next_modp(prng_ctx, u2->s, opts.constant_time);
-        next_modp(prng_ctx, u2->t, opts.constant_time);
+        next_modp(prng_ctx, u1->s);
+        next_modp(prng_ctx, u1->t);
+        next_modp(prng_ctx, u2->s);
+        next_modp(prng_ctx, u2->t);
         swu2_map2(x, y, z, u1, u2, opts.constant_time);
 
         // show results

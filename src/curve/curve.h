@@ -25,13 +25,13 @@ void svdw_map_ct(mpz_t x, mpz_t y, mpz_t z, const mpz_t t);
 // functions for simplified Brier et al. / Shallue, van de Woestijne, and Ulam map to curve
 void swu_map(mpz_t x, mpz_t y, mpz_t z, const mpz_t u, const bool constant_time);
 void swu_map2(mpz_t x, mpz_t y, mpz_t z, const mpz_t u1, const mpz_t u2, const bool constant_time);
-void swu_map_rG(mpz_t x, mpz_t y, mpz_t z, const mpz_t u, const uint8_t *r);
+void swu_map_rG(mpz_t x, mpz_t y, mpz_t z, const mpz_t u, const uint8_t *r, const bool constant_time);
 
 // addition chain for clearing cofactor
 void clear_h(mpz_t X, mpz_t Y, mpz_t Z);
 
 // clear cofactor, add random subgroup element via 3-point multi-multiplication
-void addrG_clear_h(mpz_t X, mpz_t Y, mpz_t Z, const uint8_t *r);
+void addrG_clear_h(mpz_t X, mpz_t Y, mpz_t Z, const uint8_t *r, const bool constant_time);
 
 // add two points together and clear cofactor
 void add2_clear_h(mpz_t X1, mpz_t Y1, mpz_t Z1, const mpz_t X2, const mpz_t Y2, const mpz_t Z2);

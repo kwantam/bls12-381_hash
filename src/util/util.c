@@ -5,6 +5,7 @@
 #include "util.h"
 
 #include "consts.h"
+#include "globals.h"
 
 #include <endian.h>
 #include <errno.h>
@@ -14,7 +15,7 @@
 
 // set supplied mpz_t to p-1, i.e., -1 mod p
 void mpz_set_pm1(mpz_t out) {
-    mpz_import(out, P_LEN, 1, 1, 1, 0, BLS12_381_p);
+    mpz_set(out, fld_p);
     mpz_sub_ui(out, out, 1);
 }
 
@@ -58,89 +59,37 @@ void next_prng(EVP_CIPHER_CTX *cctx, const SHA256_CTX *hctx, uint32_t idx) {
     CHECK_CRYPTO(EVP_EncryptInit(cctx, EVP_aes_128_ctr(), key_iv, key_iv + 16));
 }
 
-// compare buffer representing bigint in big endian format
-static inline bool lt_be(const uint8_t *a, const uint8_t *b, size_t len) {
-    for (size_t i = 0; i < len; ++i) {
-        if (a[i] < b[i]) {
-            return true;
-        }
-        if (a[i] > b[i]) {
-            return false;
-        }
-    }
-    return false;
-}
-
 // output the required number of bytes into the output buffer, mask, and compare to the max value
-static uint8_t ZEROS[P_LEN] = {0};
-static inline int next_com(EVP_CIPHER_CTX *cctx, uint8_t *out, int len, const uint8_t *max, uint8_t mask) {
+static uint8_t ZEROS[2 * P_LEN] = {0};
+static inline void next_com(EVP_CIPHER_CTX *cctx, uint8_t *out, int len) {
     int outl = len;
     CHECK_CRYPTO(EVP_EncryptUpdate(cctx, out, &outl, ZEROS, len));
     CHECK_CRYPTO(outl == len);
-    int ret = (out[0] & 0x80) ? 1 : 0;  // grab most significant bit to return
-    out[0] &= mask;
-    if (lt_be(out, max, len)) {
-        return ret;
-    }
-    return -1;
 }
 
 // return the next value mod p from the PRNG represented by the supplied cipher context
-static inline bool next_modp_nct(EVP_CIPHER_CTX *cctx, mpz_t ret) {
-    uint8_t p_out[P_LEN];
-    int b;
-    while ((b = next_com(cctx, p_out, P_LEN, BLS12_381_p, 0x1f)) < 0) {
-    }
-    mpz_import(ret, P_LEN, 1, 1, 1, 0, p_out);
-    return b != 0;
+bool next_modp(EVP_CIPHER_CTX *cctx, mpz_t ret) {
+    uint8_t p_out[2 * P_LEN];
+    next_com(cctx, p_out, 2 * P_LEN);
+    const bool b = (p_out[0] & 0x80) != 0;
+    p_out[0] &= 0x7f;
+    mpz_import(ret, 2 * P_LEN, 1, 1, 1, 0, p_out);
+    mpz_mod(ret, ret, fld_p);
+    return b;
 }
 
-// constant-time rejection sampling for modp
-// p is ~0.8 * 2^381, so with 20% probability we do not find a residue.
-// 0.2^56 is ~2^-130, i.e., sufficiently low failure probability
+// return the next value with the same bit length as (1-z)
+// from the PRNG represented by the supplied cipher context
 //
-// NOTE: an easier way to do this with negligible bias is to hash to 762 bits and reduce mod p (in constant time)
-#define NUM_SAMP_P 56
-static inline bool next_modp_ct(EVP_CIPHER_CTX *cctx, mpz_t ret) {
-    uint64_t p_out[P_LEN / 8] = {0};
-    int b = -1;
-    for (unsigned i = 0; i < NUM_SAMP_P; ++i) {
-        uint64_t p_tmp[P_LEN / 8];
-        const int b_tmp = next_com(cctx, (uint8_t *)p_tmp, P_LEN, BLS12_381_p, 0x1f);
-        const bool b_good = b_tmp >= 0;
-
-        // constant-time assign b and p_out if b_good
-        b = b_good ? b_tmp : b;
-        const uint64_t mask1 = 0LL - ((uint64_t)b_good);
-        const uint64_t mask2 = ~mask1;
-        for (unsigned j = 0; j < P_LEN / 8; ++j) {
-            p_out[j] = (p_tmp[j] & mask1) | (p_out[j] & mask2);
-        }
-    }
-    if (b == -1) {
-        fprintf(stderr, "no residue mod p found!\n");
-        exit(1);
-    }
-    mpz_import(ret, P_LEN, 1, 1, 1, 0, p_out);
-    return b != 0;
-}
-#undef NUM_SAMP_P
-
-// just dispatch to constant-time or non--constant-time impl
-bool next_modp(EVP_CIPHER_CTX *cctx, mpz_t ret, const bool constant_time) {
-    return constant_time ? next_modp_ct(cctx, ret) : next_modp_nct(cctx, ret);
-}
-
-// return the next value mod q from the PRNG represented by the supplied cipher context
-// return value is pointer to static buffer containing bytes of value mod q
+// return value is pointer to static buffer containing bytes of value
 // (this is because the multiexp routine in curve/curve.c expects this format)
+//
 // Also, if out is not NULL, convert byte buffer to mpz_t (used for testing)
-uint8_t *next_modq(EVP_CIPHER_CTX *cctx, mpz_t *out) {
-    static uint8_t ret[Q_LEN];
-    while (next_com(cctx, ret, Q_LEN, BLS12_381_q, 0x7f) < 0) {
-    }
+uint8_t *next_zm1b(EVP_CIPHER_CTX *cctx, mpz_t *out) {
+    static uint8_t ret[ZM1_LEN];
+    next_com(cctx, ret, ZM1_LEN);
     if (out != NULL) {
-        mpz_import(*out, Q_LEN, 1, 1, 1, 0, ret);
+        mpz_import(*out, ZM1_LEN, 1, 1, 1, 0, ret);
     }
     return ret;
 }

@@ -17,9 +17,9 @@ int main(int argc, char **argv) {
             // in test mode, make sure exceptional inputs give correct result (-1 is tested in swu_1)
             mpz_set_ui(u1, i);
         } else {
-            next_modp(prng_ctx, u1, opts.constant_time);
+            next_modp(prng_ctx, u1);
         }
-        next_modp(prng_ctx, u2, opts.constant_time);
+        next_modp(prng_ctx, u2);
         swu_map2(x, y, z, u1, u2, opts.constant_time);
 
         // show results

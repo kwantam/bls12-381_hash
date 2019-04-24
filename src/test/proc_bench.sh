@@ -19,7 +19,7 @@ if [ ! -z "$2" ]; then
 fi
 
 
-if [ "${#bench1_vals[@]}" != 27 ] || ( [ "$NUM_BENCH" = "2" ] && [ "${#bench2_vals[@]}" != 27 ] ); then
+if [ "${#bench1_vals[@]}" != 29 ] || ( [ "$NUM_BENCH" = "2" ] && [ "${#bench2_vals[@]}" != 27 ] ); then
     echo "ERROR: input files must have 27 lines"
     exit 1
 fi
@@ -89,13 +89,13 @@ echo "\\cmidrule{2-6}"
 echo "& Construction \\#3 & \\S\\ref{sec:blsmap} &"
 show_q_fq_cq 1 0
 show_q_fq_cq 1 0
-show_q_fq_cq 0 1
+show_q_fq_cq 1 1
 echo "%"
 
 echo "&& \\S\\ref{sec:blsmap2} &"
 show_q_fq_cq 0 0
 show_q_fq_cq 1 0
-show_q_fq_cq 0 1
+show_q_fq_cq 1 1
 echo "\\midrule[\\heavyrulewidth]"
 
 echo "\$\\bm{G_2}\$ & Hash-and-check & --- &"

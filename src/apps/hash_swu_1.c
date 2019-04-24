@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
             // in test mode, make sure exceptional input gives correct result (0, 1 tested in swu_2)
             mpz_set_pm1(u);
         } else {
-            next_modp(prng_ctx, u, opts.constant_time);
+            next_modp(prng_ctx, u);
         }
         swu_map(x, y, z, u, opts.constant_time);
 

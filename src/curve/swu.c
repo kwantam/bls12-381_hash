@@ -9,8 +9,6 @@
 #include "iso.h"
 #include "ops.h"
 
-#include <string.h>
-
 // *************************************************************
 // S-vdW-Ulas simplified map for curves with nonzero j-invariant
 // *************************************************************
@@ -249,14 +247,17 @@ void swu_map2(mpz_t x, mpz_t y, mpz_t z, const mpz_t u1, const mpz_t u2, const b
 }
 
 // evalute the SWU map once, apply isogeny map, and clear cofactor while adding a random point in subgroup
-void swu_map_rG(mpz_t x, mpz_t y, mpz_t z, const mpz_t u, const uint8_t *r) {
-    swu_help(1, u);  // evaluate SWU map...
-    eval_iso11();    // ...and isogeny
+void swu_map_rG(mpz_t x, mpz_t y, mpz_t z, const mpz_t u, const uint8_t *r, const bool constant_time) {
+    if (constant_time) {
+        swu_help_ct(1, u);
+    } else {
+        swu_help(1, u);
+    }
+    eval_iso11();
 
     // precompute values for the multi-point mult table
-    memcpy(&bint_precomp[1][0][0], jp_tmp + 1, sizeof(jac_point));
-    precomp_finish();
+    precomp_finish(jp_tmp + 1);
 
-    addrG_clear_h_help(r);            // do the multi-point multiplication
-    from_jac_point(x, y, z, jp_tmp);  // convert the result
+    addrG_clear_h_help(r, constant_time);  // do the multi-point multiplication
+    from_jac_point(x, y, z, jp_tmp);       // convert the result
 }
