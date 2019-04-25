@@ -2,7 +2,7 @@
 #
 # (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
 
-[ -z "$1" ] && { echo "Usage: $0 <bench_file> [bench_file_2]"; exit 1; }
+[ "$#" != "5" ] && { echo "Usage: $0 <bench_file> <hac_t> <hac_t_fo> <h2ac_t> <h2ac_t_fo>"; exit 1; }
 
 set -e
 set -o pipefail
@@ -11,15 +11,9 @@ set -o pipefail
 DIV_VAL=$((1000 * ${NUM_RUNS}))
 RND_VAL=$((${DIV_VAL} / 2))
 
-NUM_BENCH=1
 mapfile bench1_vals < "$1"
-if [ ! -z "$2" ]; then
-    mapfile bench2_vals < "$2"
-    NUM_BENCH=2
-fi
 
-
-if [ "${#bench1_vals[@]}" != 34 ] || ( [ "$NUM_BENCH" = "2" ] && [ "${#bench2_vals[@]}" != 34 ] ); then
+if [ "${#bench1_vals[@]}" != 34 ] ; then
     echo "ERROR: input files must have 34 lines"
     exit 1
 fi
@@ -33,10 +27,6 @@ show_q_fq_cq() {
 
     if [ "$1" = "1" ]; then
         div_round ${bench1_vals[$idx]}
-        if [ "$NUM_BENCH" = "2" ]; then
-            echo "$\\vert$"
-            div_round ${bench2_vals[$idx]}
-        fi
         let idx++ 1
     else
         echo "---"
@@ -51,15 +41,30 @@ show_q_fq_cq() {
 
 idx=0
 
+get_avg_timing() {
+    perl -e '
+@timings = <>;
+@timings = sort {$b <=> $a} @timings;
+$len = $#timings; $tot = 0;
+for ($i = 0; $i < $len / 10; $i++) {
+    $tot += $timings[$i];
+}
+$avg = int($tot * 10 / $len / 10 / 1000 + 0.5);
+print "$avg\n";
+' $1
+    echo "&"
+}
+
 echo "\$\\bm{G_1}\$ & Hash-and-check & --- &"
 show_q_fq_cq 1 0
 show_q_fq_cq 1 0
 show_q_fq_cq 0 1
 echo "%"
 
-# HACK
-# worst 10% timings from timings.out and timings_fo.out get manually inserted here
-echo "& (worst 10\\%) & --- & \\textred{XXX} & \\textred{XXX} & ---\\\\"
+echo "& (worst 10\\%) & --- &"
+get_avg_timing $2
+get_avg_timing $3
+echo "---\\\\"
 echo "\\cmidrule{2-6}"
 
 echo "& Construction \\#1 & \\S\\ref{sec:blsmap} &"
@@ -104,9 +109,10 @@ show_q_fq_cq 1 0
 show_q_fq_cq 0 1
 echo "%"
 
-# HACK
-# worst 10% timings from timings2.out and timings2_fo.out get manually inserted here
-echo "& (worst 10\%) & --- & \\textred{XXX} & \\textred{XXX} & ---\\\\"
+echo "& (worst 10\%) & --- &"
+get_avg_timing $4
+get_avg_timing $5
+echo "---\\\\"
 
 echo "\\cmidrule{2-6}"
 
