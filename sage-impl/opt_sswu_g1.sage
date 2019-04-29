@@ -76,7 +76,6 @@ def map2curve_osswu(alpha, clear=False):
 
 if __name__ == "__main__":
     enable_debug()
-    u = - 0xd201000000010000
     print "## Optimized Simplified SWU to BLS12-381 G1"
     for alpha in map2curve_alphas:
         tv_text("alpha", pprint_hex(alpha))
