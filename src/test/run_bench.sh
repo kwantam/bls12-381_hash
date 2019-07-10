@@ -1,6 +1,10 @@
 #!/bin/bash
 #
 # (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
+#
+# This script can optionally use the Linux `perf` command to count processor cycles.
+# To enable this, you probably want to run something like
+#     make bench USE_PERF=1
 
 [ -z "$1" ] && { echo "Usage: $0 <apps_dir>"; exit 1; }
 

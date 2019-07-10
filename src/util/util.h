@@ -12,6 +12,29 @@
 #include <stdio.h>
 #include <time.h>
 
+// WARNING: COUNT_CYCLES will *NOT* return an accurate result on all machines.
+//  To ensure that the correct count is used, you MUST do the following:
+//  1. Make sure that your CPU supports the following flags (check /proc/cpuinfo):
+//         constant_tsc, nonstop_tsc
+//  2. TURN OFF all power saving / frequency scaling (SpeedStep, Turbo Boost, etc.)
+//     options, e.g., in your BIOS.
+//  3. For good measure, you should probably also turn off hyperthreading.
+//
+// If you can't do all of the above, you can probably still use the Linux perf
+// subsystem to count cycles---it knows how to get cycle count correctly even
+// when your machine's clock is varying (by using performance counters instead
+// of the timestamp counter). See ../test/run_bench.sh.
+//
+#if COUNT_CYCLES == 1
+#include <inttypes.h>
+#include <x86intrin.h>
+#define CYCLE_COUNT_START c_start = __rdtsc()
+#define CYCLE_COUNT_END c_end = __rdtsc()
+#else
+#define CYCLE_COUNT_START c_start = 0
+#define CYCLE_COUNT_END c_end = 0
+#endif
+
 #define CHECK_CRYPTO(C)                                                                        \
     do {                                                                                       \
         if ((C) != 1) {                                                                        \
@@ -54,13 +77,16 @@ uint8_t *next_128b(EVP_CIPHER_CTX *cctx, mpz_t *out);
     EVP_CIPHER_CTX *prng_ctx = EVP_CIPHER_CTX_new();               \
     CHECK_CRYPTO(prng_ctx != NULL);                                \
     hash_stdin(&hash_ctx);                                         \
+    uint64_t c_start, c_end;                                       \
     struct timespec start, end;                                    \
-    clock_gettime(CLOCK_MONOTONIC, &start)
+    clock_gettime(CLOCK_MONOTONIC, &start);                        \
+    CYCLE_COUNT_START
 
 #define HASH_CLEAR_GENERIC(C_UNINIT_FN, MP_CLEAR_FN, ...)                                  \
+    CYCLE_COUNT_END;                                                                       \
     clock_gettime(CLOCK_MONOTONIC, &end);                                                  \
     long elapsed = 1000000000 * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; \
-    fprintf(opts.quiet ? stdout : stderr, "%ld\n", elapsed);                               \
+    fprintf(opts.quiet ? stdout : stderr, "%ld %" PRIu64 "\n", elapsed, c_end - c_start);  \
     EVP_CIPHER_CTX_free(prng_ctx);                                                         \
     MP_CLEAR_FN(__VA_ARGS__, (void *)NULL);                                                \
     C_UNINIT_FN();                                                                         \

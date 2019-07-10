@@ -20,6 +20,12 @@ if (${IS_CLANG_COMPILER})
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wloop-analysis")
 endif ()
 
+if (DEFINED ENV{COUNT_CYCLES})
+    add_compile_definitions(COUNT_CYCLES=1)
+else (NOT DEFINED ENV{COUNT_CYCLES})
+    add_compile_definitions(COUNT_CYCLES=0)
+endif (DEFINED ENV{COUNT_CYCLES})
+
 # unroll loops in bint.c
 if (${IS_CLANG_COMPILER})
     # clang only supports -funroll-loops, not -funroll-all-loops
