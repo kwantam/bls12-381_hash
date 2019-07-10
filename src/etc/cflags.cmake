@@ -35,6 +35,7 @@ else ()
 endif (${IS_CLANG_COMPILER})
 
 # add some flags for the debug and sanitizer modes
+set (CMAKE_C_FLAGS_RELDEBUG "${CMAKE_C_FLAGS_RELEASE} -g")
 set (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
 set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb3 -Og")
 set (CMAKE_C_FLAGS_DEBUGASAN "${CMAKE_C_FLAGS_DEBUG} -fsanitize=undefined -fsanitize=address")
