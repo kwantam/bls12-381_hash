@@ -11,7 +11,13 @@ set -o pipefail
 DIV_VAL=$((1000 * ${NUM_RUNS}))
 RND_VAL=$((${DIV_VAL} / 2))
 
-mapfile bench1_vals < "$1"
+if [ "${USE_CYCLES}" = "1" ]; then
+    MAP_FIELD=2
+else
+    MAP_FIELD=1
+fi
+
+mapfile -t bench1_vals < <(cut -d \  -f "${MAP_FIELD}" "$1")
 
 if [ "${#bench1_vals[@]}" != 34 ] ; then
     echo "ERROR: input files must have 34 lines"
