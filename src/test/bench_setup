@@ -17,5 +17,6 @@ TESTS_hash2_swu_2=(q cq)
 TESTS_hash2_svdw_rG=(q fq cq)
 TESTS_hash2_swu_rG=(q cq)
 TESTS=(hash_and_check hash_and_check_outliers hash_svdw_1 hash_swu_1 hash_svdw_2 hash_swu_2 hash_svdw_rG hash_swu_rG hash2_and_check hash2_and_check_outliers hash2_svdw_1 hash2_swu_1 hash2_svdw_2 hash2_swu_2 hash2_svdw_rG hash2_swu_rG)
+unset USE_PERF
 # vim: syntax=sh
 # (C) 2019 Riad S. Wahby <rsw@cs.stanford.edu>
