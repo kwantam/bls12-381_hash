@@ -5,9 +5,6 @@
 #include "curve.h"
 #include "util.h"
 
-#include <stdio.h>
-#include <time.h>
-
 int main(int argc, char **argv) {
     HASH_INIT(x, y, z, u, rr);
     precomp_init();  // precomp for multiexponentiation

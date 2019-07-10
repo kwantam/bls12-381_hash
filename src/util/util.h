@@ -9,6 +9,8 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <time.h>
 
 #define CHECK_CRYPTO(C)                                                                        \
     do {                                                                                       \

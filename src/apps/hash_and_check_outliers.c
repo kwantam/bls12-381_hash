@@ -5,9 +5,6 @@
 #include "curve.h"
 #include "util.h"
 
-#include <stdio.h>
-#include <time.h>
-
 #define NREPS 10
 
 int main(int argc, char **argv) {

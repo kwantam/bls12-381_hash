@@ -5,9 +5,6 @@
 #include "curve.h"
 #include "util.h"
 
-#include <stdio.h>
-#include <time.h>
-
 int main(int argc, char **argv) {
     HASH_INIT(x1, y1, z1, t1, x2, y2, z2, t2);
 
