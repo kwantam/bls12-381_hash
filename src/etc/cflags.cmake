@@ -20,11 +20,11 @@ if (${IS_CLANG_COMPILER})
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wloop-analysis")
 endif ()
 
-if (DEFINED ENV{COUNT_CYCLES})
+if ($ENV{COUNT_CYCLES} EQUAL 1)
     add_compile_definitions(COUNT_CYCLES=1)
-else (NOT DEFINED ENV{COUNT_CYCLES})
+else (NOT $ENV{COUNT_CYCLES} EQUAL 1)
     add_compile_definitions(COUNT_CYCLES=0)
-endif (DEFINED ENV{COUNT_CYCLES})
+endif ($ENV{COUNT_CYCLES} EQUAL 1)
 
 # unroll loops in bint.c
 if (${IS_CLANG_COMPILER})

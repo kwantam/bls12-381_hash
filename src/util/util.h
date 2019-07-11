@@ -25,11 +25,21 @@
 // when your machine's clock is varying (by using performance counters instead
 // of the timestamp counter). See ../test/run_bench.sh.
 //
+// NOTE: the recommendation to use CPUID/RDTSC and RDTSCP/CPUID comes from
+//       Paoloni, G., "How to Benchmark Code Execution Times on Intel IA-32
+//       and IA-64 Instruction Set Architectures." Intel Corp, Sep. 2010.
+//       https://www.intel.com/content/dam/www/public/us/en/documents/white-papers/ia-32-ia-64-benchmark-code-execution-paper.pdf
 #if COUNT_CYCLES == 1
 #include <inttypes.h>
+#include <cpuid.h>
 #include <x86intrin.h>
-#define CYCLE_COUNT_START c_start = __rdtsc()
-#define CYCLE_COUNT_END c_end = __rdtsc()
+#define CYCLE_COUNT_START   \
+    unsigned a, b, c, d;    \
+    __cpuid(0, a, b, c, d); \
+    c_start = __rdtsc()
+#define CYCLE_COUNT_END   \
+    c_end = __rdtscp(&a); \
+    __cpuid(0, a, b, c, d)
 #else
 #define CYCLE_COUNT_START c_start = 0
 #define CYCLE_COUNT_END c_end = 0
