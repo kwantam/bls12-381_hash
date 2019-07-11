@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     }
 
     for (unsigned i = 0; i < opts.nreps; ++i) {
-        clock_gettime(CLOCK_MONOTONIC, &start);
+        TIMER_START;
         for (unsigned k = 0; k < NREPS; ++k) {
             unsigned j;
             for (j = 0; j < 256; ++j) {
@@ -36,9 +36,7 @@ int main(int argc, char **argv) {
             mpz_set_ui(z, 1);
             clear_h(x, y, z);
         }
-        clock_gettime(CLOCK_MONOTONIC, &end);
-        long elapsed = 1000000000 * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec;
-        fprintf(outfp, "%ld\n", elapsed);
+        TIMER_END(outfp);
     }
 
     fclose(stdout);  // make sure the fprint in HASH2_CLEAR doesn't have any effect

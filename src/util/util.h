@@ -5,6 +5,7 @@
 #ifndef __bls_hash__src__util__util_h__
 
 #include <gmp.h>
+#include <inttypes.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
@@ -29,21 +30,34 @@
 //       Paoloni, G., "How to Benchmark Code Execution Times on Intel IA-32
 //       and IA-64 Instruction Set Architectures." Intel Corp, Sep. 2010.
 //       https://www.intel.com/content/dam/www/public/us/en/documents/white-papers/ia-32-ia-64-benchmark-code-execution-paper.pdf
+#define TIMER_DECL_COMMON       \
+    struct timespec start, end; \
+    uint64_t c_start, c_end
 #if COUNT_CYCLES == 1
-#include <inttypes.h>
 #include <cpuid.h>
 #include <x86intrin.h>
+#define TIMER_DECL     \
+    TIMER_DECL_COMMON; \
+    unsigned a, b, c, d
 #define CYCLE_COUNT_START   \
-    unsigned a, b, c, d;    \
     __cpuid(0, a, b, c, d); \
     c_start = __rdtsc()
 #define CYCLE_COUNT_END   \
     c_end = __rdtscp(&a); \
     __cpuid(0, a, b, c, d)
 #else
+#define TIMER_DECL TIMER_DECL_COMMON
 #define CYCLE_COUNT_START c_start = 0
 #define CYCLE_COUNT_END c_end = 0
 #endif
+#define TIMER_START    \
+    CYCLE_COUNT_START; \
+    clock_gettime(CLOCK_MONOTONIC, &start)
+#define TIMER_END(OUTFP)                                                                   \
+    CYCLE_COUNT_END;                                                                       \
+    clock_gettime(CLOCK_MONOTONIC, &end);                                                  \
+    long elapsed = 1000000000 * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; \
+    fprintf((OUTFP), "%ld %" PRIu64 "\n", elapsed, c_end - c_start)
 
 #define CHECK_CRYPTO(C)                                                                        \
     do {                                                                                       \
@@ -87,19 +101,14 @@ uint8_t *next_128b(EVP_CIPHER_CTX *cctx, mpz_t *out);
     EVP_CIPHER_CTX *prng_ctx = EVP_CIPHER_CTX_new();               \
     CHECK_CRYPTO(prng_ctx != NULL);                                \
     hash_stdin(&hash_ctx);                                         \
-    uint64_t c_start, c_end;                                       \
-    struct timespec start, end;                                    \
-    clock_gettime(CLOCK_MONOTONIC, &start);                        \
-    CYCLE_COUNT_START
+    TIMER_DECL;                                                    \
+    TIMER_START
 
-#define HASH_CLEAR_GENERIC(C_UNINIT_FN, MP_CLEAR_FN, ...)                                  \
-    CYCLE_COUNT_END;                                                                       \
-    clock_gettime(CLOCK_MONOTONIC, &end);                                                  \
-    long elapsed = 1000000000 * (end.tv_sec - start.tv_sec) + end.tv_nsec - start.tv_nsec; \
-    fprintf(opts.quiet ? stdout : stderr, "%ld %" PRIu64 "\n", elapsed, c_end - c_start);  \
-    EVP_CIPHER_CTX_free(prng_ctx);                                                         \
-    MP_CLEAR_FN(__VA_ARGS__, (void *)NULL);                                                \
-    C_UNINIT_FN();                                                                         \
+#define HASH_CLEAR_GENERIC(C_UNINIT_FN, MP_CLEAR_FN, ...) \
+    TIMER_END(opts.quiet ? stdout : stderr);              \
+    EVP_CIPHER_CTX_free(prng_ctx);                        \
+    MP_CLEAR_FN(__VA_ARGS__, (void *)NULL);               \
+    C_UNINIT_FN();                                        \
     return retval
 
 // for hash_*
