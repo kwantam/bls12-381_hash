@@ -11,7 +11,7 @@ set -o pipefail
 DIV_VAL=$((1000 * ${NUM_RUNS}))
 RND_VAL=$((${DIV_VAL} / 2))
 
-if [ "${USE_CYCLES}" = "1" ]; then
+if [ "${USE_CYCLES:-0}" = "1" ]; then
     MAP_FIELD=2
 else
     MAP_FIELD=1
@@ -48,16 +48,20 @@ show_q_fq_cq() {
 idx=0
 
 get_avg_timing() {
-    perl -e '
-@timings = <>;
+    # NOTE: the below works because each iteration runs 10x
+    #       and we take the worst 10%, so in total the number
+    #       of runs is exactly NUM_RUNS. This means we can
+    #       use the same rounding subroutine here as above.
+    div_round $(perl -e '
+@timings = map { (split(" "))[$ARGV[0] ? 1 : 0] } <STDIN>;
 @timings = sort {$b <=> $a} @timings;
-$len = $#timings; $tot = 0;
+$tot = 0;
+$len = $#timings;
 for ($i = 0; $i < $len / 10; $i++) {
     $tot += $timings[$i];
 }
-$avg = int($tot * 10 / $len / 10 / 1000 + 0.5);
-print "$avg\n";
-' $1
+print "$tot\n";
+' "${USE_CYCLES:-0}" < $1)
     echo "&"
 }
 
