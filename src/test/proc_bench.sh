@@ -65,98 +65,98 @@ print "$tot\n";
     echo "&"
 }
 
-echo "\$\\bm{G_1}\$ & Hash-and-check & --- &"
+echo "\$\\bm{G_1}\$ & Hash-and-check & ~\\,{---} &"
 show_q_fq_cq 1 0
 show_q_fq_cq 1 0
 show_q_fq_cq 0 1
 echo "%"
 
-echo "& (worst 10\\%) & --- &"
+echo "& (worst 10\\%) & ~\\,{---} &"
 get_avg_timing $2
 get_avg_timing $3
 echo "---\\\\"
 echo "\\cmidrule{2-6}"
 
-echo "& Construction \\#1 & \\S\\ref{sec:blsmap} &"
+echo "& Construction \\#1 & SW &"
 show_q_fq_cq 1 0
 show_q_fq_cq 1 0
 show_q_fq_cq 1 1
 echo "%"
 
-echo "&& \\S\\ref{sec:blsmap2} &"
+echo "&& SWU &"
 show_q_fq_cq 0 0
 show_q_fq_cq 1 0
 show_q_fq_cq 1 1
 echo "\\cmidrule{2-6}"
 
-echo "& Construction \\#2 & \\S\\ref{sec:blsmap} &"
+echo "& Construction \\#2 & SW &"
 show_q_fq_cq 1 0
 show_q_fq_cq 1 0
 show_q_fq_cq 1 1
 echo "%"
 
-echo "&& \\S\\ref{sec:blsmap2} &"
+echo "&& SWU &"
 show_q_fq_cq 0 0
 show_q_fq_cq 1 0
 show_q_fq_cq 1 1
 echo "\\cmidrule{2-6}"
 
-echo "& Construction \\#3 & \\S\\ref{sec:blsmap} &"
+echo "& Construction \\#3 & SW &"
 show_q_fq_cq 1 0
 show_q_fq_cq 1 0
 show_q_fq_cq 1 1
 echo "%"
 
-echo "&& \\S\\ref{sec:blsmap2} &"
+echo "&& SWU &"
 show_q_fq_cq 0 0
 show_q_fq_cq 1 0
 show_q_fq_cq 1 1
 echo "\\midrule[\\heavyrulewidth]"
 
-echo "\$\\bm{G_2}\$ & Hash-and-check & --- &"
+echo "\$\\bm{G_2}\$ & Hash-and-check & ~\\,{---} &"
 show_q_fq_cq 1 0
 show_q_fq_cq 1 0
 show_q_fq_cq 0 1
 echo "%"
 
-echo "& (worst 10\%) & --- &"
+echo "& (worst 10\%) & ~\\,{---} &"
 get_avg_timing $4
 get_avg_timing $5
 echo "---\\\\"
 
 echo "\\cmidrule{2-6}"
 
-echo "& Construction \\#4 & \\S\\ref{sec:blsmap} &"
+echo "& Construction \\#4 & SW &"
 show_q_fq_cq 1 0
 show_q_fq_cq 1 0
 show_q_fq_cq 1 1
 echo "%"
 
-echo "&& \\S\\ref{sec:blsmap2} &"
+echo "&& SWU &"
 show_q_fq_cq 0 0
 show_q_fq_cq 1 0
 show_q_fq_cq 1 1
 echo "\\cmidrule{2-6}"
 
-echo "& Construction \\#5 & \\S\\ref{sec:blsmap} &"
+echo "& Construction \\#5 & SW &"
 show_q_fq_cq 1 0
 show_q_fq_cq 1 0
 show_q_fq_cq 1 1
 echo "%"
 
-echo "&& \\S\\ref{sec:blsmap2} &"
+echo "&& SWU &"
 show_q_fq_cq 0 0
 show_q_fq_cq 1 0
 show_q_fq_cq 1 1
 echo "\\cmidrule{2-6}"
 
-echo "& Construction \\#6 & \\S\\ref{sec:blsmap} &"
+echo "& Construction \\#6 & SW &"
 show_q_fq_cq 1 0
 show_q_fq_cq 1 0
 show_q_fq_cq 1 1
 echo "%"
 
-echo "&& \\S\\ref{sec:blsmap2} &"
+echo "&& SWU &"
 show_q_fq_cq 0 0
 show_q_fq_cq 1 0
 show_q_fq_cq 1 1
